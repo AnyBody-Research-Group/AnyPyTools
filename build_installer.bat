@@ -1,0 +1,1 @@
+python.exe setup.py bdist_msi
