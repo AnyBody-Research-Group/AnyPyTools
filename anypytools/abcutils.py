@@ -52,20 +52,20 @@ class AnyProcess():
         tasklist = []
        
 #        # Costruct a list of tuples [(var,value),(..),...]  with design values 
-#        for i in range(1,len( desvarlist[0] )):
-#            design = [(_[0],_[i]) for _ in desvarlist ]
+#        for i in range(1,len( inputs[0] )):
+#            design = [(_[0],_[i]) for _ in inputs ]
 #            tasklist.append(design)
 #        # Run AnyBodyCon on all data
 #        
-        for k,v in desvarlist.items():
-            desvarlist[k] = np.array(v)
+        for k,v in inputs.items():
+            inputs[k] = np.array(v)
         
-        no_tasks = desvarlist.values()[0].shape[0]
+        no_tasks = inputs.values()[0].shape[0]
 
         tasklist = [[None]]*no_tasks
         for i in range(no_tasks):
             tasklist[i] = []
-            for name, array in desvarlist.items():
+            for name, array in inputs.items():
                 if taskdim == 1:
                     tasklist[i].append( (name, array[i]) )
                 elif taskdim == 2:
@@ -162,7 +162,7 @@ def test():
 #    design2 = DesignVar('Main.TestVar2', np.random.rand(1,3))
 #
 #    
-#    out =  ap.start(desvarlist = [design1,design2],
+#    out =  ap.start(inputs = [design1,design2],
 #                   macrocmds= ['operation MyStudy.Kinematics',\
 #                               'run'],
 #                   outputs = [ 'Main.MyStudy.Output.Abscissa.t',\
@@ -183,7 +183,7 @@ def test():
                   array([-0.1,0,0]) +  0.1* random.randn(100,1) }
     
     
-    out =  ap.start(desvarlist = designRand,
+    out =  ap.start(inputs = designRand,
                    macrocmds= ['operation ArmModelStudy.InverseDynamics',\
                                'run'],
                    outputs = [ 'Main.ArmModelStudy.Output.Model.Muscles.BicepsLong.Activity']

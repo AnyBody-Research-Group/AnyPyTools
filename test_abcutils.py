@@ -14,9 +14,9 @@ testmodel = op.join( op.dirname(abcutils.__file__), 'test_models', 'Demo.Arm2D.a
 #==============================================================================
 # RUN Sensitivity study
 #==============================================================================
-ap = abcutils.AnyProcess(testmodel, num_processes = 8)
+ap = abcutils.AnyProcess(testmodel, num_processes = 6)
 out =  ap.start(inputs =  {'Main.ArmModel.Segs.LowerArm.Brachialis.sRel':
-                            array([-0.1,0,0]) +  0.02* random.randn(10,1) },
+                            array([-0.1,0,0]) +  0.02* random.randn(50,1) },
                macrocmds= ['operation ArmModelStudy.InverseDynamics',\
                            'run'],
                outputs = [ 'Main.ArmModelStudy.Output.Model.Muscles.Brachialis.Activity']
