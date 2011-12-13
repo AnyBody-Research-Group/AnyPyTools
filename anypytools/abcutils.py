@@ -13,7 +13,125 @@ import numpy as np
 #import multiprocessing
 import tempfile
 import threading
+import time
 
+def getAnyBodyConsole():
+	import _winreg
+	abpath = _winreg.QueryValue(_winreg.HKEY_CLASSES_ROOT,
+			'AnyBody.AnyScript\shell\open\command').rsplit(' ',1)[0]
+	return os.path.join(os.path.dirname(abpath),'AnyBodyCon.exe')
+
+def getNumberOfProcessors():
+    from multiprocessing import cpu_count
+    return cpu_count()
+
+
+class AnyBatchProcess():
+    # This anybodycon on in all subfolder of a directory tree with a given macro.
+    def __init__(self, basepath = os.getcwd(), searchfile = None, num_processes = getNumberOfProcessors(), abcpath = getAnyBodyConsole(), stop_on_error = True):
+        self.basepath = os.path.abspath(basepath)
+        self.abcpath = abcpath
+        self.searchfile = searchfile
+        self.stop_on_error = stop_on_error
+        self.abcpath = abcpath
+        self.num_processes = num_processes
+        self.counter = 0
+
+	
+	# Function that runs the anybody model
+    def worker(self,workdir, macrolist):
+        head, trialname = os.path.split(workdir)
+        subjectname = os.path.basename(head)
+        processcount = self.counter
+        self.counter += 1
+        print 'Run ' + str(processcount) + ': '+ subjectname +':' + trialname
+        macrofile = open(os.path.join(workdir,'tmp_macro.anymcr'),'w')
+        logfile = open(os.path.join(workdir,'output_log.txt'),'w')
+        # Save macrofile to disk
+        # macrofile = tempfile.NamedTemporaryFile(mode='w+b', suffix='.anymcr', delete=False)
+        macrofile.write("\n".join( macrolist ) )
+        macrofile.close()
+        # Construct command and launch anybodycom
+        cmd = [self.abcpath, '/d', workdir,'/m', macrofile.name]   
+        try:
+            p = subprocess.Popen(cmd, stdout=logfile, stderr=logfile,shell= False)
+            starttime = time.clock()
+    	#    p.communicate()
+            # The following code is a work around to detect when the anybodycon is done
+            with open(logfile.name,'r') as f:
+                while not p.poll():
+                    fpos = f.tell()
+                    line = f.readline()
+                    if not line:
+                        time.sleep(1)
+                        f.seek(fpos)
+                    elif line.startswith('Warning : exit :'):
+                        p.terminate()
+                    elif self.stop_on_error and line.startswith('Error :'):
+                        p.terminate()
+                    elif time.clock()-starttime > 60*10:
+                        p.terminate()
+                        
+            # Load logfile and parse the results            
+            with open(logfile.name,'r') as f:
+                f.seek(0)
+                output = parseAnyScriptVars( "\n".join(f.readlines()) )
+            if output.has_key('ERROR'):
+                #print output['ERROR']
+                with open(os.path.join(workdir,'Error_log.txt'),'w') as f:
+                    f.write("ERROR LOG:\n")
+                    f.write("\n".join(macrolist))
+                    f.write("\nErrors:\n")
+                    f.write("\n".join(output['ERROR']))
+                print 'ERROR ' + str(processcount) + ': '+ subjectname +':' +\
+                       trialname + ' Runtime:' + str(int(time.clock()-starttime))+'s'
+            logfile.close()
+            macrofile.close()
+            os.remove(macrofile.name)
+        except:
+            p.terminate()
+            raise Exception("Error in AnyPyTools...")
+
+    def start(self, macro): 
+        self.counter = 0
+        if isinstance(macro, basestring):
+            macro = [macro.splitlines()]
+        dirlist = getsubdirs(self.basepath,self.searchfile)
+        tasklist = zip(dirlist, [macro]*len(dirlist))
+        scheduleProcesses(tasklist, self.worker, self.num_processes)	
+
+
+
+
+def scheduleProcesses(tasklist, worker, num_processes):
+    threads = []
+    # run until all the threads are done, and there is no data left
+    while threads or tasklist:
+        # if we aren't using all the processors AND there is still data left to
+        # compute, then spawn another thread
+	  if (len(threads) < num_processes) and tasklist:
+            args = tasklist.pop()
+            if not isinstance(args, tuple):
+                arg = (arg)
+            t = threading.Thread(target=worker, args=args)
+            t.daemon = True
+            t.start()
+            threads.append(t)
+
+		# in the case that we have the maximum number of threads check if any of them
+		# are done. (also do this when we run out of data, until all the threads are done)
+	  else:
+           for thread in threads:
+               try:
+                   if not thread.isAlive():
+                       threads.remove(thread)	
+               except KeyboardInterrupt:
+                   print 'Stopping'
+                   time.sleep(3)
+                   return
+           time.sleep(1)
+                      
+	
 
 class AnyProcess():
     
@@ -25,7 +143,7 @@ class AnyProcess():
             abpath = _winreg.QueryValue(_winreg.HKEY_CLASSES_ROOT,
                     'AnyBody.AnyScript\shell\open\command').rsplit(' ',1)[0]
             self.abcpath = os.path.join(os.path.dirname(abpath),'AnyBodyCon.exe')
-            self.workdir = workdir
+        self.workdir = workdir
         self.results = {}
         if num_processes == None:
             from multiprocessing import cpu_count
@@ -156,6 +274,16 @@ def list2anyscript(arr):
     else:
         return str(arr)
 
+def getsubdirs(toppath, hasfile = None):
+    dirlist = []
+    for root, dirs, files in os.walk(toppath):
+        if hasfile and os.path.exists(os.path.join(root,hasfile)):
+            dirlist.append(root)
+        elif hasfile is None:
+            dirlist.append(root)
+    return dirlist
+		
+		
 def test():
 #    ap =AnyProcess('test.any')
 #    design1= DesignVar('Main.TestVar1', 1)
