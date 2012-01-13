@@ -14,6 +14,8 @@ import numpy as np
 import tempfile
 import threading
 import time
+import signal
+import shutil 
 
 def getAnyBodyConsole():
 	import _winreg
@@ -36,6 +38,7 @@ class AnyBatchProcess():
         self.abcpath = abcpath
         self.num_processes = num_processes
         self.counter = 0
+        self.pids = set()
 
 	
 	# Function that runs the anybody model
@@ -44,92 +47,117 @@ class AnyBatchProcess():
         subjectname = os.path.basename(head)
         processcount = self.counter
         self.counter += 1
-        print 'Run ' + str(processcount) + ': '+ subjectname +':' + trialname
         macrofile = open(os.path.join(workdir,'tmp_macro.anymcr'),'w')
-        logfile = open(os.path.join(workdir,'output_log.txt'),'w')
+        tmplogfile = tempfile.NamedTemporaryFile(mode='w+b', suffix='.log')
         # Save macrofile to disk
         # macrofile = tempfile.NamedTemporaryFile(mode='w+b', suffix='.anymcr', delete=False)
         macrofile.write("\n".join( macrolist ) )
         macrofile.close()
         # Construct command and launch anybodycom
         cmd = [self.abcpath, '/d', workdir,'/m', macrofile.name]   
-        try:
-            p = subprocess.Popen(cmd, stdout=logfile, stderr=logfile,shell= False)
-            starttime = time.clock()
-    	#    p.communicate()
-            # The following code is a work around to detect when the anybodycon is done
-            with open(logfile.name,'r') as f:
-                while not p.poll():
-                    fpos = f.tell()
-                    line = f.readline()
-                    if not line:
-                        time.sleep(1)
-                        f.seek(fpos)
-                    elif line.startswith('Warning : exit :'):
-                        p.terminate()
-                    elif self.stop_on_error and line.startswith('Error :'):
-                        p.terminate()
-                    elif time.clock()-starttime > 60*10:
-                        p.terminate()
-                        
+        proc = subprocess.Popen(cmd, stdout=tmplogfile, stderr=tmplogfile,shell= False)
+        self.pids.add(proc.pid)
+        starttime = time.clock()
+	#    p.communicate()
+        # The following code is a work around to detect when the anybodycon is done            
+        
+        while proc.poll() is None:
+            fpos = tmplogfile.tell()
+            line = tmplogfile.readline()
+            if not line:
+                time.sleep(1)
+                tmplogfile.seek(fpos)
+            elif line.startswith('Warning : exit :'):
+                proc.terminate()
+            elif self.stop_on_error and line.startswith('Error :'):
+                proc.terminate()
+            elif time.clock()-starttime > 60*20:
+                proc.terminate()
+                tmplogfile.seek(0,2)
+                tmplogfile.write('ERROR: Timed out. Terminated by batch processor')
+                break
+        processtime = int(time.clock()-starttime)
+        try: 
+            # Remove process from set of runing processes
+            self.pids.remove(proc.pid)
+            
+            logfilename_completed = os.path.join(workdir,'outputlog.txt')
+            logfilename_error  = os.path.join(workdir,'outputlog_ERROR.txt')
+            
+            if os.path.exists(logfilename_completed):
+                os.remove(logfilename_completed)
+            if os.path.exists(logfilename_error):
+                os.remove(logfilename_error)
+            
             # Load logfile and parse the results            
-            with open(logfile.name,'r') as f:
-                f.seek(0)
-                output = parseAnyScriptVars( "\n".join(f.readlines()) )
+            tmplogfile.seek(0)
+            output = parseAnyScriptVars( "\n".join(tmplogfile.readlines()) )
+            # Check if process had any Errors
             if output.has_key('ERROR'):
-                #print output['ERROR']
-                with open(os.path.join(workdir,'Error_log.txt'),'w') as f:
-                    f.write("ERROR LOG:\n")
-                    f.write("\n".join(macrolist))
-                    f.write("\nErrors:\n")
-                    f.write("\n".join(output['ERROR']))
-                print 'ERROR ' + str(processcount) + ': '+ subjectname +':' +\
-                       trialname + ' Runtime:' + str(int(time.clock()-starttime))+'s'
-            logfile.close()
+                with open(logfilename_error,'w+') as f:
+                    shutil.copyfileobj(tmplogfile,f)
+                print 'Error' + ':' + str(processcount) + ':'+ str(processtime)+'s:'\
+                +subjectname +'/' +  trialname 
+            else:
+                with open(logfilename_completed,'w+') as f:
+                    shutil.copyfileobj(tmplogfile,f)
+                print 'Completed' + ':' + str(processcount) + ':'+ str(processtime)+'s:'\
+                +subjectname +'/' +  trialname 
+
+            tmplogfile.close()
             macrofile.close()
             os.remove(macrofile.name)
-        except:
-            p.terminate()
-            raise Exception("Error in AnyPyTools...")
+        except KeyboardInterrupt:
+            print 'Error in worker thread'
+            return
 
     def start(self, macro): 
         self.counter = 0
+        self.kill_all = False
         if isinstance(macro, basestring):
             macro = [macro.splitlines()]
         dirlist = getsubdirs(self.basepath,self.searchfile)
         tasklist = zip(dirlist, [macro]*len(dirlist))
-        scheduleProcesses(tasklist, self.worker, self.num_processes)	
+        print 'Start processing ' + str(len(tasklist)) + ' files'
+        scheduleProcesses(tasklist, self.worker, self.num_processes)
+        # Kill any rouge processes that are still running.
+        for pid in self.pids:
+            print 'Kill AnyBodyProcess. PID: ' + str(pid)
+            os.kill(pid, signal.SIGTERM)
 
 
-
+def scheduleProcessesDEBUG(tasklist,worker,num_processes):
+    for task in tasklist:
+        worker(task[0],task[1])
+        
 
 def scheduleProcesses(tasklist, worker, num_processes):
     threads = []
     # run until all the threads are done, and there is no data left
-    while threads or tasklist:
-        # if we aren't using all the processors AND there is still data left to
-        # compute, then spawn another thread
-	  if (len(threads) < num_processes) and tasklist:
-            args = tasklist.pop()
-            if not isinstance(args, tuple):
-                arg = (arg)
-            t = threading.Thread(target=worker, args=args)
-            t.daemon = True
-            t.start()
-            threads.append(t)
+    try:
+        while threads or tasklist:
+            # if we aren't using all the processors AND there is still data left to
+            # compute, then spawn another thread
+            if (len(threads) < num_processes) and tasklist:
+                args = tasklist.pop()
+                if not isinstance(args, tuple):
+                    args = (args)
+                t = threading.Thread(target=worker, args=args)
+                t.daemon = True
+                t.start()
+                threads.append(t)
+    
+    		# in the case that we have the maximum number of threads check if any of them
+    		# are done. (also do this when we run out of data, until all the threads are done)
+            else:
+                for thread in threads:
+                    if not thread.isAlive():
+                        threads.remove(thread)	
+                time.sleep(0.5)
+    except KeyboardInterrupt:
+        print 'Stopping'
+        return
 
-		# in the case that we have the maximum number of threads check if any of them
-		# are done. (also do this when we run out of data, until all the threads are done)
-	  else:
-           for thread in threads:
-               try:
-                   if not thread.isAlive():
-                       threads.remove(thread)	
-               except KeyboardInterrupt:
-                   print 'Stopping'
-                   time.sleep(3)
-                   return
-           time.sleep(1)
                       
 	
 
@@ -150,15 +178,6 @@ class AnyProcess():
             self.num_processes =  cpu_count()
         else:        
             self.num_processes = num_processes
-
-            
-    
-#==============================================================================
-#     def getReults(consoleOut):
-#         self.results.append(parseAnyScriptVars(consoleOut[0]))
-#==============================================================================
-        
-        
 
 
     def start(self,inputs,macrocmds,outputs, taskdim = 1):
