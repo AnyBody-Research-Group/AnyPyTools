@@ -5,13 +5,14 @@ Created on Sat Sep 24 12:29:53 2011
 @author: melund
 """
 
-from distutils.core import setup
+#from distutils.core import setup
+from setuptools import setup
 
 setup(
     name='AnyPyTools',
-    version='0.1',
-    install_requires=['numpy'],
-    py_modules=['anypytools.abcutils'],
+    version='0.2',
+    install_requires=['distribute','numpy','h5py'],
+    py_modules=['anypytools.abcutils', 'anypytools.datagen'],
     scripts=['scripts/pp2any.py'],
     packages=['anypytools'],
 #    package_dir={'mypkg': 'src/mypkg'},
@@ -23,7 +24,7 @@ setup(
     license='MIT',
     keywords=('AnyBody Modelling system '
               'AnyScript'),
-    url='http://github.com/lmjohns3/py-c3d',
+    url='https://github.com/AnyBody-Research-Group/AnyPyTools',
     classifiers=[
         'Development Status :: 1 - Alpha',
         'Intended Audience :: Science/Research',
