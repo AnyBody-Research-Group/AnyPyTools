@@ -30,7 +30,11 @@ def getNumberOfProcessors():
 
 class AnyBatchProcess():
     # This anybodycon on in all subfolder of a directory tree with a given macro.
-    def __init__(self, basepath = os.getcwd(), searchfile = None, num_processes = getNumberOfProcessors(), abcpath = getAnyBodyConsole(), stop_on_error = True):
+    def __init__(self, basepath = os.getcwd(), searchfile = None,
+        num_processes = getNumberOfProcessors(), abcpath = getAnyBodyConsole(),
+         stop_on_error = True,  defines=dict(), paths=dict() ):
+        self.definedict = defines
+        self.pathdict = paths
         self.basepath = os.path.abspath(basepath)
         self.abcpath = abcpath
         self.searchfile = searchfile
@@ -56,8 +60,17 @@ class AnyBatchProcess():
         # Save macrofile to disk
         macrofile.write("\n".join( macrolist ) )
         macrofile.close()
-        # Construct command and launch anybodycom
-        cmd = [self.abcpath, '--macro=', macrofile.name, "--dir=", workdir.replace('\\','/')]  
+        # Construct command to launch anybodycon
+        cmd = [self.abcpath, '--macro=', macrofile.name, "--dir=", workdir.replace('\\','/'),
+               '/ni', ' '] 
+        for k,v in self.definedict.iteritems():
+            cmd.append('/def')            
+            cmd.append('%s=%s'%(k,v))
+        for k,v in self.pathdict.iteritems():
+            cmd.append('/p')            
+            cmd.append("%s=%s"%(k,v))
+
+               
         proc = subprocess.Popen(cmd, stdout=tmplogfile, stderr=tmplogfile,shell= False)
         self.pids.add(proc.pid)
         starttime = time.clock()
@@ -110,7 +123,7 @@ class AnyBatchProcess():
             pass
 
 
-    def start(self, macro, timeout = 30*60): 
+    def start(self, macro, timeout = 60*60): 
         self.timeout = timeout
         self.counter = 0
         self.kill_all = False
@@ -120,7 +133,11 @@ class AnyBatchProcess():
         tasklist = zip(dirlist, [macro]*len(dirlist))
         print 'Start processing ' + str(len(tasklist)) + ' files'
         try:
-            scheduleProcesses(tasklist, self.worker, self.num_processes)
+            if self.num_processes == 1:
+                for task in tasklist:
+                    self.worker(task[0], task[1])
+            else:
+                scheduleProcesses(tasklist, self.worker, self.num_processes)
         except KeyboardInterrupt:
             print 'Stopping'
         # Kill any rouge processes that are still running.
@@ -280,7 +297,7 @@ def parseAnyScriptVars(strvar):
             first = first.strip()
             last = last.strip(' ;').replace('{','[').replace('}',']')
             out[first.strip()] = eval(last)
-        if line.startswith('ERROR'): 
+        if line.startswith('ERROR') or line.startswith('Error'): 
             if not out.has_key('ERROR'): out['ERROR'] = []
             out['ERROR'].append(line)
     return out

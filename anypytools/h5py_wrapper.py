@@ -7,6 +7,17 @@ Created on Mon Jan 16 11:40:42 2012
 from h5py import Group as BaseGroup, Dataset as BaseDataset, File as BaseFile
 from h5py import *
 
+def _follow_reftarget(elem):
+    completename = elem.attrs['CompleteName'].replace('.','/')
+    reftarget = elem.attrs['RefTarget'].replace('.','/')
+    prefix = completename[:-len(elem.name)]
+    h5target = reftarget[len(prefix):]
+    elem = elem.file[h5target]
+    return elem
+
+    
+    
+
 class File(BaseFile):
     def __init__(self,arg):
          super(File, self).__init__(arg)
@@ -15,6 +26,9 @@ class File(BaseFile):
     def __getitem__(self,path):
         try:
             elem = super(File, self).file[path]
+            if isinstance(elem, BaseGroup) and not len(elem.keys()):
+                if 'RefTarget' in elem.attrs:
+                    return _follow_reftarget(elem)
         except KeyError:
             elem = self
             levels = path.strip('/').split('/')
@@ -23,12 +37,8 @@ class File(BaseFile):
                     elem = elem.__getitem__(level)
                 else:
                     try:
-                        completename = elem.attrs['CompleteName'].replace('.','/')
-                        reftarget = elem.attrs['RefTarget'].replace('.','/')
-                        prefix = completename[:-len(elem.name)]
-                        h5target = reftarget[len(prefix):]
-                        newpath = h5target + '/' + level
-                        elem = super(File, self).file[newpath]
+                        elem = _follow_reftarget(elem)
+                        elem = elem.__getitem__(level)
                     except:
                         raise KeyError('Entry not found: '+path    )
         if isinstance(elem, BaseGroup):
@@ -57,6 +67,9 @@ class Group(BaseGroup):
     def __getitem__(self,path):
         try:
             elem = super(Group, self).__getitem__(path)
+            if isinstance(elem, BaseGroup) and not len(elem.keys()):
+                if 'RefTarget' in elem.attrs:
+                    return _follow_reftarget(elem)            
         except KeyError:
             elem = self
             levels = path.strip('/').split('/')
@@ -65,12 +78,8 @@ class Group(BaseGroup):
                     elem = elem.__getitem__(level)
                 else:
                     try:
-                        completename = elem.attrs['CompleteName'].replace('.','/')
-                        reftarget = elem.attrs['RefTarget'].replace('.','/')
-                        prefix = completename[:-len(elem.name)]
-                        h5target = reftarget[len(prefix):]
-                        newpath = h5target + '/' + level
-                        elem = super(Group, self).file[newpath]
+                        elem = _follow_reftarget(elem)
+                        elem = elem.__getitem__(level)
                     except:
                         raise KeyError('Entry not found: '+path    )
         if isinstance(elem, BaseGroup):

@@ -83,7 +83,7 @@ def find_heelstrike (forcedata, threshold = 5, axis = None):
         return 0    
     
     
-def find_events(f1,f2,f3,RHeel,LHeel,RToe,LToe, Sacrum, avratio = 1, axis = None):
+def find_events(f1,f2,f3,RHeel,LHeel,RToe,LToe, Sacrum, avratio = 1, use_first_fp = True, axis = None):
     # Find all Heel toe off events from forceplate data
     hs_events = np.array([find_heelstrike(f1), find_heelstrike( f2 ), find_heelstrike( f3 )]) / avratio
     to_events = np.array([find_toeoff(f1), find_toeoff( f2 ), find_toeoff( f3 )]) / avratio
@@ -121,8 +121,8 @@ def find_events(f1,f2,f3,RHeel,LHeel,RToe,LToe, Sacrum, avratio = 1, axis = None
     
     if np.sqrt(sum( vel_rheel[time_fp1,:]**2)) > np.sqrt(sum( vel_lheel[time_fp1,:]**2)):        
         hs_L = hs_events[[0,2]]
-        hs_R = np.array( [hs_events[1], hs_events_kin[0]] )
         to_L = to_events[[0,2]]
+        hs_R = np.array( [hs_events[1], hs_events_kin[0]] )
         to_R = np.r_[to_events_kin[to_events_kin<to_events[0]], to_events[1] ]
         first_foot_on_FP = 'Left'
     else:
@@ -132,40 +132,65 @@ def find_events(f1,f2,f3,RHeel,LHeel,RToe,LToe, Sacrum, avratio = 1, axis = None
         to_L = np.r_[to_events_kin[to_events_kin<to_events[0]], to_events[1] ]
         first_foot_on_FP = 'Right'
 
+    return (first_foot_on_FP, hs_R, hs_L, to_R, to_L)
+
+def foot_contact_times(context, f1,f2,f3,RHeel,LHeel,RToe,LToe, Sacrum, folder, avratio, axis = None):
+    (foot, hs_R, hs_L, to_R, to_L) = find_events(f1,f2,f3,RHeel,LHeel,RToe,LToe, Sacrum, avratio, axis = None)
+    
     hs = np.sort( np.r_[hs_L,hs_R] )
     to =np.sort(  np.r_[to_L,to_R] )
     
     events = np.round( np.sort(  np.concatenate((hs,to) ) ) )
-    return (first_foot_on_FP, events)
-
-def foot_contact_times(context, f1,f2,f3,RHeel,LHeel,RToe,LToe, Sacrum, folder, avratio, axis = None):
-    (foot,events) = find_events(f1,f2,f3,RHeel,LHeel,RToe,LToe, Sacrum, avratio, axis = None)
+    
     return (int(events[0]),int(events[1]), int(events[2]), int(events[3]),
-            int(events[4]), int(events[5]), int(events[6]), int(events[7]))
+        int(events[4]), int(events[5]), int(events[6]), int(events[7]))
+    
 
+def events_from_h5file(h5file, use_first_fp = True):
+    try:
+        f1 = h5file['/Output/EnvironmentModel/ForcePlate1/FzTotal']
+        f2 = h5file['/Output/EnvironmentModel/ForcePlate2/FzTotal']
+        f3 = h5file['/Output/EnvironmentModel/ForcePlate3/FzTotal']
+    except KeyError:
+        f1 = h5file['/Output/ModelOptimizationModel/EnvironmentModel/ForcePlate1/FzTotal']
+        f2 = h5file['/Output/ModelOptimizationModel/EnvironmentModel/ForcePlate2/FzTotal']
+        f3 = h5file['/Output/ModelOptimizationModel/EnvironmentModel/ForcePlate3/FzTotal']
 
-def events_from_h5file(h5file):
-    f1 = h5file['/Output/EnvironmentModel/ForcePlate1/FzTotal']
-    f2 = h5file['/Output/EnvironmentModel/ForcePlate2/FzTotal']
-    f3 = h5file['/Output/EnvironmentModel/ForcePlate3/FzTotal']
-    RHeel = h5file['/Output/HumanModel/BodyModel/Right/Leg/Seg/Foot/HeelNode/r']
-    LHeel = h5file['/Output/HumanModel/BodyModel/Left/Leg/Seg/Foot/HeelNode/r']
-    RToe = h5file['/Output/HumanModel/BodyModel/Right/Leg/Seg/Foot/BigToeNode/r']
-    LToe = h5file['/Output/HumanModel/BodyModel/Left/Leg/Seg/Foot/BigToeNode/r']
-    Sacrum = h5file['/Output/HumanModel/BodyModel/Trunk/SegmentsLumbar/PelvisSeg/r']
-    (first_foot_on_FP, events) =  find_events(f1,f2,f3,RHeel,LHeel,RToe,LToe, Sacrum)
-    events = events.astype(int)
-    if first_foot_on_FP == 'Right':
-        RightHeelStrike = events[[0, 4]]
-        LeftToeOff = events[[1, 5]]
-        LeftHeelStrike = events[[2, 6]]
-        RightToeOff = events[[3, 7]]
-    else:
-        LeftHeelStrike = events[[0, 4]]
-        RightToeOff = events[[1, 5]]
-        RightHeelStrike = events[[2, 6]]
-        LeftToeOff = events[[3, 7]]
-    return RightHeelStrike, RightToeOff, LeftHeelStrike, LeftToeOff
+    # Get Foot positions
+    try:
+        RHeel = h5file['/Output/OptKinModel/Right/Seg/Foot/RHeel/r']
+        LHeel = h5file['/Output/OptKinModel/Left/Seg/Foot/LHeel/r']
+        RToe = h5file['/Output/OptKinModel/Right/Seg/Foot/RToe/r']
+        LToe = h5file['/Output/OptKinModel/Left/Seg/Foot/LToe/r']
+        Sacrum = h5file['/Output/OptKinModel/Trunk/Seg/Pelvis/r']
+    except KeyError:
+        try:
+            RHeel = h5file['/Output/LegModel/Right/Seg/Foot/RHeel/r']
+            LHeel = h5file['/Output/LegModel/Left/Seg/Foot/LHeel/r']
+            RToe = h5file['/Output/LegModel/Right/Seg/Foot/RToe/r']
+            LToe = h5file['/Output/LegModel/Left/Seg/Foot/LToe/r']
+            Sacrum = h5file['/Output/LegModel/Trunk/Seg/Pelvis/r']
+        except KeyError:
+            try:
+                RHeel = h5file['/Output/BodyModel/Right/Leg/Seg/Foot/HeelNode/r']
+                LHeel = h5file['/Output/BodyModel/Left/Leg/Seg/Foot/HeelNode/r']
+                RToe = h5file['/Output/BodyModel/Right/Leg/Seg/Foot/BigToeNode/r']
+                LToe = h5file['/Output/BodyModel/Left/Leg/Seg/Foot/BigToeNode/r']
+                Sacrum = h5file['/Output/BodyModel/Trunk/SegmentsLumbar/PelvisSeg/r']
+            except KeyError:
+                RHeel = h5file['/Output/HumanModel/BodyModel/Right/Leg/Seg/Foot/HeelNode/r']
+                LHeel = h5file['/Output/HumanModel/BodyModel/Left/Leg/Seg/Foot/HeelNode/r']
+                RToe = h5file['/Output/HumanModel/BodyModel/Right/Leg/Seg/Foot/BigToeNode/r']
+                LToe = h5file['/Output/HumanModel/BodyModel/Left/Leg/Seg/Foot/BigToeNode/r']
+                Sacrum = h5file['/Output/HumanModel/BodyModel/Trunk/SegmentsLumbar/PelvisSeg/r']
+
+        
+        
+    (foot, RightHeelStrike, LeftHeelStrike,
+     RightToeOff, LeftToeOff) =  find_events(f1,f2,f3,RHeel,LHeel,RToe,LToe, Sacrum)
+
+    return RightHeelStrike.astype(int), RightToeOff.astype(int),\
+            LeftHeelStrike.astype(int), LeftToeOff.astype(int)
     
                  
                  
@@ -178,6 +203,33 @@ def events_from_h5file(h5file):
 
     def keys(self):
         return self.h5file.keys()
+
+def events_in_percent_gait(heelstrike1, heelstrike2, col_toeoff, col_heelstrike, toeoff):
+    """Returns the colateral toeoff, colateral heelstrike, and toeoff in 
+       percent of gait cycle given by heelstrike1 and heelstrike2. """
+       
+    cto = np.array(col_toeoff)
+    chs = np.array(col_heelstrike)
+    to = np.array(toeoff)
+    hs1 = heelstrike1
+    hs2 = heelstrike2
+
+    cto = cto[cto > hs1]
+    cto = cto[cto < hs2][0:1]
+    chs = chs[chs > hs1]
+    chs = chs[chs < hs2][0:1]
+    to = to[to > hs1]
+    to = to[to < hs2][0:1]
+    cto_percent = 100*(cto-hs1)/float(hs2-hs1)
+    chs_percent = 100*(chs-hs1)/float(hs2-hs1)
+    to_percent = 100*(to-hs1)/float(hs2-hs1)
+    
+    if len(cto_percent) ==0:
+        return None
+    
+    return (cto_percent, chs_percent, to_percent)
+
+    
 
 
 if __name__ == "__main__":

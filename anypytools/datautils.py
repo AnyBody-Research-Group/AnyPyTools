@@ -9,20 +9,16 @@ import csv
 import numpy as np
 import os
 import h5py_wrapper as h5py
+from scipy.interpolate import interp1d
 
 
-def anydatah5_generator(folder=None, DEBUG = False):
-#    # Change Anybody tree-path to hdf5 path 
-#    if not isinstance(varlist, list):
-#        varlist = [varlist]
-#    for idx,val in enumerate(varlist):
-#        val = val.split('Output',1)[1]
-#        val = '/Output'+val.replace('.','/')
-#        varlist[idx] = val    
-    
+
+def anydatah5_generator(folder=None, match = ''):    
     if folder is None:
         folder = os.getcwd()
-    filelist = [_ for _ in os.listdir(folder) if _.lower().endswith('h5')]
+    def func(item):
+        return item.endswith('h5') and item.find(match)!= -1
+    filelist = filter(func,  os.listdir(folder)) 
     for filename in filelist:
         try:
             with h5py.File(op.join(folder,filename)) as h5file:
@@ -34,7 +30,8 @@ def anydatah5_generator(folder=None, DEBUG = False):
 def anyouputfile_generator(folder =None, DEBUG = False):
     if folder is None:
         folder = os.getcwd()
-    filelist = os.listdir(folder)
+
+    filelist = [_ for _ in os.listdir(folder) if _.endswith('.txt') or _.endswith('.csv')]
     
     
     def is_scinum(str):
@@ -46,13 +43,13 @@ def anyouputfile_generator(folder =None, DEBUG = False):
     
     for filename in filelist:
         with open(op.join(folder,filename),'r') as csvfile:
-            try:
-                dialect = csv.Sniffer().sniff(csvfile.read(2048))
-            except:
-                if DEBUG: print "problem with " +filename
-                continue
-            csvfile.seek(0)
-            reader = csv.reader(csvfile, dialect)   
+#            try:
+#                dialect = csv.Sniffer().sniff(csvfile.read(2048),delimiters=',')
+#            except:
+#                if DEBUG: print "problem with " +filename
+#                continue
+#            csvfile.seek(0)
+            reader = csv.reader(csvfile, delimiter=',')   
             #Check when the header section ends
             fpos1 = 0
             fpos0 = 0
@@ -73,11 +70,29 @@ def anyouputfile_generator(folder =None, DEBUG = False):
             data = np.array([[float(col) for col in row] for row in reader])
             yield (data,header, op.splitext(filename)[0])
 
+def interp_percent(data, indices):
+    data = np.array(data)
+    data = data.squeeze()
+    indices = np.array(indices)
+    x = np.linspace(0,100,len(indices))
+    xnew = np.arange(0,100)
+    y = data[indices]   
+    ipolfun = interp1d(x,y)
+    return ipolfun(xnew)
+    
+def any_eval(string):
+    string = string.split('//',1)[0]
+    string  = string.split("=",1)[-1].split(";",1)[0].strip()
+    
+    string = string.replace('{','[')
+    string = string.replace('}',']')
+    return eval(string)
+    
+    
+
 if __name__ == '__main__':
 #    for data,header,filename in csv_trial_data('C:\Users\mel\SMIModelOutput', DEBUG= True):
 #        print header
         
     outvars = ['/Output/Validation/EMG'] 
         
-    for data, filename in h5_trial_data(outvars):
-        print data.keys()
