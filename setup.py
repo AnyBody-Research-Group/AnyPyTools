@@ -10,9 +10,10 @@ from setuptools import setup
 
 setup(
     name='AnyPyTools',
-    version='0.2',
+    version='0.3',
     install_requires=['distribute','numpy','h5py'],
-    py_modules=['anypytools.abcutils', 'anypytools.datagen'],
+    py_modules=['anypytools.abcutils', 'anypytools.datagen','anypytools.h5py_wrapper', 'anypytools.datautils',
+				'anypytools.abcutils_old'],
     scripts=['scripts/pp2any.py'],
     packages=['anypytools'],
 #    package_dir={'mypkg': 'src/mypkg'},
