@@ -142,11 +142,16 @@ class _Task():
             
     
 class AnyPyProcess():
-    """Commen class for setting up batch process jobs of AnyBody models. 
+    """
+    AnyPyProcess(basepat = cwd, subdir_search = None, num_processes = nCPU, 
+                 anybodycon_path = 'installed version', stop_on_error = True,
+                 timeout = 3600, disp = True, keep_logfiles = False)
+    
+    Commen class for setting up batch process jobs of AnyBody models. 
 
     Main class for running the anybody console application from python.
     The class have maethods for running different kind of batch processing:
-    
+       
     - Batch job: running many different models)
     
     - Parameter jobs: running the same model multiple times with different
@@ -155,26 +160,37 @@ class AnyPyProcess():
     - Pertubation jobs: Find the sensitivity of of some output parameters, 
       given a set of input parameters. (Usefull for calculating the 
       gradient in optimization studies)     
+      
+    Parameters
+    ----------
+    basepath:
+        directory to execute anybody console application
+    subdir_search:
+        regular expression string to search for sub
+        directories. This is used find multiple folder for batch processing. 
+        ``Setting subdir_search = '.'`` will include all subfolders.
+    num_processes:
+        number of anybody models to start in parallel.
+        This defaults to the number of CPU in the computer. 
+    anybodycon_path:
+        Overwrite the default anybodycon.exe file to 
+        use in batch processing
+    timeout:
+        maximum time a model can run until it is terminated. 
+        Defaults to 1 hour
+    disp:
+        set to False to disable status messages.
+        
+    Returns
+    -------
+    AnyPyProcess object: 
+        a AnyPyProcess object for running batch processing, parameter
+        studies and pertubation jobs.       
     """    
     def __init__(self, basepath = os.getcwd(), subdir_search = None,
                  num_processes = get_ncpu(), 
                  anybodycon_path = get_anybodycon_path(), stop_on_error = True,
                  timeout = 3600, disp = True, keep_logfiles = False):
-        """ Init AnyPyProcess with the following settings:
-
-        Args:
-            basepath: directory to execute anybody console application
-            subdir_search: Regular expression string to search for sub
-                directories. This is used find multiple folder for batch processing. 
-                Setting subdir_search = '.' will include all subfolders.
-            num_processes = Number of anybody models to start in parallel. This
-                defaults to the number of CPU in the computer. 
-            anybodycon_path: Overwrite the default anybodycon.exe file to use 
-                in batch processing
-            timeout = Maximum time a model can run until it is terminated. 
-                Defaults to 1 hour
-            disp: Set to False to disable status messages.
-        """
         self.basepath = os.path.abspath(basepath)
         self.anybodycon_path = anybodycon_path
         self.stop_on_error = stop_on_error
@@ -194,33 +210,45 @@ class AnyPyProcess():
         sensitivity of the given outputs. This is usefull to calculate 
         the gradient when wrapping AnyBody models in an optimization loop.
 
-        Args:
-            loadmacro:
-                string or list of macro commands that load the anybody 
+        Parameters
+        ----------
+        loadmacro : list of strings
+                list of macro commands that load the anybody 
                 model. I.e. 'load "MyModel.main.any'
-            mainmacro: 
-                string or list with macro commands that execute the 
-                anybody model. For example:
-                ['operation Main.study.Inversedynamics',
-                 'run']
-            inputs:     
+        mainmacro : list of strings 
+                list with macro commands that execute the anybody model.
+        inputs :  List of tuples   
                 List of tuples specifying the anybody input variables and
                 their values. For example:
-                [('Main.study.param1',1.4), ('Main.study.param2',3.1)]
-            outputs:
-                List of anybody variables for to observe the output.
-                For example: ['Main.study.output.MaxMuscleActivty']
-            pertub_factor:
+                ``[('Main.study.param1',1.4), ('Main.study.param2',3.1)]``
+        outputs : list of strings
+                List of anybody variables to observe the output.
+                For example: ``['Main.study.output.MaxMuscleActivty']``
+        pertub_factorn : float, optional
                 The value used to perturb the input variables. 
-        Returns: (objective, pertubations)
-            objective:
+                
+        Returns
+        -------
+        (objective, pertubations) :
+            objective : dictionary
                 dictionary object with an entry for each output variable.
                 The dictionary holds the value of the output variable after
                 evalutation at the input variables. 
-            pertubations:
+            pertubations: dictionary
                 dictionary object with an entry for each output
                 variable. Each enrty holds a list with the same length as 
                 'inputs', with the model's responce to the pertubed inputs. 
+                
+        Examples
+        --------
+        >>> app = anypytools.abcutils.AnyPyProcess()        
+        >>> loadmcr = ['load "mymodel.main.any"]
+        >>> mainmcr = ['operation Main.study.Inversedynamics', 'run']
+        >>> in = [('Main.study.param1',1.4), ('Main.study.param2',3.1)]
+        >>> out = ['Main.study.output.MaxMuscleActivty']
+        >>> (obj, pert) = app.start_pertubation_job(loadmcr,mainmcr,in,out)
+        >>> objective = obj[ out[0] ]
+        >>> pertubation = pert[ out[0] ]
         """
         from collections import OrderedDict        
         if isinstance(inputs, dict):
@@ -254,26 +282,33 @@ class AnyPyProcess():
         
         
     def start_param_job(self, loadmacro, mainmacro, inputs = {}, outputs = []):
-        """ Starts a parameter job
+        """ start_param_job(loadmacro, mainmacro, inputs = {}, ouputs = {})
         
-        Runs an AnyBody model multiple times with a number of different input
-        parameters.
+        Starts a parameter job. Runs an AnyBody model multiple times with a 
+        number of different input parameters.
         
-        Args:
-            loadmacro: string or list of macro commands that load the anybody 
-                model. I.e. 'load "MyModel.main.any'
-            mainmacro: string or list with macro commands that execute the 
-                anybody model. For example:
-                ['operation Main.study.Inversedynamics',
-                 'run']
-            inputs: List of tuples specifying the anybody input variables and
-                a list of values to evalutate. For example: the following will
-                run the model three times each time setting the two parameters.
-                [('Main.study.param1',[1.4,1.6,1.8]),
-                 ('Main.study.param2',[3.1,3.5,3.9])]
-            outputs: List of anybody variables to observe the output.
-                For example: ['Main.study.output.MaxMuscleActivty']
-        Returns: 
+        Parameters
+        ----------
+        loadmacro: list of strings
+            list of macro commands that load the anybodymodel. 
+            I.e. ``load "MyModel.main.any"``
+        mainmacro: list of strings
+            string or list with macro commands that execute the  anybody model.
+            For example: ``['operation Main.study.Inversedynamics', 'run']``
+        inputs: list of tuples
+            List of tuples specifying the anybody input variables and
+            a list of values to evalutate. For example: the following will
+            run the model three times each time setting the two parameters.
+            
+            >>>inputs = [ ('Main.study.param1',[1.4,1.6,1.8]),
+                          ('Main.study.param2',[3.1,3.5,3.9])  ]
+        
+        outputs: List of anybody variables to observe the output.
+                 For example: ``['Main.study.output.MaxMuscleActivty']``
+        
+        Returns
+        -------
+        result :           
             dictionary object with an entry for each output variable. The
             dictionary holds lists with output variables for each time the model
             is run
@@ -341,20 +376,68 @@ class AnyPyProcess():
         return returnvar
 
     
-    def start_batch_job(self, macro, special_dir = None):
-        """ Starts a batch processing job
+    
+    def start_macro(self, macrolist, folder = None):
+        """ 
+        app.start_marco(macro)        
         
-        Runs an anybody macro on the batch folder list in the parent class. 
+        Starts a batch processing job. Runs an anybody macro base_path of the 
+        parent class. 
         
-        Args:
-            macro: string or list of macro commands that loads and run the model
+        Parameters
+        ----------
+        macrolist: list of macros
+            list containing lists of macro commands that loads and run models
+        folder:
+            
             For example:
-                ['load "mymodel.main.any"',
-                 'operation Main.study.Inversedynamics',
-                 'run'
-                 'exit']
-            special_dir: overide the batch_folder_list of the parent class, and 
-                run the macro on a specific folder. 
+            >>> macro=[ ['load "model1.any"', 'operation Main.RunApplication', 'run', 'exit'],
+                        ['load "model2.any"', 'operation Main.RunApplication', 'run', 'exit'],
+                        ['load "model3.any"', 'operation Main.RunApplication', 'run', 'exit'] ]
+        """        
+
+        if folder is None:
+            folder = self.batch_folder_list[0]
+
+        #create a list of tasks
+        tasklist = []
+        for macro in macrolist:
+            newtask = _Task(folder, macro, taskname = '',
+                            keep_logfiles=self.keep_logfiles)
+            tasklist.append(newtask)
+        if self.disp:
+            print 'Starting', len(tasklist), 'instances.'
+        # Start batch processing
+        try:
+            _schedule_processes(tasklist, self._worker, self.num_processes)
+        except KeyboardInterrupt:
+            print 'User interuption: Kiling running processes'
+        _kill_running_processes()    
+    
+    
+    
+    
+    def start_batch_job(self, macro, special_dir = None):
+        """ 
+        app.start_batch_job(macro, special_dir = None)        
+        
+        Starts a batch processing job. Runs an anybody macro on the 
+        batch_folder_list in the parent class. 
+        
+        Parameters
+        ----------
+        macro: string or list
+            string or list of macro commands that loads and run the model
+            
+            For example:
+            >>> macro = ['load "mymodel.main.any"',
+                         'operation Main.study.Inversedynamics',
+                         'run'
+                         'exit']
+            
+        special_dir: directory
+            overide the batch_folder_list of the parent class, and 
+            run the macro on a specific folder. 
         """        
         if special_dir is None:
             folderlist = self.batch_folder_list
@@ -456,17 +539,16 @@ class AnyPyProcess():
     def _printresult(self, no, time, text = '', log = None, error = False ):
         if not self.disp and not error:
             return
+        status = 'n={0!s} : {1!s}sec : {2}'.format(no, time, text)            
+            
         if log is not None:
-            logstr = '( '+ os.path.basename(log) +' )'
-        else:
-            logstr = ''
-        if error:
-            status_str = 'Error:'
-        else:
-            status_str = 'Completed:'
+            status += ' ( {0} )'.format(os.path.basename(log))
         with print_lock:
-            print status_str,'n=', no, ':',time,'sec.:',text,logstr
-    
+            if error:
+                print 'Error : ',status,' '*10
+            else:
+                print 'Completed : ',status,' '*10,'\r',
+            
     
     def _create_anybodycon_cmd(self, macro_filename, task):
         cmd = [self.anybodycon_path, '--macro=', macro_filename, '/ni', ' '] 
