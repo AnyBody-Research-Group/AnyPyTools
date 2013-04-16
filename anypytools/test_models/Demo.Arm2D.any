@@ -34,7 +34,10 @@ statements. All include statements must be inside the
 
 */
 Main = {
-    
+   AnyOperationMacro test = {
+     MacroStr = {
+       "classoperation Main.ArmModel.Segs.LowerArm.Brachialis.sRel" + strquote("Set Value") +"--value=" + strquote("{-0.12, 0, 0}") };
+   };  
 
 // =======================================================
 // The Arm Model

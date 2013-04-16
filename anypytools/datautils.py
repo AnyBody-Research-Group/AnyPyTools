@@ -26,12 +26,14 @@ def anydatah5_generator(folder=None, match = ''):
         except IOError:
             pass
     
-def anyoutputfile_generator(folder =None, DEBUG = False):
+def anyoutputfile_generator(folder =None, match = "", DEBUG = False):
     if folder is None:
         folder = os.getcwd()
 
-    filelist = [_ for _ in os.listdir(folder) if _.endswith('.txt') or _.endswith('.csv')]
-    
+#    filelist = [_ for _ in os.listdir(folder) if _.endswith('.txt') or  _.endswith('.csv')]
+    def func(item):
+        return (item.endswith('.txt') or item.endswith('.csv')) and  item.find(match)!= -1
+    filelist = filter(func,  os.listdir(folder)) 
     
     def is_scinum(str):
         try:
@@ -59,7 +61,7 @@ def anyoutputfile_generator(folder =None, DEBUG = False):
                 fpos0 = csvfile.tell()
             else:
                 if DEBUG: print "No numeric data in " +filename
-                break
+                continue
             # Read last line of the header section if there is a header
             if fpos0 != 0:
                 csvfile.seek(fpos1)

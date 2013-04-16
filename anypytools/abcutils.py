@@ -498,7 +498,9 @@ class AnyPyProcess():
                 break
             time.sleep(0.3)
         else:
-            _pids.remove(proc.pid)
+            if proc.pid in _pids:
+                _pids.remove(proc.pid)
+        
         processtime = int(time.clock()-starttime)
         
         tmplogfile.seek(0)
@@ -567,6 +569,7 @@ def _schedule_processes(tasklist, _worker, num_processes):
     # #lse start the tasks in threads
     threads = []
     # run until all the threads are done, and there is no data left
+
     while threads or tasklist:
         # if we aren't using all the processors AND there is still data left to
         # compute, then spawn another thread
@@ -635,61 +638,37 @@ def test():
     from numpy import array, random
     import os.path as op
     
-    print 'Test batch job'
-    basepath = op.join( op.dirname(abcutils.__file__), 'test_models')
-    app = AnyPyProcess(basepath, num_processes = 1)
-    mcr = ['load "Demo.Arm2D.any"',
-           'operation ArmModelStudy.InverseDynamics',
-           'run',
-           'exit']
-    app.start_batch_job(mcr)
-    
-    print 'Test param job'
-    basepath = op.join( op.dirname(abcutils.__file__), 'test_models')
-    app = AnyPyProcess(basepath, num_processes = 1)
-    loadmcr = ['load "Demo.Arm2D.any"']
-    mainmcr = ['operation ArmModelStudy.InverseDynamics',
-              'run']
-    invars= {'Main.ArmModel.Loads.HandLoad.F': [array([0,0,-40]),array([10,0,-40])],
-              'Main.ArmModel.Segs.LowerArm.Brachialis.sRel': [array([-0.1, 0, 0 ]),array([-0.09, 0, 0 ]) ] }
-    outvars = [ 'Main.ArmModelStudy.Output.Model.Muscles.BicepsLong.Activity']
-    res = app.start_param_job(loadmcr, mainmcr, invars, outvars, keep_logfiles = True)    
-#
-#    basepath = op.join( 'C:\Users\Morten\Dropbox\ArmStrengthStudies\ArmStrengthModel')
-#    #'Demo.Arm2D.any'   )
-#    app = AnyPyProcess(basepath, num_processes = 1, subdir_search = None)
-#    
-#    mcr = ['load "ArmStrengthValidation.main.any"',
-#           'operation Main.RunApplication',
+#    print 'Test batch job'
+#    basepath = op.join( op.dirname(abcutils.__file__), 'test_models')
+#    app = AnyPyProcess(basepath, num_processes = 1)
+#    mcr = ['load "Demo.Arm2D.any"',
+#           'operation ArmModelStudy.InverseDynamics',
 #           'run',
 #           'exit']
 #    app.start_batch_job(mcr)
-
-
-#    
-#    design1= {'Main.ArmModel.Loads.HandLoad.F': array([[0,0,-40],[10,0,-40]]),
-#              'Main.ArmModel.Segs.LowerArm.Brachialis.sRel': array([[-0.1, 0, 0 ],[-0.09, 0, 0 ]] )}
-#    
-#    designRand = {'Main.ArmModel.Segs.LowerArm.Brachialis.sRel':
-#                  array([-0.1,0,0]) +  0.1* random.randn(100,1) }
-#    
-#    
-#    out =  ap.start(inputs = designRand,
-#                   macrocmds= ['operation ArmModelStudy.InverseDynamics',\
-#                               'run'],
-#                   outputs = [ 'Main.ArmModelStudy.Output.Model.Muscles.BicepsLong.Activity']
-#                  )
-           
-           
-           
-           
+    
+    print 'Test param job'
+    basepath = op.join( op.dirname(abcutils.__file__), 'test_models')
+    app = AnyPyProcess(basepath, num_processes = 10, keep_logfiles = False)
+    loadmcr = ['load "Demo.Arm2D.any"']
+    mainmcr = ['operation ArmModelStudy.InverseDynamics',
+              'run']
+#    invars= {'Main.ArmModel.Loads.HandLoad.F': [array([0,0,-40]),array([10,0,-40])],
+#              'Main.ArmModel.Segs.LowerArm.Brachialis.sRel': [array([-0.1, 0, 0 ]),array([-0.09, 0, 0 ]) ] }
+    invars = {'Main.ArmModel.Segs.LowerArm.Brachialis.sRel':
+                  list( array([-0.1,0,0]) +  0.03* random.randn(100,1)) }
+    outvars = [ 'Main.ArmModelStudy.Output.Model.Muscles.Brachialis.Activity']
+    res = app.start_param_job(loadmcr, mainmcr, invars, outvars)   
+    print("")
     
     
-#    import matplotlib.pyplot as plt 
-#    for data in out.values()[0]:
-#        plt.plot(data)
-#    #plt.axis([0,100 , 0, 1])
-#    plt.show()
+    import matplotlib.pyplot as plt 
+    plt.plot(res.values()[0][3],'r--', linewidth=6)
+
+    for data in res.values()[0]:
+        plt.plot(data)
+    #plt.axis([0,100 , 0, 1])
+    plt.show()
 
 
 
