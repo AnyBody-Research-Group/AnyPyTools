@@ -17,6 +17,16 @@ import time
 import signal
 import re
 import atexit
+import Queue
+import sys
+
+try:
+    from IPython.core.display import clear_output
+    have_ipython = True
+except ImportError:
+    have_ipython = False
+    
+    
 
 print_lock = Lock()
 
@@ -49,6 +59,15 @@ def get_ncpu():
     from multiprocessing import cpu_count
     return cpu_count()
 
+def run_from_ipython():
+     try:
+         __IPYTHON__
+         return True
+     except NameError:
+         return False
+ 
+
+
 def create_define_load_string(defines):
     """ Creates a string for setting defines statements in AnyBody Macros.    
     
@@ -66,7 +85,7 @@ def create_define_load_string(defines):
             cmd_list.append('-def %s=---"\\"%s\\""'% (key, value) )
         else:
             cmd_list.append('-def %s="%d"'% (key, value) )
-    return ','.join(cmd_list)
+    return ' '.join(cmd_list)
 
 def create_path_load_string(paths):
     """ Creates a string for setting path statements in AnyBody Macros.    
@@ -82,7 +101,7 @@ def create_path_load_string(paths):
     cmd_list = []        
     for key,value in paths.iteritems():   
         cmd_list.append('-p %s=---"%s"'% (key, value.replace('\\','\\\\')) )
-    return ','.join(cmd_list)
+    return ' '.join(cmd_list)
 
     
 
@@ -143,12 +162,14 @@ class _Task():
     
 class AnyPyProcess():
     """
-    AnyPyProcess(basepat = cwd, subdir_search = None, num_processes = nCPU, 
-                 anybodycon_path = 'installed version', stop_on_error = True,
+    AnyPyProcess(basepath = cwd, subdir_search = None, num_processes = nCPU,\
+                 anybodycon_path = 'installed version', stop_on_error = True,\
                  timeout = 3600, disp = True, keep_logfiles = False)
     
     Commen class for setting up batch process jobs of AnyBody models. 
 
+    Overview
+    ----------
     Main class for running the anybody console application from python.
     The class have maethods for running different kind of batch processing:
        
@@ -401,8 +422,13 @@ class AnyPyProcess():
 
         #create a list of tasks
         tasklist = []
-        for macro in macrolist:
-            newtask = _Task(folder, macro, taskname = '',
+        self.results = dict()
+        
+        if isinstance(macrolist[0], basestring):
+            macrolist = [macrolist]
+        
+        for i, macro in enumerate(macrolist):
+            newtask = _Task(folder, macro, taskname = '', number = i,
                             keep_logfiles=self.keep_logfiles)
             tasklist.append(newtask)
         if self.disp:
@@ -413,8 +439,13 @@ class AnyPyProcess():
         except KeyboardInterrupt:
             print 'User interuption: Kiling running processes'
         _kill_running_processes()    
-    
-    
+        
+        output = []
+        for i in range(len(self.results)):
+            if self.results.has_key(i):
+                output.append(self.results[i])
+        
+        return output
     
     
     def start_batch_job(self, macro, special_dir = None):
@@ -464,11 +495,11 @@ class AnyPyProcess():
             print 'User interuption: Kiling running processes'
         _kill_running_processes()
         
-    def _worker (self, task):
+    def _worker (self, task, queue=None):
         """ Executes AnyBody console application on the task object
         """
 #        task = task[0]        
-        process_number = self.counter + 1
+        process_number = self.counter 
         self.counter += 1
         
         macrofile = NamedTemporaryFile(mode='w+b',
@@ -519,9 +550,12 @@ class AnyPyProcess():
         else:
             logfile_path = None
         
-        self._printresult(process_number, processtime, task.name,
-                                 log = logfile_path,
-                                 error = output.has_key('ERROR'))
+        task.processtime = processtime
+        task.log = logfile_path
+        task.error = output.has_key('ERROR')
+        task.process_number =process_number
+        queue.put(task)
+        
         try:
             os.remove(macrofile.name) 
         except:
@@ -529,52 +563,61 @@ class AnyPyProcess():
 
         if not hasattr(self, 'results'):
             self.results = dict()        
-        for outvar in task.outputs:
-            if output.has_key(outvar):
-                if not self.results.has_key(task.number):
-                    self.results[task.number] = dict()
-                self.results[task.number][outvar] = output[outvar]   
+#        for outvar in task.outputs:
+#            if output.has_key(outvar):
+        if not self.results.has_key(task.number):
+            self.results[task.number] = dict()
+        self.results[task.number] = output  
 
 
 
 
-    def _printresult(self, no, time, text = '', log = None, error = False ):
-        if not self.disp and not error:
-            return
-        status = 'n={0!s} : {1!s}sec : {2}'.format(no, time, text)            
-            
-        if log is not None:
-            status += ' ( {0} )'.format(os.path.basename(log))
-        with print_lock:
-            if error:
-                print 'Error : ',status,' '*10
-            else:
-                print 'Completed : ',status,' '*10,'\r',
+
             
     
     def _create_anybodycon_cmd(self, macro_filename, task):
         cmd = [self.anybodycon_path, '--macro=', macro_filename, '/ni', ' '] 
         return cmd
         
+def _printresult(no, time, text = '', log = None, error = False ):
+    status = 'n={0!s} : {1!s}sec : {2}'.format(no, time, text)            
+        
+    if log is not None:
+        status += ' ( {0} )'.format(os.path.basename(log))
+    
+    with print_lock:
+        if error:
+            print 'Failed : ',status,' '*10
+        else:
+            print 'Completed : ',status,' '*10
+        sys.stdout.flush()
 
 
 def _schedule_processes(tasklist, _worker, num_processes):
-    # Schedule serially if no multitasking is needed.
-    if num_processes == 1 or len(tasklist) == 1:
-        for task in tasklist:
-            _worker(task)
-        return
+    queue = Queue.Queue()
     
+#    # Schedule serially if no multitasking is needed.
+#    if num_processes == 1 or len(tasklist) == 1:
+#        for task in tasklist:
+#            _worker(task,queue)
+#        return
+    
+    pbar = ProgressBar(len(tasklist))
+    pbar.animate(0)
+
     
     # #lse start the tasks in threads
     threads = []
+    errorlist = []
+    
+    counter = 1
+    
     # run until all the threads are done, and there is no data left
-
     while threads or tasklist:
         # if we aren't using all the processors AND there is still data left to
         # compute, then spawn another thread
         if (len(threads) < num_processes) and tasklist:
-            t = Thread(target=_worker, args=tuple([tasklist.pop(0)]))
+            t = Thread(target=_worker, args=tuple([tasklist.pop(0),queue]))
             t.daemon = True
             t.start()
             threads.append(t)
@@ -583,8 +626,21 @@ def _schedule_processes(tasklist, _worker, num_processes):
         else:
             for thread in threads:
                 if not thread.isAlive():
-                    threads.remove(thread)	
+                    threads.remove(thread)
+                while queue.qsize() > 0:
+                    task = queue.get()
+                    pbar.animate(counter)
+                    counter+=1
+                    if task.error:
+                        errorlist.append(task)
+
+                    
             time.sleep(0.5)
+    
+    for failedtask in errorlist:
+        _printresult(failedtask.number, failedtask.processtime, failedtask.name,
+                      log = failedtask.log,
+                      error = failedtask.error)
 
 def _parse_anybodycon_output(strvar):
     out = {};
@@ -618,6 +674,44 @@ def _list2anyscript(arr):
         return createsubarr(arr)[0:-1]
     else:
         return str(arr)
+
+
+class ProgressBar:
+    def __init__(self, iterations):
+        self.iterations = iterations
+        self.prog_bar = '[]'
+        self.fill_char = '*'
+        self.width = 40
+        self.__update_amount(0)
+        self.animate = self.animate_ipython
+
+    def animate_ipython(self, iter):
+        try:
+            if run_from_ipython():
+                clear_output()
+        except ValueError:
+            # terminal IPython has no clear_output
+            pass
+        print '\r', self,
+        sys.stdout.flush()
+        self.update_iteration(iter + 1)
+
+    def update_iteration(self, elapsed_iter):
+        self.__update_amount((elapsed_iter / float(self.iterations)) * 100.0)
+        self.prog_bar += '  %d of %s complete' % (elapsed_iter, self.iterations)
+
+    def __update_amount(self, new_amount):
+        percent_done = int(round((new_amount / 100.0) * 100.0))
+        all_full = self.width - 2
+        num_hashes = int(round((percent_done / 100.0) * all_full))
+        self.prog_bar = '[' + self.fill_char * num_hashes + ' ' * (all_full - num_hashes) + ']'
+        pct_place = (len(self.prog_bar) / 2) - len(str(percent_done))
+        pct_string = '%d%%' % percent_done
+        self.prog_bar = self.prog_bar[0:pct_place] + \
+            (pct_string + self.prog_bar[pct_place + len(pct_string):])
+
+    def __str__(self):
+        return str(self.prog_bar)
 
 
 def test():
