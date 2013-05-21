@@ -15,7 +15,14 @@ def _follow_reftarget(elem):
     elem = elem.file[h5target]
     return elem
 
-    
+
+def _check_input_path(path):
+    if not "/" in path:
+        # path does not have traditional h5 format.
+        if path.startswith('Main.') and 'Output' in path:
+            path = '/Output' + path.split('Output')[-1]
+        path = path.replace('.', '/')
+    return path
     
 
 class File(BaseFile):
@@ -24,16 +31,17 @@ class File(BaseFile):
          self.wrapped = True
      
     def __getitem__(self,path):
+        path = _check_input_path(path)
         try:
             elem = super(File, self).file[path]
             if isinstance(elem, BaseGroup) and not len(elem.keys()):
                 if 'RefTarget' in elem.attrs:
-                    return _follow_reftarget(elem)
+                    elem = _follow_reftarget(elem)
         except KeyError:
-            elem = self
+            elem = super(type(self),self)
             levels = path.strip('/').split('/')
             for level in levels:
-                if level in elem:
+                if elem.__contains__(level):
                     elem = elem.__getitem__(level)
                 else:
                     try:
@@ -57,7 +65,20 @@ class File(BaseFile):
     def parent(self):   
         id = super(File,self).parent.id
         return Group(id)
-          
+
+        
+    def __contains__(self, name):
+        """ Test if a member name exists """
+        if super(File, self).__contains__(name):
+            return True
+        else:
+            try:
+                self.__getitem__(name)
+                return True
+            except KeyError:
+                pass
+        return False
+
           
 class Group(BaseGroup):
     def __init__(self,arg):
@@ -65,16 +86,17 @@ class Group(BaseGroup):
         self.wrapped = True
  
     def __getitem__(self,path):
+        path = _check_input_path(path)
         try:
             elem = super(Group, self).__getitem__(path)
             if isinstance(elem, BaseGroup) and not len(elem.keys()):
                 if 'RefTarget' in elem.attrs:
-                    return _follow_reftarget(elem)            
+                    elem = _follow_reftarget(elem)            
         except KeyError:
-            elem = self
+            elem = super(type(self),self)
             levels = path.strip('/').split('/')
             for level in levels:
-                if level in elem:
+                if elem.__contains__(level):
                     elem = elem.__getitem__(level)
                 else:
                     try:
@@ -99,6 +121,17 @@ class Group(BaseGroup):
         id = super(Group,self).parent.id
         return Group(id)
 
+    def __contains__(self, name):
+        """ Test if a member name exists """
+        if super(Group, self).__contains__(name):
+            return True
+        else:
+            try:
+                self.__getitem__(name)
+                return True
+            except KeyError:
+                pass
+        return False
 
 class Dataset(BaseDataset):
     def __init__(self,arg):
