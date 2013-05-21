@@ -59,7 +59,7 @@ def get_ncpu():
     from multiprocessing import cpu_count
     return cpu_count()
 
-def run_from_ipython():
+def _run_from_ipython():
      try:
          __IPYTHON__
          return True
@@ -211,7 +211,7 @@ class AnyPyProcess():
     def __init__(self, basepath = os.getcwd(), subdir_search = None,
                  num_processes = get_ncpu(), 
                  anybodycon_path = get_anybodycon_path(), stop_on_error = True,
-                 timeout = 3600, disp = True, keep_logfiles = False):
+                 timeout = 3600, disp = False, keep_logfiles = False):
         self.basepath = os.path.abspath(basepath)
         self.anybodycon_path = anybodycon_path
         self.stop_on_error = stop_on_error
@@ -398,18 +398,19 @@ class AnyPyProcess():
 
     
     
-    def start_macro(self, macrolist, folder = None):
+    def start_macro(self, macrolist, folderlist = None):
         """ 
         app.start_marco(macro)        
         
-        Starts a batch processing job. Runs an anybody macro base_path of the 
-        parent class. 
+        Starts a batch processing job. Runs an list of AnyBody Macro commands in 
+        the current directory, or in the folders specified by folderlist. 
         
         Parameters
         ----------
         macrolist: list of macros
             list containing lists of macro commands that loads and run models
-        folder:
+        folderlist: 
+            list containing folders in which to execute the macro commands
             
             For example:
             >>> macro=[ ['load "model1.any"', 'operation Main.RunApplication', 'run', 'exit'],
@@ -417,8 +418,8 @@ class AnyPyProcess():
                         ['load "model3.any"', 'operation Main.RunApplication', 'run', 'exit'] ]
         """        
 
-        if folder is None:
-            folder = self.batch_folder_list[0]
+        if folderlist is None:
+            folder = [self.batch_folder_list[0]]
 
         #create a list of tasks
         tasklist = []
@@ -427,18 +428,27 @@ class AnyPyProcess():
         if isinstance(macrolist[0], basestring):
             macrolist = [macrolist]
         
-        for i, macro in enumerate(macrolist):
-            newtask = _Task(folder, macro, taskname = '', number = i,
-                            keep_logfiles=self.keep_logfiles)
-            tasklist.append(newtask)
+        taskid = 0
+        for macro in macrolist:
+            for folder in folderlist:
+                newtask = _Task(folder, macro, taskname = '', number = taskid,
+                                keep_logfiles=self.keep_logfiles)
+                tasklist.append(newtask)
+                taskid += 1
+        
+        
         if self.disp:
             print 'Starting', len(tasklist), 'instances.'
         # Start batch processing
         try:
-            _schedule_processes(tasklist, self._worker, self.num_processes)
+            (completed,failed, duration) = _schedule_processes(tasklist, 
+                                                    self._worker,
+                                                    self.num_processes)
+            self._print_summery(completed,failed,duration)
         except KeyboardInterrupt:
             print 'User interuption: Kiling running processes'
         _kill_running_processes()    
+        
         
         output = []
         for i in range(len(self.results)):
@@ -447,6 +457,24 @@ class AnyPyProcess():
         
         return output
     
+    def _print_summery(self, completed_tasks, failed_tasks,duration):
+        if self.disp is True:
+            tasklist = completed_tasks + failed_tasks
+        else:
+            tasklist = failed_tasks
+            
+        print '(Total time: {0} seconds)'.format(duration)
+        if len(tasklist):
+            for task in tasklist:
+                status = ' {0} : n={1!s} : {2!s}sec'.format(task.name,
+                                                            task.number,
+                                                            task.processtime)            
+                if task.log is not None:
+                    status += ' ( {0} )'.format(os.path.basename(task.log))
+                if task.error:
+                    print 'Failed : ',status,' '*10
+                else:
+                    print 'Completed : ',status,' '*10
     
     def start_batch_job(self, macro, special_dir = None):
         """ 
@@ -490,9 +518,11 @@ class AnyPyProcess():
             print 'Starting', len(tasklist), 'instances.'
         # Start batch processing
         try:
-            _schedule_processes(tasklist, self._worker, self.num_processes)
+            (completed,failed, time) =_schedule_processes(tasklist, self._worker, self.num_processes)
+            self._print_summery(completed,failed,time)
         except KeyboardInterrupt:
             print 'User interuption: Kiling running processes'
+            
         _kill_running_processes()
         
     def _worker (self, task, queue=None):
@@ -510,7 +540,8 @@ class AnyPyProcess():
         macrofile.write('\n'.join(task.macro))
         macrofile.flush()
             
-        anybodycmd = self._create_anybodycon_cmd(macrofile.name,task)
+        anybodycmd = [self.anybodycon_path, '--macro=', macrofile.name, '/ni', ' '] 
+        
         tmplogfile = TemporaryFile(mode='w+b',
                                          prefix ='output_',
                                          suffix='.log',
@@ -554,7 +585,7 @@ class AnyPyProcess():
         task.log = logfile_path
         task.error = output.has_key('ERROR')
         task.process_number =process_number
-        queue.put(task)
+        
         
         try:
             os.remove(macrofile.name) 
@@ -568,49 +599,32 @@ class AnyPyProcess():
         if not self.results.has_key(task.number):
             self.results[task.number] = dict()
         self.results[task.number] = output  
-
-
-
+        queue.put(task)
 
 
             
     
-    def _create_anybodycon_cmd(self, macro_filename, task):
-        cmd = [self.anybodycon_path, '--macro=', macro_filename, '/ni', ' '] 
-        return cmd
-        
-def _printresult(no, time, text = '', log = None, error = False ):
-    status = 'n={0!s} : {1!s}sec : {2}'.format(no, time, text)            
-        
-    if log is not None:
-        status += ' ( {0} )'.format(os.path.basename(log))
-    
-    with print_lock:
-        if error:
-            print 'Failed : ',status,' '*10
-        else:
-            print 'Completed : ',status,' '*10
-        sys.stdout.flush()
-
+       
 
 def _schedule_processes(tasklist, _worker, num_processes):
+    starttime = time.clock()    
     queue = Queue.Queue()
     
 #    # Schedule serially if no multitasking is needed.
 #    if num_processes == 1 or len(tasklist) == 1:
 #        for task in tasklist:
 #            _worker(task,queue)
-#        return
-    
+#        return (queue.get(),[])
+
     pbar = ProgressBar(len(tasklist))
     pbar.animate(0)
 
     
     # #lse start the tasks in threads
     threads = []
-    errorlist = []
+    completed_tasks = []
+    failed_tasks = []
     
-    counter = 1
     
     # run until all the threads are done, and there is no data left
     while threads or tasklist:
@@ -628,28 +642,34 @@ def _schedule_processes(tasklist, _worker, num_processes):
                 if not thread.isAlive():
                     threads.remove(thread)
                 while queue.qsize() > 0:
-                    task = queue.get()
-                    pbar.animate(counter)
-                    counter+=1
+                    task = queue.get() 
                     if task.error:
-                        errorlist.append(task)
-
-                    
-            time.sleep(0.5)
+                        failed_tasks.append( task )
+                    else:
+                        completed_tasks.append(task )
+                    pbar.animate(len(completed_tasks)+len(failed_tasks), 
+                                 len(failed_tasks))
+                time.sleep(0.5)
+    totaltime = int(time.clock()-starttime)
+    return (completed_tasks, failed_tasks, totaltime)
     
-    for failedtask in errorlist:
-        _printresult(failedtask.number, failedtask.processtime, failedtask.name,
-                      log = failedtask.log,
-                      error = failedtask.error)
 
 def _parse_anybodycon_output(strvar):
     out = {};
+    dump_path = None
     for line in strvar.splitlines():
+        if line.count('#### Macro command') and line.count('"Dump"'):
+            me = re.search('Main[^ \"]*', line)
+            if me is not None :
+                dump_path = me.group(0)
         if line.endswith(';'):
             (first, last) = line.split('=')
             first = first.strip()
             last = last.strip(' ;').replace('{','[').replace('}',']')
-            out[first.strip()] = eval(last)
+            if dump_path is not None:
+                first = dump_path
+                dump_path = None
+            out[first.strip()] = np.array(eval(last))
         if line.startswith('ERROR') or line.startswith('Error'): 
             if line.endswith('Path does not exist.'):
                 continue # hack to avoid detecting #path error this error which is always present
@@ -682,23 +702,26 @@ class ProgressBar:
         self.prog_bar = '[]'
         self.fill_char = '*'
         self.width = 40
-        self.__update_amount(0)
-        self.animate = self.animate_ipython
+        #self.__update_amount(0)
 
-    def animate_ipython(self, iter):
+    def animate(self, iter, failed = 0):
+        self.update_iteration(iter,failed)
         try:
-            if run_from_ipython():
+            if _run_from_ipython():
                 clear_output()
         except ValueError:
             # terminal IPython has no clear_output
             pass
         print '\r', self,
         sys.stdout.flush()
-        self.update_iteration(iter + 1)
 
-    def update_iteration(self, elapsed_iter):
+    def update_iteration(self, elapsed_iter,number_failed):
         self.__update_amount((elapsed_iter / float(self.iterations)) * 100.0)
         self.prog_bar += '  %d of %s complete' % (elapsed_iter, self.iterations)
+        if number_failed == 1:
+            self.prog_bar += ' ({0} Error)'.format(number_failed)
+        elif number_failed > 1:
+            self.prog_bar += ' ({0} Errors)'.format(number_failed)
 
     def __update_amount(self, new_amount):
         percent_done = int(round((new_amount / 100.0) * 100.0))
