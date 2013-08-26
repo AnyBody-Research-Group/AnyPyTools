@@ -419,7 +419,7 @@ class AnyPyProcess():
         """        
 
         if folderlist is None:
-            folder = [self.batch_folder_list[0]]
+            folderlist = [self.batch_folder_list[0]]
 
         #create a list of tasks
         tasklist = []
@@ -655,6 +655,7 @@ def _schedule_processes(tasklist, _worker, num_processes):
     
 
 def _parse_anybodycon_output(strvar):
+    var_name = []    
     out = {};
     dump_path = None
     for line in strvar.splitlines():
@@ -662,7 +663,7 @@ def _parse_anybodycon_output(strvar):
             me = re.search('Main[^ \"]*', line)
             if me is not None :
                 dump_path = me.group(0)
-        if line.endswith(';'):
+        if line.endswith(';') and line.count('=') == 1:
             (first, last) = line.split('=')
             first = first.strip()
             last = last.strip(' ;').replace('{','[').replace('}',']')
