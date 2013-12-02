@@ -1,0 +1,49 @@
+package:
+  name: anypytools     # lower case name of package, may contain '-' but no spaces
+  version: 0.4.2       # version of package. Should use the PEP-386 verlib conventions.
+
+#source:
+# or from git:
+#  git_url: https://github.com/AnyBody-Research-Group/AnyPyTools.git
+#  git_tag: 0.4.2                                     # (optional)
+
+# the build and runtime requirements:
+requirements:     # (optional)
+  build:
+    - python
+    - numpy
+    - distribute 
+    - h5py
+
+  run:
+    - python
+    - numpy
+    - h5py
+    - ipython
+    - matplotlib
+    - scipy
+
+test:             # (optional)
+## files which are copied from the recipe into the (temporary) test
+## directory which are needed during testing
+#  files:
+#    - test-data.txt
+## in addition to the run-time requirements, we can specify requirements
+## needed during testing
+#  requires:
+#    - nose
+
+# commands we want to make sure they work, which are expected to get
+# installed by the package
+#  commands:
+#    - bsdiff4 -h
+#    - bspatch4 -h
+# Python imports
+  imports:
+    - anypytools
+# The script run_test.py will be run automatically if it is part of the
+# recipe
+
+about:            # (optional)
+  home: https://github.com/AnyBody-Research-Group/AnyPyTools
+  license: MIT
