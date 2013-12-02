@@ -10,7 +10,7 @@ from setuptools import setup
 
 setup(
     name='AnyPyTools',
-    version='0.4',
+    version='0.4.2',
     install_requires=['distribute','numpy','h5py'],
     py_modules=['anypytools.abcutils', 'anypytools.datagen','anypytools.h5py_wrapper', 'anypytools.datautils',
 				'anypytools.abcutils_old'],

@@ -21,7 +21,7 @@ import Queue
 import sys
 
 try:
-    from IPython.core.display import clear_output
+    from IPython.display import clear_output, HTML, display
     have_ipython = True
 except ImportError:
     have_ipython = False
@@ -50,7 +50,8 @@ def get_anybodycon_path():
     """
     import _winreg
     abpath = _winreg.QueryValue(_winreg.HKEY_CLASSES_ROOT,
-                    'AnyBody.AnyScript\shell\open\command').rsplit(' ',1)[0]
+                    'AnyBody.AnyScript\shell\open\command')
+    abpath = abpath.rsplit(' ',1)[0].strip('"')
     return os.path.join(os.path.dirname(abpath),'AnyBodyCon.exe')
 
 def get_ncpu():
@@ -200,7 +201,9 @@ class AnyPyProcess():
         maximum time a model can run until it is terminated. 
         Defaults to 1 hour
     disp:
-        set to False to disable status messages.
+        Set to False to suppress output
+    verbose:
+        set to True to enable more display masseges
         
     Returns
     -------
@@ -211,13 +214,15 @@ class AnyPyProcess():
     def __init__(self, basepath = os.getcwd(), subdir_search = None,
                  num_processes = get_ncpu(), 
                  anybodycon_path = get_anybodycon_path(), stop_on_error = True,
-                 timeout = 3600, disp = False, keep_logfiles = False):
+                 timeout = 3600, disp = True, verbose = False,
+                 keep_logfiles = False):
         self.basepath = os.path.abspath(basepath)
         self.anybodycon_path = anybodycon_path
         self.stop_on_error = stop_on_error
         self.num_processes = num_processes
         self.counter = 0
         self.disp = disp
+        self.verbose = verbose
         self.timeout = timeout
         self.keep_logfiles = keep_logfiles
         self.batch_folder_list = _getsubdirs(self.basepath,subdir_search)
@@ -377,7 +382,7 @@ class AnyPyProcess():
             tasklist.append(newtask)             
             
         try:
-            _schedule_processes(tasklist, self._worker, self.num_processes)
+            self._schedule_processes(tasklist, self._worker)
         except KeyboardInterrupt:
             print 'User interuption: Kiling running processes'
             _kill_running_processes()
@@ -407,15 +412,28 @@ class AnyPyProcess():
         
         Parameters
         ----------
-        macrolist: list of macros
-            list containing lists of macro commands that loads and run models
-        folderlist: 
-            list containing folders in which to execute the macro commands
+        
+        macrolist:
+            List containing lists of macro commands that loads and run models.
             
             For example:
-            >>> macro=[ ['load "model1.any"', 'operation Main.RunApplication', 'run', 'exit'],
-                        ['load "model2.any"', 'operation Main.RunApplication', 'run', 'exit'],
-                        ['load "model3.any"', 'operation Main.RunApplication', 'run', 'exit'] ]
+            
+            >>> macro=[ ['load "model1.any"', 'operation Main.RunApplication',
+                         'run', 'exit'],
+                        ['load "model2.any"', 'operation Main.RunApplication', 
+                         'run', 'exit'],
+                        ['load "model3.any"', 'operation Main.RunApplication',
+                         'run', 'exit'] ]
+            
+        folderlist:
+            List containing folders in which to execute the macro commands. 
+            This may also be a list of tuples to specify a name to appear in the
+            output.
+            
+            For example:
+            
+            >>> folderlist = [('path1/', 'name1'), ('path2/', 'name2')] 
+            
         """        
 
         if folderlist is None:
@@ -429,21 +447,29 @@ class AnyPyProcess():
             macrolist = [macrolist]
         
         taskid = 0
-        for macro in macrolist:
+        for i_macro, macro in enumerate(macrolist):
+            
             for folder in folderlist:
-                newtask = _Task(folder, macro, taskname = '', number = taskid,
+                if isinstance(folder ,tuple) and len(folder) ==2:
+                    folder, taskname = folder
+                    if len(macrolist) > 1:
+                        taskname = taskname + ' macro '+str(i_macro) 
+                else:
+                    taskname = None
+                
+                newtask = _Task(folder, macro, taskname = taskname,
+                                number = taskid,
                                 keep_logfiles=self.keep_logfiles)
                 tasklist.append(newtask)
                 taskid += 1
         
         
-        if self.disp:
+        if self.verbose:
             print 'Starting', len(tasklist), 'instances.'
         # Start batch processing
         try:
-            (completed,failed, duration) = _schedule_processes(tasklist, 
-                                                    self._worker,
-                                                    self.num_processes)
+            (completed,failed, duration) = self._schedule_processes(tasklist, 
+                                                    self._worker)
             self._print_summery(completed,failed,duration)
         except KeyboardInterrupt:
             print 'User interuption: Kiling running processes'
@@ -458,23 +484,39 @@ class AnyPyProcess():
         return output
     
     def _print_summery(self, completed_tasks, failed_tasks,duration):
-        if self.disp is True:
+        if self.disp is False:
+            return
+        
+        if self.verbose is True:
             tasklist = completed_tasks + failed_tasks
         else:
             tasklist = failed_tasks
             
-        print '(Total time: {0} seconds)'.format(duration)
+        print '\nTotal run time: {0} seconds'.format(duration)
         if len(tasklist):
             for task in tasklist:
-                status = ' {0} : n={1!s} : {2!s}sec'.format(task.name,
+                if task.error:
+                    status = 'Failed '
+                else:
+                    status = 'Completed '
+                    
+                status = status + '{2!s}sec :{0} n={1!s} : '.format(task.name,
                                                             task.number,
                                                             task.processtime)            
-                if task.log is not None:
-                    status += ' ( {0} )'.format(os.path.basename(task.log))
-                if task.error:
-                    print 'Failed : ',status,' '*10
-                else:
-                    print 'Completed : ',status,' '*10
+                if _run_from_ipython():
+                    if task.log is not None:
+                        status = status + '(<a href= "{0}">{1}</a> \
+                                            <a href= "{2}">dir</a>)\
+                                           '.format(task.log,
+                                                os.path.basename(task.log),
+                                                os.path.dirname(task.log) )
+                    display(HTML(status))
+                else:                        
+                    if task.log is not None:
+                        status = status + ' ( {0} )'.format(os.path.basename(task.log))
+                    print status
+
+
     
     def start_batch_job(self, macro, special_dir = None):
         """ 
@@ -514,11 +556,12 @@ class AnyPyProcess():
         for folder in folderlist:
             newtask = _Task(folder,macro, keep_logfiles=self.keep_logfiles)
             tasklist.append(newtask)
-        if self.disp:
+        if self.verbose:
             print 'Starting', len(tasklist), 'instances.'
         # Start batch processing
         try:
-            (completed,failed, time) =_schedule_processes(tasklist, self._worker, self.num_processes)
+            (completed,failed, time) =self._schedule_processes(tasklist,
+                                                self._worker)
             self._print_summery(completed,failed,time)
         except KeyboardInterrupt:
             print 'User interuption: Kiling running processes'
@@ -540,12 +583,9 @@ class AnyPyProcess():
         macrofile.write('\n'.join(task.macro))
         macrofile.flush()
             
-        anybodycmd = [self.anybodycon_path, '--macro=', macrofile.name, '/ni', ' '] 
+        anybodycmd = [os.path.realpath(self.anybodycon_path), '--macro=', macrofile.name, '/ni', ' '] 
         
-        tmplogfile = TemporaryFile(mode='w+b',
-                                         prefix ='output_',
-                                         suffix='.log',
-                                         dir = task.folder)            
+        tmplogfile = TemporaryFile()            
         proc = Popen(anybodycmd, stdout=tmplogfile,
                                 stderr=tmplogfile,shell= False)                      
         _pids.add(proc.pid)
@@ -606,52 +646,54 @@ class AnyPyProcess():
     
        
 
-def _schedule_processes(tasklist, _worker, num_processes):
-    starttime = time.clock()    
-    queue = Queue.Queue()
+    def _schedule_processes(self, tasklist, _worker):
+        starttime = time.clock()    
+        queue = Queue.Queue()
+        totaltasks = len(tasklist)
+        pbar = ProgressBar(totaltasks)
+        if self.disp:
+            pbar = ProgressBar(totaltasks)
+            pbar.animate(0)
+        threads = []
+        completed_tasks = []
+        failed_tasks = []
+        
+        
+        # #lse start the tasks in threads
     
-#    # Schedule serially if no multitasking is needed.
-#    if num_processes == 1 or len(tasklist) == 1:
-#        for task in tasklist:
-#            _worker(task,queue)
-#        return (queue.get(),[])
-
-    pbar = ProgressBar(len(tasklist))
-    pbar.animate(0)
-
-    
-    # #lse start the tasks in threads
-    threads = []
-    completed_tasks = []
-    failed_tasks = []
-    
-    
-    # run until all the threads are done, and there is no data left
-    while threads or tasklist:
-        # if we aren't using all the processors AND there is still data left to
-        # compute, then spawn another thread
-        if (len(threads) < num_processes) and tasklist:
-            t = Thread(target=_worker, args=tuple([tasklist.pop(0),queue]))
-            t.daemon = True
-            t.start()
-            threads.append(t)
-		# in the case that we have the maximum number of threads check if any of them
-		# are done. (also do this when we run out of data, until all the threads are done)
-        else:
-            for thread in threads:
-                if not thread.isAlive():
-                    threads.remove(thread)
-                while queue.qsize() > 0:
-                    task = queue.get() 
-                    if task.error:
-                        failed_tasks.append( task )
-                    else:
-                        completed_tasks.append(task )
+        
+        
+        # run until all the threads are done, and there is no data left
+        while threads or tasklist or queue.qsize():
+            # if we aren't using all the processors AND there is still data left to
+            # compute, then spawn another thread
+            if (len(threads) < self.num_processes) and tasklist:
+                if self.num_processes > 1 and totaltasks > 1:
+                    t = Thread(target=_worker, args=tuple([tasklist.pop(0),queue]))
+                    t.daemon = True
+                    t.start()
+                    threads.append(t)
+                else:
+                    _worker(tasklist.pop(0),queue)
+    		# in the case that we have the maximum number of threads check if any of them
+    		# are done. (also do this when we run out of data, until all the threads are done)
+            else:
+                for thread in threads:
+                    if not thread.isAlive():
+                        threads.remove(thread)
+            while queue.qsize() > 0:
+                task = queue.get() 
+                if task.error:
+                    failed_tasks.append( task )
+                else:
+                    completed_tasks.append(task )
+                if self.disp:
                     pbar.animate(len(completed_tasks)+len(failed_tasks), 
-                                 len(failed_tasks))
-                time.sleep(0.5)
-    totaltime = int(time.clock()-starttime)
-    return (completed_tasks, failed_tasks, totaltime)
+                             len(failed_tasks))
+            time.sleep(0.5)
+                
+        totaltime = int(time.clock()-starttime)
+        return (completed_tasks, failed_tasks, totaltime)
     
 
 def _parse_anybodycon_output(strvar):
