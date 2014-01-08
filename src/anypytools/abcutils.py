@@ -575,6 +575,9 @@ class AnyPyProcess():
         process_number = self.counter 
         self.counter += 1
         
+        if not os.path.exists(task.folder):
+            raise IOError('Unable to find folder: ' + task.folder)
+        
         macrofile = NamedTemporaryFile(mode='w+b',
                                          prefix ='macro_',
                                          suffix='.anymcr',
