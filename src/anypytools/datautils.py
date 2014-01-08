@@ -35,44 +35,66 @@ def anyoutputfile_generator(folder =None, match = "", DEBUG = False):
         return (item.endswith('.txt') or item.endswith('.csv')) and  item.find(match)!= -1
     filelist = filter(func,  os.listdir(folder)) 
     
+
+    
+    for filename in filelist:
+        filepath = op.join(folder,filename)
+        data, header, const = open_anyoutputfile(filepath,DEBUG)
+        if data is None:
+            continue
+            
+        yield (data, header, const, os.path.basename(filepath))
+        
+def open_anyoutputfile(filepath,DEBUG = False):
     def is_scinum(str):
         try:
             np.float(str)
             return True
         except ValueError:
             return False
-    
-    for filename in filelist:
-        with open(op.join(folder,filename),'r') as csvfile:
-#            try:
-#                dialect = csv.Sniffer().sniff(csvfile.read(2048),delimiters=',')
-#            except:
-#                if DEBUG: print "problem with " +filename
-#                continue
-#            csvfile.seek(0)
-            reader = csv.reader(csvfile, delimiter=',')   
-            #Check when the header section ends
-            fpos1 = 0
-            fpos0 = 0
-            for row in reader:
-                if is_scinum(row[0]):
-                    break
-                fpos1 = fpos0
-                fpos0 = csvfile.tell()
-            else:
-                if DEBUG: print "No numeric data in " +filename
-                continue
-            # Read last line of the header section if there is a header
-            if fpos0 != 0:
-                csvfile.seek(fpos1)
-                headerline = reader.next()
-                header = ["_".join(_.rsplit('.',3)[-2:]) for _ in headerline]
-            else:
-                header = None
-            data = np.array([[float(col) for col in row] for row in reader])
-            yield (data,header, op.splitext(filename)[0])
+
+    with open(filepath,'r') as anyoutputfile:
+        constants = {}       
+        reader = iter(anyoutputfile.readline, b'')       
+        #Check when the header section ends
+        fpos1 = 0
+        fpos0 = 0
+        for row in reader:
+            if is_scinum(row.split(',')[0]):
+                break
+            #Save constant from AnyOutput file
+            const,value= _parse_anyoutputfile_constants(row)
+            if const is not None:
+                constants[const] = value
+            fpos1 = fpos0
+            fpos0 = anyoutputfile.tell()
+        else:
+            if DEBUG: print "No numeric data in " + os.path.basename(filepath)
+            return (None,None,None)
+        # Read last line of the header section if there is a header
+        if fpos0 != 0:
+            anyoutputfile.seek(fpos1)
+            header = reader.next().strip('\n').split(',')
+        else:
+            header = None
+        data = np.array([[float(col) for col in row.strip('\n').split(',')] for row in reader])
+    return (data, header, constants)   
+        
 
 
+def _parse_anyoutputfile_constants(strvar):
+    varname = None
+    value = None
+    if strvar.count('=') == 1 and strvar.startswith('Main'):
+        (first, last) = strvar.split('=')
+        first = first.strip()
+        last = last.strip('\n').replace('{','[').replace('}',']')
+        varname = first.strip()
+        try:
+            value = np.array(eval(last))
+        except:
+            value = np.array(eval('"'+last+'"') )
+    return (varname, value)
 
 
 def anyouputfile_generator(folder =None, DEBUG = False):
