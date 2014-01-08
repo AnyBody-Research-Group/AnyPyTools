@@ -23,7 +23,7 @@ requirements:     # (optional)
     - matplotlib
     - scipy
 
-test:             # (optional)
+#test:             # (optional)
 ## files which are copied from the recipe into the (temporary) test
 ## directory which are needed during testing
 #  files:
@@ -39,8 +39,8 @@ test:             # (optional)
 #    - bsdiff4 -h
 #    - bspatch4 -h
 # Python imports
-  imports:
-    - anypytools
+#  imports:
+#    - anypytools
 # The script run_test.py will be run automatically if it is part of the
 # recipe
 
