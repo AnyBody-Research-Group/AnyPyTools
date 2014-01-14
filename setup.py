@@ -10,19 +10,20 @@ from setuptools import setup
 
 setup(
     name='AnyPyTools',
-    version='0.4.2',
-    install_requires=['distribute','numpy','h5py'],
-    py_modules=['anypytools.abcutils', 'anypytools.datagen','anypytools.h5py_wrapper', 'anypytools.datautils'],
-    scripts=['scripts/pp2any.py'],
+    version='0.4.4',
+    install_requires=['scipy', 'numpy','h5py'],
+    py_modules=['anypytools.abcutils', 'anypytools.h5py_wrapper',
+                'anypytools.datautils'],
+    scripts=['src/scripts/pp2any.py'],
     packages=['anypytools'],
     package_dir={'': 'src'},
     package_data={'anypytools': ['test_models/Demo.Arm2D.any']},
     author='Morten Lund',
     author_email='melund@gmail.com',
-    description='A library of python utilities for AnyBody Modelling System ',
+    description='A library of python utilities for the AnyBody Modeling System',
 #    long_description=open('README.rst').read(),
     license='MIT',
-    keywords=('AnyBody Modelling system '
+    keywords=('AnyBody Modeling System '
               'AnyScript'),
     url='https://github.com/AnyBody-Research-Group/AnyPyTools',
     classifiers=[
