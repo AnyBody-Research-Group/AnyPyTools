@@ -97,48 +97,6 @@ def _parse_anyoutputfile_constants(strvar):
     return (varname, value)
 
 
-def anyouputfile_generator(folder =None, DEBUG = False):
-    if folder is None:
-        folder = os.getcwd()
-
-    filelist = [_ for _ in os.listdir(folder) if _.endswith('.txt') or _.endswith('.csv')]
-    
-    
-    def is_scinum(str):
-        try:
-            np.float(str)
-            return True
-        except ValueError:
-            return False
-    
-    for filename in filelist:
-        with open(op.join(folder,filename),'r') as csvfile:
-#            try:
-#                dialect = csv.Sniffer().sniff(csvfile.read(2048),delimiters=',')
-#            except:
-#                if DEBUG: print "problem with " +filename
-#                continue
-#            csvfile.seek(0)
-            reader = csv.reader(csvfile, delimiter=',')   
-            #Check when the header section ends
-            fpos1 = 0
-            fpos0 = 0
-            for row in reader:
-                if is_scinum(row[0]):
-                    break
-                fpos1 = fpos0
-                fpos0 = csvfile.tell()
-            else:
-                if DEBUG: print "No numeric data in " +filename
-                break
-            # Read last line of the header section if there is a header
-            if fpos0 != 0:
-                csvfile.seek(fpos1)
-                header = [_.rsplit('.',2)[-1] for _ in reader.next()]
-            else:
-                header = None
-            data = np.array([[float(col) for col in row] for row in reader])
-            yield (data,header, op.splitext(filename)[0])
 
 def interp_percent(data, indices):
     data = np.array(data)
