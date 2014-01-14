@@ -7,12 +7,9 @@ Created on Fri Oct 19 21:14:59 2012
 
 import os
 from subprocess import Popen
-#import threading
-#import time
 import numpy as np
-#import multiprocessing
 from tempfile import NamedTemporaryFile, TemporaryFile
-from threading import Thread, Lock
+from threading import Thread
 import time 
 import signal
 import re
@@ -28,7 +25,7 @@ except ImportError:
     
     
 
-print_lock = Lock()
+#print_lock = Lock()
 
 _pids = set()
 def _kill_running_processes():
@@ -403,9 +400,9 @@ class AnyPyProcess():
 
     
     
-    def start_macro(self, macrolist, folderlist = None):
+    def start_macro(self, macrolist, folderlist = None, search_subdirs = None):
         """ 
-        app.start_marco(macro)        
+        app.start_marco(macrolist, folderlist = None, search_subdirs =None )        
         
         Starts a batch processing job. Runs an list of AnyBody Macro commands in 
         the current directory, or in the folders specified by folderlist. 
@@ -439,9 +436,18 @@ class AnyPyProcess():
         if folderlist is None:
             folderlist = [self.batch_folder_list[0]]
 
+        if not isinstance(folderlist,list):
+            raise TypeError('folderlist must be a list of folders')
+            
         #create a list of tasks
         tasklist = []
         self.results = dict()
+        
+        if isinstance(search_subdirs,basestring) and isinstance(folderlist[0], basestring):
+            tmplist = []
+            for folder in folderlist:
+               tmplist.extend(_getsubdirs(folder, search_string = search_subdirs) )
+            folderlist = tmplist
         
         if isinstance(macrolist[0], basestring):
             macrolist = [macrolist]
@@ -456,6 +462,8 @@ class AnyPyProcess():
                         taskname = taskname + ' macro '+str(i_macro) 
                 else:
                     taskname = None
+                
+                
                 
                 newtask = _Task(folder, macro, taskname = taskname,
                                 number = taskid,
@@ -560,9 +568,9 @@ class AnyPyProcess():
             print 'Starting', len(tasklist), 'instances.'
         # Start batch processing
         try:
-            (completed,failed, time) =self._schedule_processes(tasklist,
+            (completed,failed, time_passed) =self._schedule_processes(tasklist,
                                                 self._worker)
-            self._print_summery(completed,failed,time)
+            self._print_summery(completed,failed,time_passed)
         except KeyboardInterrupt:
             print 'User interuption: Kiling running processes'
             
@@ -700,7 +708,6 @@ class AnyPyProcess():
     
 
 def _parse_anybodycon_output(strvar):
-    var_name = []    
     out = {};
     dump_path = None
     for line in strvar.splitlines():
@@ -824,14 +831,16 @@ def test():
     res = app.start_param_job(loadmcr, mainmcr, invars, outvars)   
     print("")
     
+    try:
+        import matplotlib.pyplot as plt 
+        plt.plot(res.values()[0][3],'r--', linewidth=6)
     
-    import matplotlib.pyplot as plt 
-    plt.plot(res.values()[0][3],'r--', linewidth=6)
-
-    for data in res.values()[0]:
-        plt.plot(data)
-    #plt.axis([0,100 , 0, 1])
-    plt.show()
+        for data in res.values()[0]:
+            plt.plot(data)
+        #plt.axis([0,100 , 0, 1])
+        plt.show()
+    except ImportError:
+        pass
 
 
 
