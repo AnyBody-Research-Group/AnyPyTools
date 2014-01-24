@@ -160,7 +160,7 @@ class _Task():
     
 class AnyPyProcess():
     """
-    AnyPyProcess(basepath = cwd, subdir_search = None, num_processes = nCPU,\
+    AnyPyProcess(num_processes = nCPU,\
                  anybodycon_path = 'installed version', stop_on_error = True,\
                  timeout = 3600, disp = True, keep_logfiles = False)
     
@@ -182,12 +182,6 @@ class AnyPyProcess():
       
     Parameters
     ----------
-    basepath:
-        directory to execute anybody console application
-    subdir_search:
-        regular expression string to search for sub
-        directories. This is used find multiple folder for batch processing. 
-        ``Setting subdir_search = '.'`` will include all subfolders.
     num_processes:
         number of anybody models to start in parallel.
         This defaults to the number of CPU in the computer. 
@@ -208,12 +202,10 @@ class AnyPyProcess():
         a AnyPyProcess object for running batch processing, parameter
         studies and pertubation jobs.       
     """    
-    def __init__(self, basepath = os.getcwd(), subdir_search = None,
-                 num_processes = get_ncpu(), 
+    def __init__(self, num_processes = get_ncpu(), 
                  anybodycon_path = get_anybodycon_path(), stop_on_error = True,
                  timeout = 3600, disp = True, verbose = False,
                  keep_logfiles = False):
-        self.basepath = os.path.abspath(basepath)
         self.anybodycon_path = anybodycon_path
         self.stop_on_error = stop_on_error
         self.num_processes = num_processes
@@ -222,7 +214,6 @@ class AnyPyProcess():
         self.verbose = verbose
         self.timeout = timeout
         self.keep_logfiles = keep_logfiles
-        self.batch_folder_list = _getsubdirs(self.basepath,subdir_search)
     
 
     def start_pertubation_job(self, loadmacro, mainmacro, inputs, outputs,
@@ -264,13 +255,14 @@ class AnyPyProcess():
                 
         Examples
         --------
+        >>> import anypytools
         >>> app = anypytools.abcutils.AnyPyProcess()        
-        >>> loadmcr = ['load "mymodel.main.any"]
+        >>> loadmcr = ['load "mymodel.main.any"']
         >>> mainmcr = ['operation Main.study.Inversedynamics', 'run']
-        >>> in = [('Main.study.param1',1.4), ('Main.study.param2',3.1)]
+        >>> input = [('Main.study.param1',1.4), ('Main.study.param2',3.1)]
         >>> out = ['Main.study.output.MaxMuscleActivty']
-        >>> (obj, pert) = app.start_pertubation_job(loadmcr,mainmcr,in,out)
-        >>> objective = obj[ out[0] ]
+        >>> (objval, pert) = app.start_pertubation_job(loadmcr,mainmcr,input,out)
+        >>> objective = objval[ out[0] ]
         >>> pertubation = pert[ out[0] ]
         """
         from collections import OrderedDict        
@@ -372,8 +364,7 @@ class AnyPyProcess():
                     valuestr = _list2anyscript(value[itask])
                     inputmacro.append('classoperation %s "Set Value" --value="%s"' %(varname,valuestr) )
 #                inputmacro.append('classoperation Main "Update Values"')
-            newtask = _Task(folder = self.batch_folder_list[0], 
-                           macro = loadmacro+inputmacro+mainmacro+outputmacro+['exit'],  
+            newtask = _Task(macro = loadmacro+inputmacro+mainmacro+outputmacro+['exit'],  
                            taskname = str(itask), outputs = outputs,
                            number = itask, keep_logfiles = self.keep_logfiles )
             tasklist.append(newtask)             
@@ -405,7 +396,9 @@ class AnyPyProcess():
         app.start_marco(macrolist, folderlist = None, search_subdirs =None )        
         
         Starts a batch processing job. Runs an list of AnyBody Macro commands in 
-        the current directory, or in the folders specified by folderlist. 
+        the current directory, or in the folders specified by folderlist. If 
+        search_subdirs is a regular expression the folderlist will be expanded
+        to include all subdirectories that match the regular expression
         
         Parameters
         ----------
@@ -415,11 +408,11 @@ class AnyPyProcess():
             
             For example:
             
-            >>> macro=[ ['load "model1.any"', 'operation Main.RunApplication',
-                         'run', 'exit'],
-                        ['load "model2.any"', 'operation Main.RunApplication', 
-                         'run', 'exit'],
-                        ['load "model3.any"', 'operation Main.RunApplication',
+            >>> macro=[ ['load "model1.any"', 'operation Main.RunApplication',\
+                         'run', 'exit'],\
+                        ['load "model2.any"', 'operation Main.RunApplication',\
+                         'run', 'exit'],\
+                        ['load "model3.any"', 'operation Main.RunApplication',\
                          'run', 'exit'] ]
             
         folderlist:
@@ -431,10 +424,19 @@ class AnyPyProcess():
             
             >>> folderlist = [('path1/', 'name1'), ('path2/', 'name2')] 
             
+            
+        search_subdirs:
+            Regular expression used to search sub-directories of the folders in
+            folderlist. Default to None: no subdirectories include. 
+            
+            For example:
+            
+            >>> start_macro(macro, folderlist, search_subdirs = "*.main.any")
+            
         """        
 
         if folderlist is None:
-            folderlist = [self.batch_folder_list[0]]
+            folderlist = [os.getcwd()]
 
         if not isinstance(folderlist,list):
             raise TypeError('folderlist must be a list of folders')
@@ -525,56 +527,6 @@ class AnyPyProcess():
                     print status
 
 
-    
-    def start_batch_job(self, macro, special_dir = None):
-        """ 
-        app.start_batch_job(macro, special_dir = None)        
-        
-        Starts a batch processing job. Runs an anybody macro on the 
-        batch_folder_list in the parent class. 
-        
-        Parameters
-        ----------
-        macro: string or list
-            string or list of macro commands that loads and run the model
-            
-            For example:
-            >>> macro = ['load "mymodel.main.any"',
-                         'operation Main.study.Inversedynamics',
-                         'run'
-                         'exit']
-            
-        special_dir: directory
-            overide the batch_folder_list of the parent class, and 
-            run the macro on a specific folder. 
-        """        
-        if special_dir is None:
-            folderlist = self.batch_folder_list
-        elif os.path.isdir(special_dir):
-            folderlist = [special_dir]
-        else:
-            raise TypeError('Special_dir must be a directory' ) 
-                            
-        self.kill_all = False
-        # Convert macro to a list 
-        if isinstance(macro, basestring):
-            macro = [macro.splitlines()]
-        #create a list of tasks
-        tasklist = []
-        for folder in folderlist:
-            newtask = _Task(folder,macro, keep_logfiles=self.keep_logfiles)
-            tasklist.append(newtask)
-        if self.verbose:
-            print 'Starting', len(tasklist), 'instances.'
-        # Start batch processing
-        try:
-            (completed,failed, time_passed) =self._schedule_processes(tasklist,
-                                                self._worker)
-            self._print_summery(completed,failed,time_passed)
-        except KeyboardInterrupt:
-            print 'User interuption: Kiling running processes'
-            
-        _kill_running_processes()
         
     def _worker (self, task, queue=None):
         """ Executes AnyBody console application on the task object
@@ -658,6 +610,8 @@ class AnyPyProcess():
        
 
     def _schedule_processes(self, tasklist, _worker):
+        if len(tasklist) == 0:
+            return ([],[], 0)
         starttime = time.clock()    
         queue = Queue.Queue()
         totaltasks = len(tasklist)

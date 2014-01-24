@@ -1,0 +1,11 @@
+{
+  "menu_items": [
+    {
+      "icon": "${MENU_DIR}/anypytools.ico",
+      "name": "AnyPyToolsTutorial",
+      "pyscript": "${PYTHON_SCRIPTS}/ipython-script.py notebook --notebook-dir ${PYTHON_SCRIPTS}/../AnyPyToolsTutorial --pylab inline", 
+      "workdir": "${PYTHON_SCRIPTS}/../AnyPyToolsTutorial/"
+    }
+  ], 
+  "menu_name": "Anaconda (64-bit)"
+}
