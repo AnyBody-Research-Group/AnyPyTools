@@ -9,7 +9,7 @@ xcopy "%RECIPE_DIR%"\..\setup.py . /S/Y/I
 cd "%PREFIX%"
 mkdir AnyPyToolsTutorial
 cd AnyPyToolsTutorial
-xcopy "%RECIPE_DIR%\..\Tutorial\AnyPyTools Tutorial.ipynb" . /S/Y/I
+xcopy "%RECIPE_DIR%\..\Tutorial\AnyPyTools_Tutorial.ipynb" . /S/Y/I
 xcopy "%RECIPE_DIR%\..\Tutorial\Knee.any" . /S/Y/I
 mkdir BatchProcessExample
 cd BatchProcessExample
