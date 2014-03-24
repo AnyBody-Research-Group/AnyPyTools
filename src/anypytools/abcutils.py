@@ -5,7 +5,7 @@ Created on Fri Oct 19 21:14:59 2012
 @author: Morten
 """
 from __future__ import division, absolute_import, print_function, unicode_literals
-from utils.py3k import * # @UnusedWildImport
+from .utils.py3k import * # @UnusedWildImport
 
 
 
@@ -327,9 +327,9 @@ class AnyPyProcess():
             a list of values to evalutate. For example: the following will
             run the model three times each time setting the two parameters.
             
-            >>>inputs = [ ('Main.study.param1',[1.4,1.6,1.8]),
-                          ('Main.study.param2',[3.1,3.5,3.9])  ]
-        
+            >>>inputs = [ ('Main.study.param1',[1.4,1.6,1.8]), ('Main.study.param2',[3.1,3.5,3.9])  ]
+
+
         outputs: List of anybody variables to observe the output.
                  For example: ``['Main.study.output.MaxMuscleActivty']``
         

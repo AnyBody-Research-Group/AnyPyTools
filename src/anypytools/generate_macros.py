@@ -5,14 +5,13 @@ Created on Fri Oct 19 21:14:59 2012
 @author: Morten
 """
 from __future__ import division, absolute_import, print_function, unicode_literals
-from utils.py3k import * # @UnusedWildImport
+from .utils.py3k import * # @UnusedWildImport
 
 
 import numpy as np
 from scipy.stats import distributions
 from numpy.random import random, seed
 import types
-import pyDOE
 
 def _list2anyscript(arr):
     def createsubarr(arr):
@@ -159,8 +158,8 @@ class MacroGenerator(object):
         
         elif isinstance(variable, basestring) and isinstance(value,list):
             if len(value) != self.number_of_macros:
-                raise ValueError('Values must be the same length as the number\
-                                  of macros')
+                raise ValueError("If 'value' is a list it must be the same length\
+                                  as the number of macros")
             macro_generator = self._generator_set_value(variable, value)
             self.add_macro(macro_generator)
             
@@ -649,7 +648,7 @@ class LatinHyperCubeMacroGenerator(MacroGenerator):
 
     """    
 
-    def __init__(self, number_of_macros=1):
+    def __init__(self, number_of_macros=1): 
         super(self.__class__,self).__init__(number_of_macros)
         self.LHS_factors = 0
         self.lhd = np.zeros((2,100))
@@ -748,6 +747,11 @@ class LatinHyperCubeMacroGenerator(MacroGenerator):
         self.LHS_factors += n_elem
 
     def generate_macros(self, batch = 1):
+        try:
+            import pyDOE
+        except ImportError:
+            raise ImportError('The pyDOE package must be install to use this class')
+
         self.lhd = pyDOE.lhs(self.LHS_factors, samples=self.number_of_macros)
         return super(LatinHyperCubeMacroGenerator,self).generate_macros(batch)
         
@@ -780,6 +784,5 @@ if __name__ == '__main__':
     
     import doctest
     doctest.testmod()
-
 
 
