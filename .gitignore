@@ -1,0 +1,7 @@
+*.log
+*.py[c]
+Tutorial/.ipynb_checkpoints/*
+*.anymcr
+src/*egg-info/*
+*.bak
+dist/*

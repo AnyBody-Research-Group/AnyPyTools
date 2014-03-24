@@ -4,7 +4,7 @@ package:
 
 
 build:            # (optional)
-  number: 0                        # (optional, defaults to 0)
+  number: 3                        # (optional, defaults to 0)
 
 # the build and runtime requirements:
 requirements:     # (optional)
