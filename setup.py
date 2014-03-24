@@ -28,6 +28,7 @@ setup(
     url='https://github.com/AnyBody-Research-Group/AnyPyTools',
     classifiers=[
         'Development Status :: 1 - Alpha',
+        'Programming Language :: Python :: 2.7',
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: MIT License',
         'Operating System :: Windows',
