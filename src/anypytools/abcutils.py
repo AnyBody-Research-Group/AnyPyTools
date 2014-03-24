@@ -4,6 +4,11 @@ Created on Fri Oct 19 21:14:59 2012
 
 @author: Morten
 """
+from __future__ import division, absolute_import, print_function, unicode_literals
+from utils.py3k import * # @UnusedWildImport
+
+
+
 
 import os
 from subprocess import Popen
@@ -16,9 +21,10 @@ import re
 import atexit
 import Queue
 import sys
+import types
 
 try:
-    from IPython.display import clear_output, HTML, display
+    from IPython.display import clear_output, HTML, display, FileLinks
     have_ipython = True
 except ImportError:
     have_ipython = False
@@ -35,7 +41,7 @@ def _kill_running_processes():
     for pid in _pids:
         try:
             os.kill(pid, signal.SIGTERM)
-            print 'Kill AnyBodyCon Process. PID: ', pid, ' : Done'
+            print('Kill AnyBodyCon Process. PID: ', pid, ' : Done')
         except:
             pass
     _pids.clear()
@@ -103,7 +109,7 @@ def create_path_load_string(paths):
 
     
 
-def _getsubdirs(toppath, search_string = "."):
+def getsubdirs(toppath, search_string = "."):
     """ Find all directories below a given top path. 
     
     Args: 
@@ -140,12 +146,14 @@ class _Task():
         keep_logfiles: true if log files should not be deleted
         name: name of the task, which is used for printing status informations
     """
-    def __init__(self,folder=os.getcwd(), macro = [], 
+    def __init__(self,folder=None, macro = [], 
                  taskname = None, outputs = [], number = 1,
                  keep_logfiles = False):
         """ Init the Task class with the class attributes
         """
         self.folder = folder
+        if folder is None:
+            self.folder = os.getcwd()
         self.macro = macro
         self.outputs = outputs
         self.number = number
@@ -191,10 +199,12 @@ class AnyPyProcess():
     timeout:
         maximum time a model can run until it is terminated. 
         Defaults to 1 hour
+    ignore_errors:
+        List of AnyBody Errors to ignore when running the models
     disp:
         Set to False to suppress output
     verbose:
-        set to True to enable more display masseges
+        Set to True to enable more display masseges
         
     Returns
     -------
@@ -204,7 +214,7 @@ class AnyPyProcess():
     """    
     def __init__(self, num_processes = get_ncpu(), 
                  anybodycon_path = get_anybodycon_path(), stop_on_error = True,
-                 timeout = 3600, disp = True, verbose = False,
+                 timeout = 3600, disp = True, verbose = False, ignore_errors = [],
                  keep_logfiles = False):
         self.anybodycon_path = anybodycon_path
         self.stop_on_error = stop_on_error
@@ -213,6 +223,7 @@ class AnyPyProcess():
         self.disp = disp
         self.verbose = verbose
         self.timeout = timeout
+        self.ignore_errors = ignore_errors
         self.keep_logfiles = keep_logfiles
     
 
@@ -296,7 +307,8 @@ class AnyPyProcess():
         return (objective, pertubations)
         
         
-    def start_param_job(self, loadmacro, mainmacro, inputs = {}, outputs = []):
+    def start_param_job(self, loadmacro, mainmacro, inputs = {}, outputs = [],
+                        folder = None):
         """ start_param_job(loadmacro, mainmacro, inputs = {}, ouputs = {})
         
         Starts a parameter job. Runs an AnyBody model multiple times with a 
@@ -364,7 +376,7 @@ class AnyPyProcess():
                     valuestr = _list2anyscript(value[itask])
                     inputmacro.append('classoperation %s "Set Value" --value="%s"' %(varname,valuestr) )
 #                inputmacro.append('classoperation Main "Update Values"')
-            newtask = _Task(macro = loadmacro+inputmacro+mainmacro+outputmacro+['exit'],  
+            newtask = _Task(folder, macro = loadmacro+inputmacro+mainmacro+outputmacro+['exit'],  
                            taskname = str(itask), outputs = outputs,
                            number = itask, keep_logfiles = self.keep_logfiles )
             tasklist.append(newtask)             
@@ -372,7 +384,7 @@ class AnyPyProcess():
         try:
             self._schedule_processes(tasklist, self._worker)
         except KeyboardInterrupt:
-            print 'User interuption: Kiling running processes'
+            print('User interuption: Kiling running processes')
             _kill_running_processes()
             raise KeyboardInterrupt
         
@@ -391,7 +403,8 @@ class AnyPyProcess():
 
     
     
-    def start_macro(self, macrolist, folderlist = None, search_subdirs = None):
+    def start_macro(self, macrolist, folderlist = None, search_subdirs = None,
+                    number_of_macros = None):
         """ 
         app.start_marco(macrolist, folderlist = None, search_subdirs =None )        
         
@@ -404,85 +417,87 @@ class AnyPyProcess():
         ----------
         
         macrolist:
-            List containing lists of macro commands that loads and run models.
-            
+            List or generator containing lists of anyscript macro commands
+        folderlist:
+            list of folders in which to excute the macro commands. If None the
+            current working directory is used. This may also be a list of
+            tuples to specify a name to appear in the output
+        search_subdirs:
+            Regular expression used to extend the folderlist with all the
+            subdirectories that match the regular expression. 
+            Defaults to None: subdirectories are included.
+        number_of_macros:
+            Number of macros in macrolist. Must be specified if macrolist
+            is a genertors expression. 
+                        
             For example:
-            
+                        
             >>> macro=[ ['load "model1.any"', 'operation Main.RunApplication',\
                          'run', 'exit'],\
                         ['load "model2.any"', 'operation Main.RunApplication',\
                          'run', 'exit'],\
                         ['load "model3.any"', 'operation Main.RunApplication',\
                          'run', 'exit'] ]
-            
-        folderlist:
-            List containing folders in which to execute the macro commands. 
-            This may also be a list of tuples to specify a name to appear in the
-            output.
-            
-            For example:
-            
             >>> folderlist = [('path1/', 'name1'), ('path2/', 'name2')] 
-            
-            
-        search_subdirs:
-            Regular expression used to search sub-directories of the folders in
-            folderlist. Default to None: no subdirectories include. 
-            
-            For example:
-            
             >>> start_macro(macro, folderlist, search_subdirs = "*.main.any")
             
         """        
 
         if folderlist is None:
             folderlist = [os.getcwd()]
+            
 
         if not isinstance(folderlist,list):
             raise TypeError('folderlist must be a list of folders')
+            
+        if isinstance(macrolist, types.GeneratorType) and number_of_macros is None:
+            raise ValueError('number_of_macros must be specified if\
+                              macrolist is a generator' )            
             
         #create a list of tasks
         tasklist = []
         self.results = dict()
         
+        # Extend the folderlist if search_subdir is given
         if isinstance(search_subdirs,basestring) and isinstance(folderlist[0], basestring):
             tmplist = []
             for folder in folderlist:
-               tmplist.extend(_getsubdirs(folder, search_string = search_subdirs) )
+               tmplist.extend(getsubdirs(folder, search_string = search_subdirs) )
             folderlist = tmplist
         
-        if isinstance(macrolist[0], basestring):
-            macrolist = [macrolist]
-        
-        taskid = 0
-        for i_macro, macro in enumerate(macrolist):
+        # Wrap macro in extra list if necessary
+        if isinstance(macrolist, list):
+            if isinstance(macrolist[0], basestring):
+                macrolist = [macrolist]
+            number_of_macros = len(macrolist)
             
-            for folder in folderlist:
-                if isinstance(folder ,tuple) and len(folder) ==2:
-                    folder, taskname = folder
-                    if len(macrolist) > 1:
-                        taskname = taskname + ' macro '+str(i_macro) 
-                else:
-                    taskname = None
-                
-                
-                
-                newtask = _Task(folder, macro, taskname = taskname,
-                                number = taskid,
-                                keep_logfiles=self.keep_logfiles)
-                tasklist.append(newtask)
-                taskid += 1
+        number_of_tasks = number_of_macros * len(folderlist)
+        
+        def generate_tasks(macros, folders):
+            taskid = 0
+            for i_macro, macro in enumerate(macros):
+                for folder in folders:
+                    if isinstance(folder ,tuple) and len(folder) ==2:
+                        folder, taskname = folder
+                        if number_of_macros > 1:
+                            taskname = taskname + ' macro '+str(i_macro) 
+                    else:
+                        taskname = None
+                    yield _Task(folder, macro, taskname = taskname,
+                                    number = taskid,
+                                    keep_logfiles=self.keep_logfiles)
+                    taskid += 1
+
+        tasklist = list(generate_tasks(macrolist, folderlist) )
         
         
-        if self.verbose:
-            print 'Starting', len(tasklist), 'instances.'
         # Start batch processing
         try:
-            (completed,failed, duration) = self._schedule_processes(tasklist, 
-                                                    self._worker)
+            (completed,failed, duration) = self._schedule_processes(tasklist,
+                                                                self._worker)
             self._print_summery(completed,failed,duration)
         except KeyboardInterrupt:
-            print 'User interuption: Kiling running processes'
+            print('User interuption: Kiling running processes')
         _kill_running_processes()    
         
         
@@ -501,30 +516,13 @@ class AnyPyProcess():
             tasklist = completed_tasks + failed_tasks
         else:
             tasklist = failed_tasks
-            
-        print '\nTotal run time: {0} seconds'.format(duration)
-        if len(tasklist):
-            for task in tasklist:
-                if task.error:
-                    status = 'Failed '
-                else:
-                    status = 'Completed '
-                    
-                status = status + '{2!s}sec :{0} n={1!s} : '.format(task.name,
-                                                            task.number,
-                                                            task.processtime)            
-                if _run_from_ipython():
-                    if task.log is not None:
-                        status = status + '(<a href= "{0}">{1}</a> \
-                                            <a href= "{2}">dir</a>)\
-                                           '.format(task.log,
-                                                os.path.basename(task.log),
-                                                os.path.dirname(task.log) )
-                    display(HTML(status))
-                else:                        
-                    if task.log is not None:
-                        status = status + ' ( {0} )'.format(os.path.basename(task.log))
-                    print status
+        print('')
+        for entry in _summery(tasklist,duration ):
+            if  _run_from_ipython():
+                display(HTML(entry))
+            else:
+                print(entry)
+
 
 
         
@@ -575,10 +573,20 @@ class AnyPyProcess():
                 
         output = _parse_anybodycon_output(rawoutput)
         
-        if task.keep_logfiles or output.has_key('ERROR'):
+        # Remove any ERRORs which should be ignored
+        if 'ERROR' in output:
+            def check_error(error_string):
+                return all( [(err not in error_string) for err in self.ignore_errors])
+            output['ERROR'][:] = [_ for _ in output['ERROR'] if check_error(_)]
+
+            if len( output['ERROR'] ) == 0:
+                del output['ERROR']
+        
+        
+        if task.keep_logfiles or 'ERROR' in output:
             with NamedTemporaryFile(mode='w+b', prefix ='output_',
-                                         suffix='.log',  dir = task.folder,
-                                         delete = False) as logfile:
+                                    suffix='.log',  dir = task.folder,
+                                    delete = False) as logfile:
                 logfile.write(rawoutput)
                 logfile_path = logfile.name
         else:
@@ -593,7 +601,7 @@ class AnyPyProcess():
         try:
             os.remove(macrofile.name) 
         except:
-            print 'Error removing macro file'
+            print( 'Error removing macro file')
 
         if not hasattr(self, 'results'):
             self.results = dict()        
@@ -627,7 +635,6 @@ class AnyPyProcess():
         # #lse start the tasks in threads
     
         
-        
         # run until all the threads are done, and there is no data left
         while threads or tasklist or queue.qsize():
             # if we aren't using all the processors AND there is still data left to
@@ -660,6 +667,35 @@ class AnyPyProcess():
         totaltime = int(time.clock()-starttime)
         return (completed_tasks, failed_tasks, totaltime)
     
+    
+def _summery(tasks,duration=None):
+
+    summery = []
+    for task in tasks:
+        entry = ''
+        if task.error:
+            entry += 'Failed '
+        else:
+            entry += 'Completed '
+            
+        entry += '{2!s}sec :{0} n={1!s} : '.format(task.name,
+                                                    task.number,
+                                                    task.processtime)            
+        if task.log is not None:
+            if _run_from_ipython():
+                entry += '(<a href= "{0}">{1}</a> \
+                                    <a href= "{2}">dir</a>)\
+                                   '.format(task.log,
+                                        os.path.basename(task.log),
+                                        os.path.dirname(task.log) )
+            else:                        
+                entry += '( {0} )'.format(os.path.basename(task.log))
+        summery.append(entry)
+    
+    if duration is not None:
+        summery.append('Total time: {0} seconds'.format(duration))
+    
+    return summery
 
 def _parse_anybodycon_output(strvar):
     out = {};
@@ -713,29 +749,27 @@ class ProgressBar:
 
     def animate(self, iter, failed = 0):
         self.update_iteration(iter,failed)
-        try:
-            if _run_from_ipython():
-                clear_output()
-        except ValueError:
-            # terminal IPython has no clear_output
-            pass
-        print '\r', self,
+        if _run_from_ipython():
+            clear_output()
+        print('\r', self, end="")
         sys.stdout.flush()
 
-    def update_iteration(self, elapsed_iter,number_failed):
+    def update_iteration(self, elapsed_iter,number_failed, tasks=[]):
         self.__update_amount((elapsed_iter / float(self.iterations)) * 100.0)
         self.prog_bar += '  %d of %s complete' % (elapsed_iter, self.iterations)
         if number_failed == 1:
             self.prog_bar += ' ({0} Error)'.format(number_failed)
         elif number_failed > 1:
             self.prog_bar += ' ({0} Errors)'.format(number_failed)
+            
+            
 
     def __update_amount(self, new_amount):
         percent_done = int(round((new_amount / 100.0) * 100.0))
         all_full = self.width - 2
         num_hashes = int(round((percent_done / 100.0) * all_full))
         self.prog_bar = '[' + self.fill_char * num_hashes + ' ' * (all_full - num_hashes) + ']'
-        pct_place = (len(self.prog_bar) / 2) - len(str(percent_done))
+        pct_place = int(len(self.prog_bar) / 2) - len(str(percent_done))
         pct_string = '%d%%' % percent_done
         self.prog_bar = self.prog_bar[0:pct_place] + \
             (pct_string + self.prog_bar[pct_place + len(pct_string):])
@@ -771,9 +805,9 @@ def test():
 #           'exit']
 #    app.start_batch_job(mcr)
     
-    print 'Test param job'
+    print('Test param job')
     basepath = op.join( op.dirname(abcutils.__file__), 'test_models')
-    app = AnyPyProcess(basepath, num_processes = 10, keep_logfiles = False)
+    app = AnyPyProcess(num_processes = 10, keep_logfiles = False)
     loadmcr = ['load "Demo.Arm2D.any"']
     mainmcr = ['operation ArmModelStudy.InverseDynamics',
               'run']
@@ -782,7 +816,7 @@ def test():
     invars = {'Main.ArmModel.Segs.LowerArm.Brachialis.sRel':
                   list( array([-0.1,0,0]) +  0.03* random.randn(100,1)) }
     outvars = [ 'Main.ArmModelStudy.Output.Model.Muscles.Brachialis.Activity']
-    res = app.start_param_job(loadmcr, mainmcr, invars, outvars)   
+    res = app.start_param_job(loadmcr, mainmcr, invars, outvars, folder=basepath)   
     print("")
     
     try:
