@@ -1,35 +1,24 @@
 package:
   name: anypytools     # lower case name of package, may contain '-' but no spaces
-  version: 0.4.6       # version of package. Should use the PEP-386 verlib conventions.
+  version: 0.5        # version of package. Should use the PEP-386 verlib conventions.
 
-#source:
-# or from git:
-#  git_url: https://github.com/AnyBody-Research-Group/AnyPyTools.git
-#  git_tag: 0.4.6                                     # (optional)
 
 build:            # (optional)
-  number: 2                        # (optional, defaults to 0)
+  number: 0                        # (optional, defaults to 0)
 
 # the build and runtime requirements:
 requirements:     # (optional)
   build:
     - python
-    - h5py
-    - numpy
-    - scipy
     - setuptools
     
 
   run:
-    - python
-    - numpy
-    - h5py
-    - scipy
 
 #test:
 #  # Python imports
 #  imports:
-#S    - anypytools
+#    - anypytools
 
 about:            # (optional)
   home: https://github.com/AnyBody-Research-Group/AnyPyTools
