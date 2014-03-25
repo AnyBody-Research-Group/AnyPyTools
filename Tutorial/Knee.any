@@ -166,14 +166,30 @@ Main = {
       AnyRefFrame &Femur = .Femur.Knee;
       AnyRefFrame &Tibia = .Tibia.Knee;
     };
-    AnyKinEqSimpleDriver KneeAngle = {
+//    AnyKinEqFourierDriver KneeAngle = {
+//      AnyKinMeasure &jnt = .Knee;
+//      DriverPos = {0};
+//      DriverVel = {pi/2};
+//      Reaction.Type ={Off};
+//    };
+//    AnyKinEqFourierDriver KneeAngle = {
+//      AnyKinMeasure &jnt = .Knee;
+//      Type = Sin;
+//      Freq = 0.5;
+//      A = {{0,90}}*pi/180;
+//      B = {{0,0}}*pi/180;
+//      Reaction.Type ={Off};
+//    };
+    AnyKinEqInterPolDriver KneeAngle = {
+      Type = Bspline ;
+      BsplineOrder  =5;
+      T = 2*{0, 0.2, 0.4, 0.6, 0.8, 1.0,1.2};
+      Data = {{90,90, 30, 0, 30, 90,90}}*pi/180;
       AnyKinMeasure &jnt = .Knee;
-      DriverPos = {0};
-      DriverVel = {pi/2};
       Reaction.Type ={Off};
     };
-    
-    AnyViaPointMuscle Quadriceps = {
+
+AnyViaPointMuscle Quadriceps = {
       AnyMuscleModel Model = {
         F0 = 1000;
       };
@@ -190,8 +206,8 @@ Main = {
     AnyFolder &kneeref = .MyModel.Knee;
     AnyFolder &Model = .MyModel;
     Gravity = {0.0, -9.81, 0.0};
-    nStep = 30;
-    
+    nStep = 100;
+    tEnd = 2.4;
     AnyVar MomentArm = Main.MyModel.Quadriceps.LmtDot/(Main.MyModel.Knee.Vel[0]+1.0e-10);
   };
 
