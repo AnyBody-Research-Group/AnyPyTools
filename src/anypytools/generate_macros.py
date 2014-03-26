@@ -5,9 +5,12 @@ Created on Fri Oct 19 21:14:59 2012
 @author: Morten
 """
 from __future__ import division, absolute_import, print_function, unicode_literals
-from .utils.py3k import * # @UnusedWildImport
+try:
+    from .utils.py3k import * # @UnusedWildImport
+except ValueError:
+    from utils.py3k import * # @UnusedWildImport
 
-
+from pprint import pprint
 import numpy as np
 from scipy.stats import distributions
 from numpy.random import random, seed
@@ -49,11 +52,11 @@ class MacroGenerator(object):
     >>> mg.add_load('c:/MyModel/model.main.any')
     >>> mg.add_set_value('Main.Study.myvar', 12.3)
     >>> mg.add_run_operation('Main.Study.Kinematics')
-    >>> for line in mg.generate_macros()[0]: print(line)
-    load "c:/MyModel/model.main.any"
-    classoperation Main.Study.myvar "Set Value" --value="12.3"
-    operation Main.Study.Kinematics
-    run
+    >>> pprint( mg.generate_macros() )
+    [[u'load "c:/MyModel/model.main.any"',
+      u'classoperation Main.Study.myvar "Set Value" --value="12.3"',
+      u'operation Main.Study.Kinematics',
+      u'run']]
 
     If more than one macro is generated the class can construct a python 
     generator object which builds the macro (lazily) as they are requested. 
@@ -70,6 +73,7 @@ class MacroGenerator(object):
         A MacroGenerator object for constructing the macro.       
     """    
     def __init__(self, number_of_macros=1):
+        assert(number_of_macros > 0)
         self.macro_cmd_list = []
         self.number_of_macros = number_of_macros
        
@@ -121,32 +125,34 @@ class MacroGenerator(object):
             >>> mg.add_set_value('Main.Study.myvar1', 23.0)
             >>> mg.add_set_value('Main.Study.myvar2', np.array([2,3,4]))
             >>> mg.add_run_operation('Main.Study.Kinematics')
-            >>> for line in mg.generate_macros()[0]: print(line)
-            load "c:/MyModel/model.main.any"
-            classoperation Main.Study.myvar1 "Set Value" --value="23.0"
-            classoperation Main.Study.myvar2 "Set Value" --value="{2,3,4}"
-            operation Main.Study.Kinematics
-            run
+            >>> pprint( mg.generate_macros() )
+            [[u'load "c:/MyModel/model.main.any"',
+              u'classoperation Main.Study.myvar1 "Set Value" --value="23.0"',
+              u'classoperation Main.Study.myvar2 "Set Value" --value="{2,3,4}"',
+              u'operation Main.Study.Kinematics',
+              u'run']]
             
             Set variable across different macros
             
             >>> mg = MacroGenerator(number_of_macros = 3)
             >>> mg.add_load('c:/MyModel/model.main.any')
             >>> mg.add_set_value('Main.Study.myvar1',[1,2,3])
-            >>> for macro in mg.generate_macros():
-            ...     print(macro)
-            [u'load "c:/MyModel/model.main.any"', u'classoperation Main.Study.myvar1 "Set Value" --value="1"']
-            [u'load "c:/MyModel/model.main.any"', u'classoperation Main.Study.myvar1 "Set Value" --value="2"']
-            [u'load "c:/MyModel/model.main.any"', u'classoperation Main.Study.myvar1 "Set Value" --value="3"']
+            >>> pprint( mg.generate_macros() )
+            [[u'load "c:/MyModel/model.main.any"',
+              u'classoperation Main.Study.myvar1 "Set Value" --value="1"'],
+             [u'load "c:/MyModel/model.main.any"',
+              u'classoperation Main.Study.myvar1 "Set Value" --value="2"'],
+             [u'load "c:/MyModel/model.main.any"',
+              u'classoperation Main.Study.myvar1 "Set Value" --value="3"']]
             
             The method can also add several macro commands if both variable and 
             value are list of the same length
             
             >>> mg = MacroGenerator()
             >>> mg.add_set_value(['Main.Study.myvar1','Main.Study.myvar1'],[4.0, 23.0])
-            >>> for line in mg.generate_macros()[0]: print(line)
-            classoperation Main.Study.myvar1 "Set Value" --value="4.0"
-            classoperation Main.Study.myvar1 "Set Value" --value="23.0"
+            >>> pprint( mg.generate_macros())
+            [[u'classoperation Main.Study.myvar1 "Set Value" --value="4.0"',
+              u'classoperation Main.Study.myvar1 "Set Value" --value="23.0"']]
             
         """        
         
@@ -191,18 +197,17 @@ class MacroGenerator(object):
             
             >>> mg = MacroGenerator(number_of_macros = 10)
             >>> mg.add_set_value_range('Main.Study.myvar1', start= 10, stop=100)
-            >>> for macro in mg.generate_macros():
-            ...     print(macro)
-            [u'classoperation Main.Study.myvar1 "Set Value" --value="10.0"']
-            [u'classoperation Main.Study.myvar1 "Set Value" --value="20.0"']
-            [u'classoperation Main.Study.myvar1 "Set Value" --value="30.0"']
-            [u'classoperation Main.Study.myvar1 "Set Value" --value="40.0"']
-            [u'classoperation Main.Study.myvar1 "Set Value" --value="50.0"']
-            [u'classoperation Main.Study.myvar1 "Set Value" --value="60.0"']
-            [u'classoperation Main.Study.myvar1 "Set Value" --value="70.0"']
-            [u'classoperation Main.Study.myvar1 "Set Value" --value="80.0"']
-            [u'classoperation Main.Study.myvar1 "Set Value" --value="90.0"']
-            [u'classoperation Main.Study.myvar1 "Set Value" --value="100.0"']
+            >>> pprint( mg.generate_macros() )
+            [[u'classoperation Main.Study.myvar1 "Set Value" --value="10.0"'],
+             [u'classoperation Main.Study.myvar1 "Set Value" --value="20.0"'],
+             [u'classoperation Main.Study.myvar1 "Set Value" --value="30.0"'],
+             [u'classoperation Main.Study.myvar1 "Set Value" --value="40.0"'],
+             [u'classoperation Main.Study.myvar1 "Set Value" --value="50.0"'],
+             [u'classoperation Main.Study.myvar1 "Set Value" --value="60.0"'],
+             [u'classoperation Main.Study.myvar1 "Set Value" --value="70.0"'],
+             [u'classoperation Main.Study.myvar1 "Set Value" --value="80.0"'],
+             [u'classoperation Main.Study.myvar1 "Set Value" --value="90.0"'],
+             [u'classoperation Main.Study.myvar1 "Set Value" --value="100.0"']]
 
         """                
         no = self.number_of_macros
@@ -395,50 +400,72 @@ class MacroGenerator(object):
         return macro
         
         
-    def generate_macros(self, batch = None):
-        """ Generate the macros. Either as list or in batches as generator
-        object (memory efficient when generating many macros)
+    def generate_macros(self, batch_size = None):
+        """ Generate the macros. Either as list (batch = None) or in batches 
+        as generator object (memory efficient when generating many macros)
                     
         Examples:
         ---------
         >>> mg = MacroGenerator(number_of_macros = 4)
+        >>> mg.add_load("c:/Model.main.any")
+        >>> mg.add_run_operation('Main.study.Kinematics')
+        >>> macros =  mg.generate_macros()
+        >>> type(macros)
+        <type 'list'>
+        >>> pprint(macros)
+        [[u'load "c:/Model.main.any"', u'operation Main.study.Kinematics', u'run'],
+         [u'load "c:/Model.main.any"', u'operation Main.study.Kinematics', u'run'],
+         [u'load "c:/Model.main.any"', u'operation Main.study.Kinematics', u'run'],
+         [u'load "c:/Model.main.any"', u'operation Main.study.Kinematics', u'run']]
+        
+        
+        Generate macros in batches:
+        >>> mg = MacroGenerator(number_of_macros = 6)
         >>> mg.add_load('c:/Model.main.any')
-        >>> for i, macros in  enumerate( mg.generate_macros(batch = 2) ):
-        ...     print('batch {}:'.format(i)) 
-        ...     print(macros)
-        batch 0:
+        >>> macro_gen =  mg.generate_macros(batch_size = 2) 
+        >>> type(macro_gen)
+        <type 'generator'>
+        >>> for i, macros in enumerate( macro_gen ):
+        ...     print( 'Batch {}'.format(i) )
+        ...     pprint(macros)
+        Batch 0
         [[u'load "c:/Model.main.any"'], [u'load "c:/Model.main.any"']]
-        batch 1:
+        Batch 1
+        [[u'load "c:/Model.main.any"'], [u'load "c:/Model.main.any"']]
+        Batch 2
         [[u'load "c:/Model.main.any"'], [u'load "c:/Model.main.any"']]
         """        
-        if batch is None:
-            # Return everything in one list
-            batch = self.number_of_macros
-            return list(self._macro_generator(batch))[0]
+        if batch_size is None:
+           return list(self._macro_generator(0))
         else:
-            # Return an iterator
-            return self._macro_generator(batch)
-            
-        
-    def _macro_generator(self, batch = 1):
+            return self._macro_generator(batch_size)
+    
+    
+    def _macro_generator(self, batch = 0):
         """ Return a macro generator object"""
-        if batch is None:
-            batch = self.number_of_macros
-        macro_batch = []
-        for i_macro in range(self.number_of_macros):
-            macro_batch.append( self._build_macro(i_macro) )
-            
-            if i_macro % batch == batch-1:
-                if batch == self.number_of_macros:
-                    yield list(macro_batch)
-                else:
-                    yield macro_batch
-                macro_batch = []
+        assert(batch >= 0)
+        
+        self._restart_generator = True
+        while(self._restart_generator):
+            self._restart_generator = False
+            macro_batch = []
+            for i_macro in range(self.number_of_macros):
+                if self._restart_generator:
+                    break
+                if batch == 0:
+                    yield self._build_macro(i_macro)
+                else: 
+                    macro_batch.append( self._build_macro(i_macro) )
+                    if i_macro % batch == batch-1:
+                        yield macro_batch
+                        macro_batch = []
                 
         if len(macro_batch):
-            print('last')
-            yield macro_batch 
+            yield macro_batch
     
+    def reset(self):
+        self._restart_generator = True
+
     
 class MonteCarloMacroGenerator(MacroGenerator):
     """ Generates AnyScript macros for monte carlos studies. 
@@ -486,11 +513,23 @@ class MonteCarloMacroGenerator(MacroGenerator):
     >>> mg.add_load('c:/MyModel/model.main.any')
     >>> mg.add_set_value_random_norm('Main.Study.myvar', means = 2, stdvs = 0.1)
     >>> mg.add_run_operation('Main.Study.Kinematics')
-    >>> for line in mg.generate_macros(): print(line)
-    [u'load "c:/MyModel/model.main.any"', u'classoperation Main.Study.myvar "Set Value" --value="1.97904821591"', u'operation Main.Study.Kinematics', u'run']
-    [u'load "c:/MyModel/model.main.any"', u'classoperation Main.Study.myvar "Set Value" --value="2.05838057443"', u'operation Main.Study.Kinematics', u'run']
-    [u'load "c:/MyModel/model.main.any"', u'classoperation Main.Study.myvar "Set Value" --value="1.63150523305"', u'operation Main.Study.Kinematics', u'run']
-    [u'load "c:/MyModel/model.main.any"', u'classoperation Main.Study.myvar "Set Value" --value="1.94822964848"', u'operation Main.Study.Kinematics', u'run']
+    >>> pprint( mg.generate_macros())
+    [[u'load "c:/MyModel/model.main.any"',
+      u'classoperation Main.Study.myvar "Set Value" --value="1.97904821591"',
+      u'operation Main.Study.Kinematics',
+      u'run'],
+     [u'load "c:/MyModel/model.main.any"',
+      u'classoperation Main.Study.myvar "Set Value" --value="2.05838057443"',
+      u'operation Main.Study.Kinematics',
+      u'run'],
+     [u'load "c:/MyModel/model.main.any"',
+      u'classoperation Main.Study.myvar "Set Value" --value="1.63150523305"',
+      u'operation Main.Study.Kinematics',
+      u'run'],
+     [u'load "c:/MyModel/model.main.any"',
+      u'classoperation Main.Study.myvar "Set Value" --value="1.94822964848"',
+      u'operation Main.Study.Kinematics',
+      u'run']]
     
     Generate macros using a custom distribtuion from scipy.stats.distribtuion. 
     In this example we use a logistic distribution
@@ -500,11 +539,11 @@ class MonteCarloMacroGenerator(MacroGenerator):
     >>> log_dist = logistic( loc= [2,4,10],scale = [0.1,0.5,1] )
     >>> mg = MonteCarloMacroGenerator(number_of_macros=4)
     >>> mg.add_set_value_random('Main.MyVar', log_dist)
-    >>> for line in mg.generate_macros(): print(line)
-    [u'classoperation Main.MyVar "Set Value" --value="{1.96649895478,4.47303588492,0.924084750004}"']
-    [u'classoperation Main.MyVar "Set Value" --value="{1.91637851212,3.11986245798,7.71459079162}"']
-    [u'classoperation Main.MyVar "Set Value" --value="{1.8525504037,3.68069479813,9.58104766459}"']
-    [u'classoperation Main.MyVar "Set Value" --value="{2.01555799978,3.83695956934,10.7778636562}"']
+    >>> pprint( mg.generate_macros())
+    [[u'classoperation Main.MyVar "Set Value" --value="{1.96649895478,4.47303588492,0.924084750004}"'],
+     [u'classoperation Main.MyVar "Set Value" --value="{1.91637851212,3.11986245798,7.71459079162}"'],
+     [u'classoperation Main.MyVar "Set Value" --value="{1.8525504037,3.68069479813,9.58104766459}"'],
+     [u'classoperation Main.MyVar "Set Value" --value="{2.01555799978,3.83695956934,10.7778636562}"']]
 
     """    
 
@@ -675,15 +714,23 @@ class LatinHyperCubeMacroGenerator(MacroGenerator):
         >>> mg = LatinHyperCubeMacroGenerator(number_of_macros=8)
         >>> mg.add_set_value_LHS_uniform('Main.myvar1',1,2)
         >>> mg.add_set_value_LHS_uniform('Main.myvar2',10,10)
-        >>> for line in mg.generate_macros(): print(line)
-        [[u'classoperation Main.myvar1 "Set Value" --value="1.0991918685"', u'classoperation Main.myvar2 "Set Value" --value="7.6154232434"']]
-        [[u'classoperation Main.myvar1 "Set Value" --value="0.79656505284"', u'classoperation Main.myvar2 "Set Value" --value="10.673520917"']]
-        [[u'classoperation Main.myvar1 "Set Value" --value="1.354798628"', u'classoperation Main.myvar2 "Set Value" --value="9.181950908"']]
-        [[u'classoperation Main.myvar1 "Set Value" --value="0.53668897270"', u'classoperation Main.myvar2 "Set Value" --value="5.900405616"']]
-        [[u'classoperation Main.myvar1 "Set Value" --value="0.10425550117"', u'classoperation Main.myvar2 "Set Value" --value="13.597646795"']]
-        [[u'classoperation Main.myvar1 "Set Value" --value="1.5511130624"', u'classoperation Main.myvar2 "Set Value" --value="14.588084387"']]
-        [[u'classoperation Main.myvar1 "Set Value" --value="0.25002859370"', u'classoperation Main.myvar2 "Set Value" --value="12.106524375"']]
-        [[u'classoperation Main.myvar1 "Set Value" --value="1.756846898"', u'classoperation Main.myvar2 "Set Value" --value="6.6279157157"']]
+        >>> pprint( mg.generate_macros() )
+        [[u'classoperation Main.myvar1 "Set Value" --value="1.0991918685"',
+          u'classoperation Main.myvar2 "Set Value" --value="7.6154232434"'],
+         [u'classoperation Main.myvar1 "Set Value" --value="0.79656505284"',
+          u'classoperation Main.myvar2 "Set Value" --value="10.673520917"'],
+         [u'classoperation Main.myvar1 "Set Value" --value="1.354798628"',
+          u'classoperation Main.myvar2 "Set Value" --value="9.181950908"'],
+         [u'classoperation Main.myvar1 "Set Value" --value="0.53668897270"',
+          u'classoperation Main.myvar2 "Set Value" --value="5.900405616"'],
+         [u'classoperation Main.myvar1 "Set Value" --value="0.10425550117"',
+          u'classoperation Main.myvar2 "Set Value" --value="13.597646795"'],
+         [u'classoperation Main.myvar1 "Set Value" --value="1.5511130624"',
+          u'classoperation Main.myvar2 "Set Value" --value="14.588084387"'],
+         [u'classoperation Main.myvar1 "Set Value" --value="0.25002859370"',
+          u'classoperation Main.myvar2 "Set Value" --value="12.106524375"'],
+         [u'classoperation Main.myvar1 "Set Value" --value="1.756846898"',
+          u'classoperation Main.myvar2 "Set Value" --value="6.6279157157"']]
             
         """        
         if isinstance(means,list):
@@ -716,11 +763,15 @@ class LatinHyperCubeMacroGenerator(MacroGenerator):
         >>> mg = LatinHyperCubeMacroGenerator(number_of_macros=4)
         >>> mg.add_set_value_LHS('Main.myvar1',normdist)
         >>> mg.add_set_value_LHS('Main.myvar2', normdist)
-        >>> for line in mg.generate_macros(): print(line)
-        [[u'classoperation Main.myvar1 "Set Value" --value="{1.07895227633,3.41996355574,-0.0241255334168}"', u'classoperation Main.myvar2 "Set Value" --value="{1.24119096808,2.1047636289,2.00615775617}"']]
-        [[u'classoperation Main.myvar1 "Set Value" --value="{1.01284739969,3.29072197649,5.64666114098}"', u'classoperation Main.myvar2 "Set Value" --value="{0.970685113414,2.81380147984,4.35758342284}"']]
-        [[u'classoperation Main.myvar1 "Set Value" --value="{0.87423296579,2.54247201378,4.01716347152}"', u'classoperation Main.myvar2 "Set Value" --value="{1.04333421171,3.13228054445,5.42610272557}"']]
-        [[u'classoperation Main.myvar1 "Set Value" --value="{0.94656943816,2.78883239641,3.61249682803}"', u'classoperation Main.myvar2 "Set Value" --value="{0.856457591334,3.47384439353,3.80144358466}"']]
+        >>> pprint( mg.generate_macros() )
+        [[u'classoperation Main.myvar1 "Set Value" --value="{1.07895227633,3.41996355574,-0.0241255334168}"',
+          u'classoperation Main.myvar2 "Set Value" --value="{1.24119096808,2.1047636289,2.00615775617}"'],
+         [u'classoperation Main.myvar1 "Set Value" --value="{1.01284739969,3.29072197649,5.64666114098}"',
+          u'classoperation Main.myvar2 "Set Value" --value="{0.970685113414,2.81380147984,4.35758342284}"'],
+         [u'classoperation Main.myvar1 "Set Value" --value="{0.87423296579,2.54247201378,4.01716347152}"',
+          u'classoperation Main.myvar2 "Set Value" --value="{1.04333421171,3.13228054445,5.42610272557}"'],
+         [u'classoperation Main.myvar1 "Set Value" --value="{0.94656943816,2.78883239641,3.61249682803}"',
+          u'classoperation Main.myvar2 "Set Value" --value="{0.856457591334,3.47384439353,3.80144358466}"']]
             
         """        
 
@@ -746,14 +797,14 @@ class LatinHyperCubeMacroGenerator(MacroGenerator):
 
         self.LHS_factors += n_elem
 
-    def generate_macros(self, batch = 1):
+    def generate_macros(self, batch_size = None):
         try:
             import pyDOE
         except ImportError:
             raise ImportError('The pyDOE package must be install to use this class')
 
         self.lhd = pyDOE.lhs(self.LHS_factors, samples=self.number_of_macros)
-        return super(LatinHyperCubeMacroGenerator,self).generate_macros(batch)
+        return super(LatinHyperCubeMacroGenerator,self).generate_macros(batch_size)
         
         
         
