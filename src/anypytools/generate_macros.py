@@ -74,7 +74,7 @@ class MacroGenerator(object):
     """    
     def __init__(self, number_of_macros=1):
         assert(number_of_macros > 0)
-        self.macro_cmd_list = []
+        self._macro_cmd_list = []
         self.number_of_macros = number_of_macros
        
        
@@ -103,7 +103,7 @@ class MacroGenerator(object):
         if not isinstance(macro,list):
             macro = [macro]
         for macro_cmd in macro:
-            self.macro_cmd_list.append(macro_cmd)
+            self._macro_cmd_list.append(macro_cmd)
             
     def add_set_value(self,variable, value):
         """ Add a 'Set Value' macro command where the value is the same in all 
@@ -212,10 +212,11 @@ class MacroGenerator(object):
         """                
         no = self.number_of_macros
         if isinstance(start, np.ndarray):
+            assert start.shape == stop.shape, 'Start and stop must be similar'
             arr = np.array([np.linspace(i,j, no, endpoint) for i,j in zip(start,stop)])
-            values = (_ for _ in arr.T.squeeze() )
+            values = arr.T.squeeze()
         else:
-            values = (_ for _ in np.linspace(start,stop, no, endpoint) )
+            values = np.linspace(start,stop, no, endpoint)
         
         macro_generator = self._generator_set_value(var, values)
         self.add_macro(macro_generator)
@@ -392,7 +393,7 @@ class MacroGenerator(object):
     def _build_macro(self,i):
         """ Assemble the macro commands for the i'th  macro"""
         macro = []
-        for macro_cmd in self.macro_cmd_list:
+        for macro_cmd in self._macro_cmd_list:
             if isinstance(macro_cmd, basestring):
                 macro.append(macro_cmd)
             if isinstance(macro_cmd, types.GeneratorType):
@@ -445,27 +446,19 @@ class MacroGenerator(object):
         """ Return a macro generator object"""
         assert(batch >= 0)
         
-        self._restart_generator = True
-        while(self._restart_generator):
-            self._restart_generator = False
-            macro_batch = []
-            for i_macro in range(self.number_of_macros):
-                if self._restart_generator:
-                    break
-                if batch == 0:
-                    yield self._build_macro(i_macro)
-                else: 
-                    macro_batch.append( self._build_macro(i_macro) )
-                    if i_macro % batch == batch-1:
-                        yield macro_batch
-                        macro_batch = []
+        macro_batch = []
+        for i_macro in range(self.number_of_macros):
+            if batch == 0:
+                yield self._build_macro(i_macro)
+            else: 
+                macro_batch.append( self._build_macro(i_macro) )
+                if i_macro % batch == batch-1:
+                    yield macro_batch
+                    macro_batch = []
                 
         if len(macro_batch):
             yield macro_batch
     
-    def reset(self):
-        self._restart_generator = True
-
     
 class MonteCarloMacroGenerator(MacroGenerator):
     """ Generates AnyScript macros for monte carlos studies. 
