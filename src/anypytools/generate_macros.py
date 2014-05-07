@@ -64,19 +64,29 @@ class MacroGenerator(object):
              
     Parameters
     ----------
-    number_of_macros:
-        The number of macros to generate. M
+    number_of_macros: int
+        The number of macros to generate.
+    counter_token: string
+        A token in the macro commands that will be replace with a counter. If
+        the token is '{ID}' then all occurences of '{ID}' in the macros will be
+        replaced with a counter. 
+    reset_counter_for_each_batch: Bool
+        Specifies if the macro counter is reset if macros are generated in batch 
+        mode.
+    
         
     Returns
     -------
     A MacroGenerator object: 
         A MacroGenerator object for constructing the macro.       
     """    
-    def __init__(self, number_of_macros=1):
+    def __init__(self, number_of_macros=1, counter_token = None,
+                 reset_counter_for_each_batch = True):
         assert(number_of_macros > 0)
         self._macro_cmd_list = []
         self.number_of_macros = number_of_macros
-       
+        self._counter_token = counter_token
+        self._new_batch_resets_counter = reset_counter_for_each_batch
        
     def add_macro(self,macro):
         """ Add macro code to the generated macro.
@@ -267,6 +277,9 @@ class MacroGenerator(object):
             Dictionary of defines statements to set during load
         path_kw: dict
             Dictionary of path staements to set during load
+        counter_token: string
+            A string in the macro commands which will be replace with a counter
+            for every macro generated
             
         Examples:
         ---------
@@ -274,11 +287,19 @@ class MacroGenerator(object):
         >>> paths = {'DATA':'c:/MyModel/Data'}
         >>> defines = {'EXCLUDE_ARMS':None, 'N_STEP':20}
         >>> mg.add_load('c:/MyModel/model.main.any', defines, paths)
-        >>> print( mg.generate_macros())
+        >>> pprint( mg.generate_macros())
         [[u'load "c:/MyModel/model.main.any" -def EXCLUDE_ARMS="" -def N_STEP="20" -p DATA=---"c:/MyModel/Data"']]
+        
+        >>> mg = MacroGenerator( number_of_macros = 3, counter_token='{COUNTER}' )
+        >>> mg.add_load('c:/MyModel/model_{COUNTER}_.main.any')
+        >>> pprint( mg.generate_macros())
+        [[u'load "c:/MyModel/model_0_.main.any"'],
+         [u'load "c:/MyModel/model_1_.main.any"'],
+         [u'load "c:/MyModel/model_2_.main.any"']]
+        
         """
         load_cmd = ['load "{}"'.format(mainfile)]
-        
+                
         for key,value in define_kw.iteritems():   
             if isinstance(value,basestring):
                 load_cmd.append('-def %s=---"\\"%s\\""'% (key, value) )
@@ -390,19 +411,22 @@ class MacroGenerator(object):
         self.add_macro(['operation {}'.format(operation),'run'])
         
 
-    def _build_macro(self,i):
-        """ Assemble the macro commands for the i'th  macro"""
+    def _build_macro(self,i ):
+        """ Assemble the macro commands for the i'th macro,  """        
         macro = []
         for macro_cmd in self._macro_cmd_list:
             if isinstance(macro_cmd, basestring):
                 macro.append(macro_cmd)
             if isinstance(macro_cmd, types.GeneratorType):
-                macro.append(macro_cmd.next())
+                macro.append( next(macro_cmd) )
+            if self._counter_token is not None:
+                macro[-1] = macro[-1].replace(self._counter_token, str(i) )                
+                
         return macro
         
         
     def generate_macros(self, batch_size = None):
-        """ Generate the macros. Either as list (batch = None) or in batches 
+        """ Generate the macros. Either as list (batch_size = None) or in batches 
         as generator object (memory efficient when generating many macros)
                     
         Examples:
@@ -439,20 +463,24 @@ class MacroGenerator(object):
         if batch_size is None:
            return list(self._macro_generator(0))
         else:
-            return self._macro_generator(batch_size)
+           return self._macro_generator(batch_size)
     
     
-    def _macro_generator(self, batch = 0):
+    def _macro_generator(self, batch_size = 0):
         """ Return a macro generator object"""
-        assert(batch >= 0)
+        assert(batch_size >= 0)
         
         macro_batch = []
         for i_macro in range(self.number_of_macros):
-            if batch == 0:
+            if batch_size == 0:
                 yield self._build_macro(i_macro)
-            else: 
-                macro_batch.append( self._build_macro(i_macro) )
-                if i_macro % batch == batch-1:
+            else:
+                if self._new_batch_resets_counter:
+                    macro_counter = i_macro % batch_size
+                else:
+                    macro_counter = i_macro
+                macro_batch.append( self._build_macro(macro_counter) )
+                if macro_counter+1 >= batch_size:
                     yield macro_batch
                     macro_batch = []
                 
@@ -540,8 +568,8 @@ class MonteCarloMacroGenerator(MacroGenerator):
 
     """    
 
-    def __init__(self, number_of_macros=1):
-        super(self.__class__,self).__init__(number_of_macros)
+    def __init__(self, *args, **kwargs):
+        super(self.__class__,self).__init__(*args, **kwargs)
                 
     def add_set_value_random_uniform(self, variable, means, scale ):
         """ Add a 'Set Value' macro command where the value is chosen from a
@@ -680,8 +708,8 @@ class LatinHyperCubeMacroGenerator(MacroGenerator):
 
     """    
 
-    def __init__(self, number_of_macros=1): 
-        super(self.__class__,self).__init__(number_of_macros)
+    def __init__(self, *args, **kwargs): 
+        super(self.__class__,self).__init__(*args,**kwargs)
         self.LHS_factors = 0
         self.lhd = np.zeros((2,100))
         
@@ -806,9 +834,28 @@ class PertubationMacroGenerator(MacroGenerator):
     
     
     """
-    def __init__(self, number_of_macros=1):
-        super(self.__class__,self).__init__(number_of_macros)        
-                
+    def __init__(self, pertubationfactor = 1e-4):
+        super(self.__class__,self).__init__(number_of_macros = 1) 
+
+        self.pertubationfactor = pertubationfactor
+          
+          
+    def _generator_set_value_designvar(self, var, value, i_designvar):
+        for counter in range(self.number_of_macros):
+            if counter == i_designvar:
+                yield self._create_set_value_cmd(var, value+self.pertubationfactor)
+            else:
+                yield self._create_set_value_cmd(var, value)
+            
+          
+    def add_set_value_designvar(self,var, value):
+        
+        macro_generator = self._generator_set_value_designvar(var,value,
+                                                              self.number_of_macros)
+        self.number_of_macros += 1
+        self.add_macro(macro_generator)
+        
+        
     def add_set_value_range(self, var, start, stop, endpoint = True ) :
         no = self.number_of_macros
         if isinstance(start, np.ndarray):
@@ -822,11 +869,16 @@ class PertubationMacroGenerator(MacroGenerator):
         macro_generator = self._generator_set_value(var, values)
         self.add_macro(macro_generator)
 
-
     
 if __name__ == '__main__':
     
-    import doctest
-    doctest.testmod()
+    mg = PertubationMacroGenerator()
+    mg.add_set_value_designvar('test',1)
+    mg.add_set_value_designvar('test',2)
+
+    pprint(mg.generate_macros())
+#    
+#    import doctest
+#    doctest.testmod()
 
 
