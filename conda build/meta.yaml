@@ -1,10 +1,10 @@
 package:
   name: anypytools     # lower case name of package, may contain '-' but no spaces
-  version: 0.5        # version of package. Should use the PEP-386 verlib conventions.
+  version: 0.5.3      # version of package. Should use the PEP-386 verlib conventions.
 
 
 build:            # (optional)
-  number: 3                        # (optional, defaults to 0)
+  number: 0                       # (optional, defaults to 0)
 
 # the build and runtime requirements:
 requirements:     # (optional)
@@ -14,6 +14,7 @@ requirements:     # (optional)
     
 
   run:
+    - python
 
 #test:
 #  # Python imports
