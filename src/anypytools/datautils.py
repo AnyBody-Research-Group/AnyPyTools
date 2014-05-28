@@ -4,11 +4,16 @@ Created on Mon Jan 16 11:40:42 2012
 
 @author: mel
 """
+from __future__ import division, absolute_import, print_function, unicode_literals
+from .utils.py3k import * # @UnusedWildImport
+
+
+
 import os.path as op
 import csv
 import numpy as np
 import os
-import h5py_wrapper as h5py
+from . import h5py_wrapper as h5py
 from scipy.interpolate import interp1d
 
 
@@ -69,7 +74,7 @@ def open_anyoutputfile(filepath,DEBUG = False):
             fpos1 = fpos0
             fpos0 = anyoutputfile.tell()
         else:
-            if DEBUG: print "No numeric data in " + os.path.basename(filepath)
+            if DEBUG: print ( "No numeric data in " + os.path.basename(filepath) )
             return (None,None,None)
         # Read last line of the header section if there is a header
         if fpos0 != 0:

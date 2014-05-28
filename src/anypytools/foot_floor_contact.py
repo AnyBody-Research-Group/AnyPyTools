@@ -4,7 +4,8 @@ Created on Mon Jan 09 12:19:16 2012
 
 @author: melund
 """
-from __future__ import division
+from __future__ import division, absolute_import, print_function, unicode_literals
+from .utils.py3k import * # @UnusedWildImport
 
 import numpy as np
 import os
@@ -251,8 +252,8 @@ if __name__ == "__main__":
 
     ret1  = foot_contact_times("",f1,f2,f3,RHeel,LHeel,RToe,LToe,Sacral, os.getcwd(), 10, axis = ax)
     side, ret1  = find_events(f1,f2,f3,RHeel,LHeel,RToe,LToe,Sacral, 10, axis = ax)
-    print side
-    print ret1
+    print (side)
+    print (ret1)
     ax.plot(np.array(ret1),np.zeros((len(ret1),)), 'r^' )
     ax.plot(np.array(RHeel)[:,0] )
     ax.plot(np.array(LHeel)[:,0] )

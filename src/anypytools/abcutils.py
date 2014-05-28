@@ -5,7 +5,10 @@ Created on Fri Oct 19 21:14:59 2012
 @author: Morten
 """
 from __future__ import division, absolute_import, print_function, unicode_literals
-from .utils.py3k import * # @UnusedWildImport
+try:
+    from .utils.py3k import * # @UnusedWildImport
+except (ValueError, SystemError):
+    from utils.py3k import * # @UnusedWildImport
 
 
 
@@ -19,7 +22,10 @@ import time
 import signal
 import re
 import atexit
-import Queue
+try:
+    import Queue as queue
+except ImportError:
+    import queue
 import sys
 import types
 
@@ -51,8 +57,12 @@ atexit.register(_kill_running_processes)
 def get_anybodycon_path():
     """  Return the path to default AnyBody console application 
     """
-    import _winreg
-    abpath = _winreg.QueryValue(_winreg.HKEY_CLASSES_ROOT,
+    try: 
+        import winreg
+    except ImportError:
+        import _winreg as winreg
+    
+    abpath = winreg.QueryValue(winreg.HKEY_CLASSES_ROOT,
                     'AnyBody.AnyScript\shell\open\command')
     abpath = abpath.rsplit(' ',1)[0].strip('"')
     return os.path.join(os.path.dirname(abpath),'AnyBodyCon.exe')
@@ -85,7 +95,7 @@ def create_define_load_string(defines):
         raise TypeError 
     cmd_list = []        
     for key,value in defines.iteritems():   
-        if isinstance(value,basestring):
+        if isinstance(value,string_types):
             cmd_list.append('-def %s=---"\\"%s\\""'% (key, value) )
         else:
             cmd_list.append('-def %s="%d"'% (key, value) )
@@ -341,9 +351,9 @@ class AnyPyProcess():
             is run
         """        
         
-        if isinstance(loadmacro, basestring):
+        if isinstance(loadmacro, string_types):
             loadmacro = loadmacro.splitlines()
-        if isinstance(mainmacro, basestring):
+        if isinstance(mainmacro, string_types):
             mainmacro = mainmacro.splitlines()
         
         if not isinstance(inputs,dict):
@@ -459,7 +469,7 @@ class AnyPyProcess():
         self.results = dict()
         
         # Extend the folderlist if search_subdir is given
-        if isinstance(search_subdirs,basestring) and isinstance(folderlist[0], basestring):
+        if isinstance(search_subdirs,string_types) and isinstance(folderlist[0], string_types):
             tmplist = []
             for folder in folderlist:
                tmplist.extend(getsubdirs(folder, search_string = search_subdirs) )
@@ -467,7 +477,7 @@ class AnyPyProcess():
         
         # Wrap macro in extra list if necessary
         if isinstance(macrolist, list):
-            if isinstance(macrolist[0], basestring):
+            if isinstance(macrolist[0], string_types):
                 macrolist = [macrolist]
             number_of_macros = len(macrolist)
             
@@ -503,7 +513,7 @@ class AnyPyProcess():
         
         output = []
         for i in range(len(self.results)):
-            if self.results.has_key(i):
+            if i in self.results:
                 output.append(self.results[i])
         
         return output
@@ -526,7 +536,7 @@ class AnyPyProcess():
 
 
         
-    def _worker (self, task, queue=None):
+    def _worker (self, task, task_queue):
         """ Executes AnyBody console application on the task object
         """
 #        task = task[0]        
@@ -541,7 +551,7 @@ class AnyPyProcess():
                                          suffix='.anymcr',
                                          dir = task.folder,
                                          delete = False)
-        macrofile.write('\n'.join(task.macro))
+        macrofile.write( '\n'.join(task.macro).encode('UTF-8') )
         macrofile.flush()
             
         anybodycmd = [os.path.realpath(self.anybodycon_path), '--macro=', macrofile.name, '/ni', ' '] 
@@ -557,7 +567,7 @@ class AnyPyProcess():
                 proc.terminate()
                 proc.communicate()
                 tmplogfile.seek(0,2)
-                tmplogfile.write('ERROR: Timeout. Terminate by batch processor')
+                tmplogfile.write('ERROR: Timeout. Terminate by batch processor'.encode('UTF-8') )
                 break
             time.sleep(0.3)
         else:
@@ -567,7 +577,7 @@ class AnyPyProcess():
         processtime = int(time.clock()-starttime)
         
         tmplogfile.seek(0)
-        rawoutput = "\n".join(tmplogfile.readlines())
+        rawoutput = "\n".join( s.decode('UTF-8') for s in tmplogfile.readlines() )
         tmplogfile.close()
         macrofile.close()
                 
@@ -587,14 +597,14 @@ class AnyPyProcess():
             with NamedTemporaryFile(mode='w+b', prefix ='output_',
                                     suffix='.log',  dir = task.folder,
                                     delete = False) as logfile:
-                logfile.write(rawoutput)
+                logfile.write(rawoutput.encode('UTF-8'))
                 logfile_path = logfile.name
         else:
             logfile_path = None
         
         task.processtime = processtime
         task.log = logfile_path
-        task.error = output.has_key('ERROR')
+        task.error = 'ERROR' in output
         task.process_number =process_number
         
         
@@ -607,10 +617,10 @@ class AnyPyProcess():
             self.results = dict()        
 #        for outvar in task.outputs:
 #            if output.has_key(outvar):
-        if not self.results.has_key(task.number):
+        if task.number not in self.results:
             self.results[task.number] = dict()
         self.results[task.number] = output  
-        queue.put(task)
+        task_queue.put(task)
 
 
             
@@ -621,7 +631,7 @@ class AnyPyProcess():
         if len(tasklist) == 0:
             return ([],[], 0)
         starttime = time.clock()    
-        queue = Queue.Queue()
+        task_queue = queue.Queue()
         totaltasks = len(tasklist)
         pbar = ProgressBar(totaltasks)
         if self.disp:
@@ -636,25 +646,25 @@ class AnyPyProcess():
     
         
         # run until all the threads are done, and there is no data left
-        while threads or tasklist or queue.qsize():
+        while threads or tasklist or task_queue.qsize():
             # if we aren't using all the processors AND there is still data left to
             # compute, then spawn another thread
             if (len(threads) < self.num_processes) and tasklist:
                 if self.num_processes > 1 and totaltasks > 1:
-                    t = Thread(target=_worker, args=tuple([tasklist.pop(0),queue]))
+                    t = Thread(target=_worker, args=tuple([tasklist.pop(0),task_queue]))
                     t.daemon = True
                     t.start()
                     threads.append(t)
                 else:
-                    _worker(tasklist.pop(0),queue)
+                    _worker(tasklist.pop(0),task_queue)
     		# in the case that we have the maximum number of threads check if any of them
     		# are done. (also do this when we run out of data, until all the threads are done)
             else:
                 for thread in threads:
                     if not thread.isAlive():
                         threads.remove(thread)
-            while queue.qsize() > 0:
-                task = queue.get() 
+            while task_queue.qsize() > 0:
+                task = task_queue.get() 
                 if task.error:
                     failed_tasks.append( task )
                 else:
@@ -716,7 +726,8 @@ def _parse_anybodycon_output(strvar):
         if line.startswith('ERROR') or line.startswith('Error'): 
             if line.endswith('Path does not exist.'):
                 continue # hack to avoid detecting #path error this error which is always present
-            if not out.has_key('ERROR'): out['ERROR'] = []
+            if 'ERROR' not in out:
+                out['ERROR'] = []
             out['ERROR'].append(line)
     return out
         
@@ -750,7 +761,7 @@ class ProgressBar:
     def animate(self, iter, failed = 0):
         self.update_iteration(iter,failed)
         if _run_from_ipython():
-            clear_output()
+            clear_output(wait=True)
         print('\r', self, end="")
         sys.stdout.flush()
 

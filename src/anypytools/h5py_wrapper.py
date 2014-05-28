@@ -4,12 +4,16 @@ Created on Mon Jan 16 11:40:42 2012
 
 @author: mel
 """
+from __future__ import division, absolute_import, print_function, unicode_literals
+from .utils.py3k import * # @UnusedWildImport
+
 from h5py import Group as BaseGroup, Dataset as BaseDataset, File as BaseFile
 from h5py import *
 
 def _follow_reftarget(elem):
-    completename = elem.attrs['CompleteName'].replace('.','/')
-    reftarget = elem.attrs['RefTarget'].replace('.','/')
+    completename = elem.attrs['CompleteName']
+    completename = completename.replace(b'.',b'/')
+    reftarget = elem.attrs['RefTarget'].replace(b'.',b'/')
     prefix = completename[:-len(elem.name)]
     h5target = reftarget[len(prefix):]
     elem = elem.file[h5target]
@@ -155,4 +159,4 @@ if __name__ == '__main__':
     outvars = ['/Output/Validation/EMG'] 
         
     for data, filename in h5_trial_data(outvars):
-        print data.keys()
+        print( data.keys() )
