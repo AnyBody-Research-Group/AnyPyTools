@@ -11,7 +11,7 @@ from setuptools import setup
 setup(
     name='AnyPyTools',
     version='0.5.4',
-    install_requires=['scipy', 'numpy','h5py'],
+    install_requires=['numpy','scipy'],
     py_modules=['anypytools.abcutils', 'anypytools.h5py_wrapper',
                 'anypytools.datautils', 'anypytools.genereate_macros', 
                 'anypytools.utils.py3k'],
@@ -22,10 +22,8 @@ setup(
     author='Morten Lund',
     author_email='melund@gmail.com',
     description='A library of python utilities for the AnyBody Modeling System',
-#    long_description=open('README.rst').read(),
     license='MIT',
-    keywords=('AnyBody Modeling System '
-              'AnyScript'),
+    keywords=('AnyBody Modeling System ', 'AnyScript'),
     url='https://github.com/AnyBody-Research-Group/AnyPyTools',
     classifiers=[
         'Development Status :: 1 - Alpha',
@@ -34,6 +32,6 @@ setup(
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: MIT License',
         'Operating System :: Windows',
-        'Topic :: Scientific/Engineering',
-        ],
+        'Topic :: Scientific/Engineering'
+        ]
     )
