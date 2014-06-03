@@ -1,8 +1,11 @@
+
 mkdir src
 cd src
 xcopy "%RECIPE_DIR%"\..\src . /S/Y/I
 cd ..
 xcopy "%RECIPE_DIR%"\..\setup.py . /S/Y/I
+
+
 
 "%PYTHON%" setup.py install
 
@@ -19,3 +22,4 @@ cd "%PREFIX%"
 mkdir Menu
 copy "%RECIPE_DIR%\menu-windows_manual.json" "%PREFIX%\Menu\AnyPyToolsTutorial.json"
 copy "%RECIPE_DIR%\..\anypytools.ico" "%PREFIX%\Menu\anypytools.ico"
+
