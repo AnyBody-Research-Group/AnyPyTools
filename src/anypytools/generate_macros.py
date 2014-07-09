@@ -15,30 +15,14 @@ pprint = py3k_pprint
 import numpy as np
 from scipy.stats import distributions
 from numpy.random import random, seed
-import types
 
-def _list2anyscript(arr):
-    def tostr(v):
-        return '{:.12g}'.format(v)
+try:
+    from .utils import array2anyscript
+except (ValueError, SystemError):
+    from utils import array2anyscript
     
-    def createsubarr(arr):
-        outstr = ""
-        if isinstance(arr, np.ndarray):
-            if len(arr) == 1:
-                return tostr(arr[0])
-            outstr += '{'
-            for row in arr:
-                outstr += createsubarr(row)
-            outstr = outstr[0:-1] + '},'
-            return outstr
-        else:
-            return outstr + tostr(arr)+','      
-    if isinstance(arr, np.ndarray) :
-        return createsubarr(arr)[0:-1]
-    elif isinstance( arr, float):
-        return tostr(arr)
-    else:
-        return str(arr)
+from types import GeneratorType
+
 
 def _isgenerator(x):
     return isinstance(x, types.GeneratorType)
@@ -226,12 +210,17 @@ class MacroGenerator(object):
         no = self.number_of_macros
         if isinstance(start, np.ndarray):
             assert start.shape == stop.shape, 'Start and stop must be similar'
-            arr = np.array([np.linspace(i,j, no, endpoint) for i,j in zip(start,stop)])
-            values = arr.T.squeeze()
+            valuelist = []
+            for start_val, stop_val in zip(start.flatten(), stop.flatten() ):
+                arr = np.linspace(start_val,stop_val, self.number_of_macros, endpoint)
+                valuelist.append(arr)
+            valuelist = np.array(valuelist).T
+            
+            valuelist = [subarr.reshape(start.shape) for subarr in valuelist ]
         else:
-            values = np.linspace(start,stop, no, endpoint)
+            valuelist = np.linspace(start,stop, no, endpoint).tolist()
         
-        macro_generator = self._generator_set_value(var, values)
+        macro_generator = self._generator_set_value(var, valuelist)
         self.add_macro(macro_generator)
     
     
@@ -240,7 +229,7 @@ class MacroGenerator(object):
         if isinstance(val,list):
             val = np.array(val)
         if isinstance(val, np.ndarray):
-            val = _list2anyscript(val)
+            val = array2anyscript(val)
         if isinstance(val,float):
             val = '{:.12g}'.format(val)
         return 'classoperation {0} "Set Value" --value="{1}"'.format(var,val)
@@ -271,7 +260,8 @@ class MacroGenerator(object):
         variables: string or list of strings
             The anyscript values to create a 'Dump' macro command for
         include_in_macro: integer or list of integers
-            Specifices which macros [0,1,2....] to include the dump command.
+            Specifices in which macros [0,1,2....NumberOfMacros] to include the
+            dump command.
             If None, the command is included in all macros.
             
             
@@ -460,7 +450,7 @@ class MacroGenerator(object):
         for elem in self._macro_cmd_list:
             if isinstance(elem, string_types):
                 macro.append(elem)
-            elif isinstance(elem, types.GeneratorType):
+            elif isinstance(elem, GeneratorType):
                 macro_cmd = next(elem)
                 if macro_cmd is not None:  
                     macro.append( macro_cmd )
@@ -783,20 +773,20 @@ class LatinHyperCubeMacroGenerator(MacroGenerator):
         >>> pprint( mg.generate_macros() )
         [['classoperation Main.myvar1 "Set Value" --value="1"',
           'classoperation Main.myvar2 "Set Value" --value="10"'],
-         ['classoperation Main.myvar1 "Set Value" --value="1.0991918685"',
-          'classoperation Main.myvar2 "Set Value" --value="7.6154232434"'],
-         ['classoperation Main.myvar1 "Set Value" --value="0.79656505284"',
-          'classoperation Main.myvar2 "Set Value" --value="10.673520917"'],
-         ['classoperation Main.myvar1 "Set Value" --value="1.354798628"',
-          'classoperation Main.myvar2 "Set Value" --value="9.181950908"'],
-         ['classoperation Main.myvar1 "Set Value" --value="0.53668897270"',
-          'classoperation Main.myvar2 "Set Value" --value="5.900405616"'],
-         ['classoperation Main.myvar1 "Set Value" --value="0.10425550117"',
-          'classoperation Main.myvar2 "Set Value" --value="13.597646795"'],
-         ['classoperation Main.myvar1 "Set Value" --value="1.5511130624"',
-          'classoperation Main.myvar2 "Set Value" --value="14.588084387"'],
-         ['classoperation Main.myvar1 "Set Value" --value="0.25002859370"',
-          'classoperation Main.myvar2 "Set Value" --value="12.106524375"']]
+         ['classoperation Main.myvar1 "Set Value" --value="{1.09919186856}"',
+          'classoperation Main.myvar2 "Set Value" --value="{7.61542324346}"'],
+         ['classoperation Main.myvar1 "Set Value" --value="{0.796565052844}"',
+          'classoperation Main.myvar2 "Set Value" --value="{10.6735209175}"'],
+         ['classoperation Main.myvar1 "Set Value" --value="{1.3547986286}"',
+          'classoperation Main.myvar2 "Set Value" --value="{9.1819509088}"'],
+         ['classoperation Main.myvar1 "Set Value" --value="{0.536688972704}"',
+          'classoperation Main.myvar2 "Set Value" --value="{5.9004056168}"'],
+         ['classoperation Main.myvar1 "Set Value" --value="{0.104255501176}"',
+          'classoperation Main.myvar2 "Set Value" --value="{13.5976467955}"'],
+         ['classoperation Main.myvar1 "Set Value" --value="{1.55111306243}"',
+          'classoperation Main.myvar2 "Set Value" --value="{14.5880843877}"'],
+         ['classoperation Main.myvar1 "Set Value" --value="{0.250028593704}"',
+          'classoperation Main.myvar2 "Set Value" --value="{12.1065243755}"']]
             
         """        
         if isinstance(means,list):
@@ -926,6 +916,6 @@ if __name__ == '__main__':
 #
 #    pprint(mg.generate_macros())
 #    
-    import doctest
-    doctest.testmod()
+    import pytest
+    pytest.main(str('generate_macros.py --doctest-modules'))
 
