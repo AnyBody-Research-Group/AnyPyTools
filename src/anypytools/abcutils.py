@@ -237,181 +237,6 @@ class AnyPyProcess():
         self.keep_logfiles = keep_logfiles
     
 
-    def start_pertubation_job(self, loadmacro, mainmacro, inputs, outputs,
-                            perturb_factor = 10e-5):
-        """ Starts a pertubation batch job and return a list petubated ouputs.
-        
-        Runs an AnyBody model while pertubing the inputs to find the 
-        sensitivity of the given outputs. This is usefull to calculate 
-        the gradient when wrapping AnyBody models in an optimization loop.
-
-        Parameters
-        ----------
-        loadmacro : list of strings
-                list of macro commands that load the anybody 
-                model. I.e. 'load "MyModel.main.any'
-        mainmacro : list of strings 
-                list with macro commands that execute the anybody model.
-        inputs :  List of tuples   
-                List of tuples specifying the anybody input variables and
-                their values. For example:
-                ``[('Main.study.param1',1.4), ('Main.study.param2',3.1)]``
-        outputs : list of strings
-                List of anybody variables to observe the output.
-                For example: ``['Main.study.output.MaxMuscleActivty']``
-        pertub_factorn : float, optional
-                The value used to perturb the input variables. 
-                
-        Returns
-        -------
-        (objective, pertubations) :
-            objective : dictionary
-                dictionary object with an entry for each output variable.
-                The dictionary holds the value of the output variable after
-                evalutation at the input variables. 
-            pertubations: dictionary
-                dictionary object with an entry for each output
-                variable. Each enrty holds a list with the same length as 
-                'inputs', with the model's responce to the pertubed inputs. 
-                
-        Examples
-        --------
-        >>> import anypytools
-        >>> app = anypytools.abcutils.AnyPyProcess()        
-        >>> loadmcr = ['load "mymodel.main.any"']
-        >>> mainmcr = ['operation Main.study.Inversedynamics', 'run']
-        >>> input = [('Main.study.param1',1.4), ('Main.study.param2',3.1)]
-        >>> out = ['Main.study.output.MaxMuscleActivty']
-        >>> (objval, pert) = app.start_pertubation_job(loadmcr,mainmcr,input,out)
-        >>> objective = objval[ out[0] ]
-        >>> pertubation = pert[ out[0] ]
-        """
-        from collections import OrderedDict        
-        if isinstance(inputs, dict):
-            raise TypeError('inputs argument must be a list of tuples')
-        
-        inputs = OrderedDict(inputs)        
-        # inputs must be an ordered dictionary in order to interpret the 
-        for k,v in inputs.iteritems():
-            if isinstance(v,list):
-                if len(v) != 1:
-                    raise TypeError('inputs argument have the incorrect type')
-            else:
-                inputs[k]=[inputs[k]]
-        for index in range(len(inputs)):
-            for i,key in enumerate(inputs.keys() ):
-                unpert_value = inputs[key][0]
-                if i ==index:
-                    inputs[key].append(unpert_value*(1+perturb_factor))
-                else:
-                    inputs[key].append(unpert_value)
-        
-        result =  self.start_param_job(loadmacro, mainmacro, inputs, outputs)
-        objective = dict()
-        pertubations = dict()
-        # All the first elements correspond to objective functions                                  
-        for key in result.keys():
-            objective[key] = result[key][0]
-            pertubations[key] = result[key][1:]
-        
-        return (objective, pertubations)
-        
-        
-    def start_param_job(self, loadmacro, mainmacro, inputs = {}, outputs = [],
-                        folder = None):
-        """ start_param_job(loadmacro, mainmacro, inputs = {}, ouputs = {})
-        
-        Starts a parameter job. Runs an AnyBody model multiple times with a 
-        number of different input parameters.
-        
-        Parameters
-        ----------
-        loadmacro: list of strings
-            list of macro commands that load the anybodymodel. 
-            I.e. ``load "MyModel.main.any"``
-        mainmacro: list of strings
-            string or list with macro commands that execute the  anybody model.
-            For example: ``['operation Main.study.Inversedynamics', 'run']``
-        inputs: list of tuples
-            List of tuples specifying the anybody input variables and
-            a list of values to evalutate. For example: the following will
-            run the model three times each time setting the two parameters.
-            
-            >>>inputs = [ ('Main.study.param1',[1.4,1.6,1.8]), ('Main.study.param2',[3.1,3.5,3.9])  ]
-
-
-        outputs: List of anybody variables to observe the output.
-                 For example: ``['Main.study.output.MaxMuscleActivty']``
-        
-        Returns
-        -------
-        result :           
-            dictionary object with an entry for each output variable. The
-            dictionary holds lists with output variables for each time the model
-            is run
-        """        
-        
-        if isinstance(loadmacro, string_types):
-            loadmacro = loadmacro.splitlines()
-        if isinstance(mainmacro, string_types):
-            mainmacro = mainmacro.splitlines()
-        
-        if not isinstance(inputs,dict):
-            inputs= dict(inputs)
-               
-        # Check format of inputs
-        ntask = None
-        if len(inputs) > 0:
-            for key, value in inputs.iteritems():
-                if isinstance(value, list ):
-                    pass
-                else:
-                    value = [value]
-                    inputs[key] = value
-                if ntask is None: ntask = len(value)
-                if ntask != len(value):
-                    raise ValueError('All inputs must have the same length')
-        else:
-            ntask = 1
-        self.results = dict()
-        tasklist = []
-        outputmacro = []
-        if len(outputs):
-            for varname in outputs:
-                outputmacro.append('classoperation %s "Dump All" ' % varname)        
-        for itask in range(ntask):
-            inputmacro = []
-            if len(inputs):
-                for varname, value in inputs.iteritems():
-                    valuestr = _list2anyscript(value[itask])
-                    inputmacro.append('classoperation %s "Set Value" --value="%s"' %(varname,valuestr) )
-#                inputmacro.append('classoperation Main "Update Values"')
-            newtask = _Task(folder, macro = loadmacro+inputmacro+mainmacro+outputmacro+['exit'],  
-                           taskname = str(itask), outputs = outputs,
-                           number = itask, keep_logfiles = self.keep_logfiles )
-            tasklist.append(newtask)             
-            
-        try:
-            self._schedule_processes(tasklist, self._worker)
-        except KeyboardInterrupt:
-            print('User interuption: Kiling running processes')
-            _kill_running_processes()
-            raise KeyboardInterrupt
-        
-        # Collect results        
-        returnvar = dict()
-        if len(self.results):
-            for outvar in outputs:
-                if not returnvar.has_key(outvar): returnvar[outvar] = []
-                for itask in range(ntask):
-                    if self.results.has_key(itask):
-                        vararray = np.array(self.results[itask][outvar] )
-                        returnvar[outvar].append(vararray)
-                    else:
-                        returnvar[outvar].append(None)
-        return returnvar
-
-    
     
     def start_macro(self, macrolist, folderlist = None, search_subdirs = None,
                     number_of_macros = None):
@@ -731,23 +556,6 @@ def _parse_anybodycon_output(strvar):
             out['ERROR'].append(line)
     return out
         
-def _list2anyscript(arr):
-    def createsubarr(arr):
-        outstr = ""
-        if isinstance(arr, np.ndarray):
-            if len(arr) == 1:
-                return str(arr[0])
-            outstr += '{'
-            for row in arr:
-                outstr += createsubarr(row)
-            outstr = outstr[0:-1] + '},'
-            return outstr
-        else:
-            return outstr + str(arr)+','      
-    if isinstance(arr, np.ndarray) :
-        return createsubarr(arr)[0:-1]
-    else:
-        return str(arr)
 
 
 class ProgressBar:
@@ -774,7 +582,6 @@ class ProgressBar:
             self.prog_bar += ' ({0} Errors)'.format(number_failed)
             
             
-
     def __update_amount(self, new_amount):
         percent_done = int(round((new_amount / 100.0) * 100.0))
         all_full = self.width - 2
@@ -789,64 +596,8 @@ class ProgressBar:
         return str(self.prog_bar)
 
 
-def test():
-#    ap =AnyProcess('test.any')
-#    design1= DesignVar('Main.TestVar1', 1)
-#    design2 = DesignVar('Main.TestVar2', np.random.rand(1,3))
-#
-#    
-#    out =  ap.start(inputs = [design1,design2],
-#                   macrocmds= ['operation MyStudy.Kinematics',\
-#                               'run'],
-#                   outputs = [ 'Main.MyStudy.Output.Abscissa.t',\
-#                               'Main.MyStudy.nStep']
-#                  )    
-
-    # test batch processor
-    from anypytools import abcutils 
-    from numpy import array, random
-    import os.path as op
-    
-#    print 'Test batch job'
-#    basepath = op.join( op.dirname(abcutils.__file__), 'test_models')
-#    app = AnyPyProcess(basepath, num_processes = 1)
-#    mcr = ['load "Demo.Arm2D.any"',
-#           'operation ArmModelStudy.InverseDynamics',
-#           'run',
-#           'exit']
-#    app.start_batch_job(mcr)
-    
-    print('Test param job')
-    basepath = op.join( op.dirname(abcutils.__file__), 'test_models')
-    app = AnyPyProcess(num_processes = 10, keep_logfiles = False)
-    loadmcr = ['load "Demo.Arm2D.any"']
-    mainmcr = ['operation ArmModelStudy.InverseDynamics',
-              'run']
-#    invars= {'Main.ArmModel.Loads.HandLoad.F': [array([0,0,-40]),array([10,0,-40])],
-#              'Main.ArmModel.Segs.LowerArm.Brachialis.sRel': [array([-0.1, 0, 0 ]),array([-0.09, 0, 0 ]) ] }
-    invars = {'Main.ArmModel.Segs.LowerArm.Brachialis.sRel':
-                  list( array([-0.1,0,0]) +  0.03* random.randn(100,1)) }
-    outvars = [ 'Main.ArmModelStudy.Output.Model.Muscles.Brachialis.Activity']
-    res = app.start_param_job(loadmcr, mainmcr, invars, outvars, folder=basepath)   
-    print("")
-    
-    try:
-        import matplotlib.pyplot as plt 
-        plt.plot(res.values()[0][3],'r--', linewidth=6)
-    
-        for data in res.values()[0]:
-            plt.plot(data)
-        #plt.axis([0,100 , 0, 1])
-        plt.show()
-    except ImportError:
-        pass
-
-
 
 
 if __name__ == '__main__':
-#    for data,header,filename in csv_trial_data('C:\Users\mel\SMIModelOutput', DEBUG= True):
-#        print header
-    test()    
-#    outvars = ['/Output/Validation/EMG'] 
+    pass
         
