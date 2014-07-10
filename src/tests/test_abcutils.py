@@ -67,6 +67,8 @@ class TestAnyPyProcess():
     def test_start_macro_generator_input(self, init_simple_model, default_macro):
         n_macros = 5
         def generate_macros():
+            """Generator that returns macros
+            """
             for i in range(n_macros):
                 yield default_macro[0]
         
@@ -95,7 +97,21 @@ class TestAnyPyProcess():
             assert 'ERROR' not in result
             
         
+    def test_start_macro_cached(self,init_simple_model):
+        macro = [['load "model.main.any"',
+                 'operation Main.ArmModelStudy.InverseDynamics',
+                 'classoperation Main.ArmModelStudy.Output.MaxMuscleActivity "Dump"', 
+                 'classoperation Main.ArmModel.GlobalRef.t "Dump"'], 
+                 ['load "model.main.any"',
+                 'operation Main.ArmModelStudy.InverseDynamics',
+                 'classoperation Main.ArmModelStudy.Output.MaxMuscleActivity "Dump"', 
+                 'classoperation Main.ArmModel.GlobalRef.t "Dump"']]
         
+        app = AnyPyProcess(disp = False)
+
+        output = app.start_macro(macro)
+        assert False
+
         
 if __name__ == '__main__':
-    test_list2anyscript() 
+    pytest.main(str( 'test_abcutils.py'))    

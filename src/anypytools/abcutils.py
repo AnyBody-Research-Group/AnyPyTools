@@ -7,9 +7,12 @@ Created on Fri Oct 19 21:14:59 2012
 from __future__ import division, absolute_import, print_function, unicode_literals
 try:
     from .utils.py3k import * # @UnusedWildImport
+    from .utils import make_hash
 except (ValueError, SystemError):
     from utils.py3k import * # @UnusedWildImport
+    from .utils import make_hash
 
+import copy
 
 
 
@@ -18,6 +21,7 @@ from subprocess import Popen
 import numpy as np
 from tempfile import NamedTemporaryFile, TemporaryFile
 from threading import Thread
+from functools import wraps
 import time 
 import signal
 import re
@@ -119,29 +123,38 @@ class _Task():
     Attributes:
         folder: directory in which the macro is executed
         macro: list of macro commands to executre
-        outputs: list of anybody variables to collect from the console output
         number: id number of the task
-        keep_logfiles: true if log files should not be deleted
         name: name of the task, which is used for printing status informations
     """
     def __init__(self,folder=None, macro = [], 
-                 taskname = None, outputs = [], number = 1,
-                 keep_logfiles = False):
+                 taskname = None, number = 1):
         """ Init the Task class with the class attributes
         """
         self.folder = folder
         if folder is None:
             self.folder = os.getcwd()
         self.macro = macro
-        self.outputs = outputs
+        self.output = None
         self.number = number
-        self.keep_logfiles = keep_logfiles
+        self.logfile = None
+        self.processtime = 0
         self.name = taskname
         if taskname is None:
             head, folder = os.path.split(folder)
             parentfolder = os.path.basename(head)
-            self.name = parentfolder+'/'+folder
-
+            self.name = parentfolder+'/'+folder + str(number)
+    
+                             
+    def get_output(self, task_info = False):
+        out = self.output
+        if task_info is True:
+            out['task_info']  = dict(logfile = self.logfile,
+                                processtime = self.processtime,
+                                taskname = self.name,
+                                macro = self.macro,
+                                index = self.number,
+                                workdir = self.folder)
+        return out
             
     
 class AnyPyProcess():
@@ -179,10 +192,10 @@ class AnyPyProcess():
         Defaults to 1 hour
     ignore_errors:
         List of AnyBody Errors to ignore when running the models
+    return_task_info: bool
+        Return the task status information when running macros 
     disp:
         Set to False to suppress output
-    verbose:
-        Set to True to enable more display masseges
         
     Returns
     -------
@@ -192,22 +205,44 @@ class AnyPyProcess():
     """    
     def __init__(self, num_processes = get_ncpu(), 
                  anybodycon_path = get_anybodycon_path(), stop_on_error = True,
-                 timeout = 3600, disp = True, verbose = False, ignore_errors = [],
-                 keep_logfiles = False):
+                 timeout = 3600, disp = True, ignore_errors = [],
+                 return_task_info = False,
+                 keep_logfiles = False, cache_dir = None):
         self.anybodycon_path = anybodycon_path
         self.stop_on_error = stop_on_error
         self.num_processes = num_processes
         self.counter = 0
         self.disp = disp
-        self.verbose = verbose
         self.timeout = timeout
+        self.return_task_info = return_task_info 
         self.ignore_errors = ignore_errors
         self.keep_logfiles = keep_logfiles
-    
+        self.cache_dir = None
 
     
+    def cache_results(arg1, arg2, arg3):
+        def _cach_result(f):
+            print( "Inside wrap()")
+            @wraps(f)
+            def wrapper(self, *args, **kwargs):
+                print("Inside wrapped_f()" )
+                print("Decorator arguments:", arg1, arg2, arg3 )
+                macro = args[0]
+                if 'cache_mode' in kwargs:
+                    print(kwargs['cache_mode'])
+                print( make_hash(macro) ) 
+                output = f(self,*args,**kwargs)
+                return output
+                print("After f(*args)")
+            return wrapper
+        return _cach_result
+
+    
+    
+    
+    @cache_results(1,2,3)
     def start_macro(self, macrolist, folderlist = None, search_subdirs = None,
-                    number_of_macros = None):
+                    number_of_macros = None, cache_mode = 'r',**kwargs ):
         """ 
         app.start_marco(macrolist, folderlist = None, search_subdirs =None )        
         
@@ -232,6 +267,8 @@ class AnyPyProcess():
         number_of_macros:
             Number of macros in macrolist. Must be specified if macrolist
             is a genertors expression. 
+        cache_mode: 
+            Determines the mode when cache_results
                         
             For example:
                         
@@ -259,7 +296,6 @@ class AnyPyProcess():
             
         #create a list of tasks
         tasklist = []
-        self.results = dict()
         
         # Extend the folderlist if search_subdir is given
         if isinstance(search_subdirs,string_types) and isinstance(folderlist[0], string_types):
@@ -273,9 +309,7 @@ class AnyPyProcess():
             if isinstance(macrolist[0], string_types):
                 macrolist = [macrolist]
             number_of_macros = len(macrolist)
-            
-        number_of_tasks = number_of_macros * len(folderlist)
-        
+                    
         def generate_tasks(macros, folders):
             taskid = 0
             for i_macro, macro in enumerate(macros):
@@ -287,40 +321,37 @@ class AnyPyProcess():
                     else:
                         taskname = None
                     yield _Task(folder, macro, taskname = taskname,
-                                    number = taskid,
-                                    keep_logfiles=self.keep_logfiles)
+                                    number = taskid)
                     taskid += 1
 
+
         tasklist = list(generate_tasks(macrolist, folderlist) )
+        assert len(tasklist) == number_of_macros * len(folderlist)
         
         
         # Start batch processing
         try:
             (completed,failed, duration) = self._schedule_processes(tasklist,
-                                                                self._worker)
+                                                                    self._worker)
             self._print_summery(completed,failed,duration)
         except KeyboardInterrupt:
             print('User interuption: Kiling running processes')
         _kill_running_processes()    
         
+        # Sort the tasklist 
+        def get_key(task):
+            return task.number
+        tasklist= sorted(completed+failed, key= get_key)
         
-        output = []
-        for i in range(len(self.results)):
-            if i in self.results:
-                output.append(self.results[i])
         
-        return output
-    
+        return [task.get_output(task_info = self.return_task_info ) for task in tasklist]
+        
+        
     def _print_summery(self, completed_tasks, failed_tasks,duration):
         if self.disp is False:
             return
-        
-        if self.verbose is True:
-            tasklist = completed_tasks + failed_tasks
-        else:
-            tasklist = failed_tasks
         print('')
-        for entry in _summery(tasklist,duration ):
+        for entry in _summery(failed_tasks,duration ):
             if  _run_from_ipython():
                 display(HTML(entry))
             else:
@@ -386,7 +417,7 @@ class AnyPyProcess():
                 del output['ERROR']
         
         
-        if task.keep_logfiles or 'ERROR' in output:
+        if self.keep_logfiles or 'ERROR' in output:
             with NamedTemporaryFile(mode='w+b', prefix ='output_',
                                     suffix='.log',  dir = task.folder,
                                     delete = False) as logfile:
@@ -396,7 +427,7 @@ class AnyPyProcess():
             logfile_path = None
         
         task.processtime = processtime
-        task.log = logfile_path
+        task.logfile = logfile_path
         task.error = 'ERROR' in output
         task.process_number =process_number
         
@@ -406,13 +437,7 @@ class AnyPyProcess():
         except:
             print( 'Error removing macro file')
 
-        if not hasattr(self, 'results'):
-            self.results = dict()        
-#        for outvar in task.outputs:
-#            if output.has_key(outvar):
-        if task.number not in self.results:
-            self.results[task.number] = dict()
-        self.results[task.number] = output  
+        task.output = output
         task_queue.put(task)
 
 
@@ -484,15 +509,15 @@ def _summery(tasks,duration=None):
         entry += '{2!s}sec :{0} n={1!s} : '.format(task.name,
                                                     task.number,
                                                     task.processtime)            
-        if task.log is not None:
+        if task.logfile is not None:
             if _run_from_ipython():
                 entry += '(<a href= "{0}">{1}</a> \
                                     <a href= "{2}">dir</a>)\
                                    '.format(task.log,
-                                        os.path.basename(task.log),
-                                        os.path.dirname(task.log) )
+                                        os.path.basename(task.logfile),
+                                        os.path.dirname(task.logfile) )
             else:                        
-                entry += '( {0} )'.format(os.path.basename(task.log))
+                entry += '( {0} )'.format(os.path.basename(task.logfile))
         summery.append(entry)
     
     if duration is not None:
