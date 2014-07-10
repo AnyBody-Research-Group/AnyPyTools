@@ -82,40 +82,8 @@ def _run_from_ipython():
  
 
 
-def create_define_load_string(defines):
-    """ Creates a string for setting defines statements in AnyBody Macros.    
-    
-    Args: 
-        defines: dictionary with {define_variable: Define value/string}
-    Returns: 
-        formatted string for setting the define statements in a macro 
-        load command    
-    """
-    if not isinstance(defines, dict):
-        raise TypeError 
-    cmd_list = []        
-    for key,value in defines.iteritems():   
-        if isinstance(value,string_types):
-            cmd_list.append('-def %s=---"\\"%s\\""'% (key, value) )
-        else:
-            cmd_list.append('-def %s="%d"'% (key, value) )
-    return ' '.join(cmd_list)
 
-def create_path_load_string(paths):
-    """ Creates a string for setting path statements in AnyBody Macros.    
-    
-    Args: 
-        defines: dictionary with path staments {path_variable: directory_path}
-    Returns: 
-        formatted string for setting the path statements in a macro 
-        load command    
-    """    
-    if not isinstance(paths, dict):
-        raise TypeError 
-    cmd_list = []        
-    for key,value in paths.iteritems():   
-        cmd_list.append('-p %s=---"%s"'% (key, value.replace('\\','\\\\')) )
-    return ' '.join(cmd_list)
+
 
     
 
