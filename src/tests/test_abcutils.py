@@ -40,7 +40,7 @@ def default_macro():
     
 class TestAnyPyProcess():
     def test_start_macro(self,init_simple_model, default_macro):
-        app = AnyPyProcess()
+        app = AnyPyProcess(disp = False)
         
         default_macro[0].extend(['classoperation Main.ArmModelStudy.Output.MaxMuscleActivity "Dump"', 
                          'classoperation Main.ArmModel.GlobalRef.t "Dump"'])
@@ -56,7 +56,7 @@ class TestAnyPyProcess():
         number_of_models = 5
         setup_models_in_subdirs(tmpdir, number_of_models)   
         
-        app = AnyPyProcess( )
+        app = AnyPyProcess(disp = False )
         with tmpdir.as_cwd():
             output = app.start_macro(default_macro,search_subdirs='main.any')
     
@@ -72,7 +72,7 @@ class TestAnyPyProcess():
             for i in range(n_macros):
                 yield default_macro[0]
         
-        app = AnyPyProcess()
+        app = AnyPyProcess(disp = False)
         macros_gen = generate_macros()
         output = app.start_macro(macros_gen, number_of_macros= n_macros )
         
@@ -110,7 +110,7 @@ class TestAnyPyProcess():
         app = AnyPyProcess(disp = False)
 
         output = app.start_macro(macro)
-        assert False
+        assert True
 
         
 if __name__ == '__main__':

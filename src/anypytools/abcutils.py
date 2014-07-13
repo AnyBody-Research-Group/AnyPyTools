@@ -51,7 +51,7 @@ def _kill_running_processes():
     for pid in _pids:
         try:
             os.kill(pid, signal.SIGTERM)
-            print('Kill AnyBodyCon Process. PID: ', pid, ' : Done')
+            print('Kill AnyBodyCon Process. PID: ', pid)
         except:
             pass
     _pids.clear()
@@ -139,6 +139,7 @@ class _Task():
         self.logfile = None
         self.processtime = 0
         self.name = taskname
+        self.error = False
         if taskname is None:
             head, folder = os.path.split(folder)
             parentfolder = os.path.basename(head)
@@ -222,18 +223,19 @@ class AnyPyProcess():
     
     def cache_results(arg1, arg2, arg3):
         def _cach_result(f):
-            print( "Inside wrap()")
+            #print( "Inside wrap()")
             @wraps(f)
             def wrapper(self, *args, **kwargs):
-                print("Inside wrapped_f()" )
-                print("Decorator arguments:", arg1, arg2, arg3 )
+                #print("Inside wrapped_f()" )
+                #print("Decorator arguments:", arg1, arg2, arg3 )
                 macro = args[0]
                 if 'cache_mode' in kwargs:
-                    print(kwargs['cache_mode'])
-                print( make_hash(macro) ) 
+                    pass
+                    #print(kwargs['cache_mode'])
+                #print( make_hash(macro) ) 
                 output = f(self,*args,**kwargs)
                 return output
-                print("After f(*args)")
+                #print("After f(*args)")
             return wrapper
         return _cach_result
 
@@ -328,38 +330,41 @@ class AnyPyProcess():
         tasklist = list(generate_tasks(macrolist, folderlist) )
         assert len(tasklist) == number_of_macros * len(folderlist)
         
+        process_time = self._schedule_processes(tasklist, self._worker)
         
-        # Start batch processing
-        try:
-            (completed,failed, duration) = self._schedule_processes(tasklist,
-                                                                    self._worker)
-            self._print_summery(completed,failed,duration)
-        except KeyboardInterrupt:
-            print('User interuption: Kiling running processes')
-        _kill_running_processes()    
+        self._print_summery(tasklist,process_time)
         
-        # Sort the tasklist 
-        def get_key(task):
-            return task.number
-        tasklist= sorted(completed+failed, key= get_key)
-        
-        
+                
         return [task.get_output(task_info = self.return_task_info ) for task in tasklist]
         
         
-    def _print_summery(self, completed_tasks, failed_tasks,duration):
+    def _print_summery(self, tasks ,duration):
         if self.disp is False:
             return
         print('')
-        for entry in _summery(failed_tasks,duration ):
-            if  _run_from_ipython():
-                display(HTML(entry))
-            else:
-                print(entry)
-
-
-
+        unfinished_tasks = [t for t in tasks if t.processtime == 0]
+        failed_tasks = [t for t in tasks if t.error ]
         
+        def _display(line):
+            if  _run_from_ipython():
+                display(HTML('<div STYLE="font-family: Courier; line-height:90%;">'+line+'</div>'))
+            else:
+                print(line)
+            
+        if len(failed_tasks):
+            print('Tasks with errors: {:d}'.format(len(failed_tasks)) )
+        for task in failed_tasks:
+            _display( _summery(task) ) 
+        
+        if len(unfinished_tasks):
+            print('Tasks that did not complete: {:d}'.format(len(unfinished_tasks)) )
+        for task in unfinished_tasks:
+            _display( _summery(task) ) 
+
+        if duration is not None:
+            print( 'Total time: {:d} seconds'.format(duration))
+
+
     def _worker (self, task, task_queue):
         """ Executes AnyBody console application on the task object
         """
@@ -398,7 +403,7 @@ class AnyPyProcess():
             if proc.pid in _pids:
                 _pids.remove(proc.pid)
         
-        processtime = int(time.clock()-starttime)
+        processtime = round(time.clock()-starttime, 2)
         
         tmplogfile.seek(0)
         rawoutput = "\n".join( s.decode('UTF-8') for s in tmplogfile.readlines() )
@@ -446,84 +451,92 @@ class AnyPyProcess():
        
 
     def _schedule_processes(self, tasklist, _worker):
+        # Make a shallow copy of the task list, so we don't mess with the callers
+        # list. 
+        number_tasks = len(tasklist)
+        tasklist = copy.copy(tasklist)
         if len(tasklist) == 0:
             return ([],[], 0)
+            
+        if number_tasks > 1 and self.num_processes > 1:
+            use_threading = True
+        else: 
+            use_threading = False
+            
         starttime = time.clock()    
         task_queue = queue.Queue()
-        totaltasks = len(tasklist)
-        pbar = ProgressBar(totaltasks)
         if self.disp:
-            pbar = ProgressBar(totaltasks)
+            pbar = ProgressBar(number_tasks)
             pbar.animate(0)
+        
+        processed_tasks = []
+        no_erros = 0
         threads = []
-        completed_tasks = []
-        failed_tasks = []
-        
-        
-        # #lse start the tasks in threads
-    
-        
-        # run until all the threads are done, and there is no data left
-        while threads or tasklist or task_queue.qsize():
-            # if we aren't using all the processors AND there is still data left to
-            # compute, then spawn another thread
-            if (len(threads) < self.num_processes) and tasklist:
-                if self.num_processes > 1 and totaltasks > 1:
-                    t = Thread(target=_worker, args=tuple([tasklist.pop(0),task_queue]))
-                    t.daemon = True
-                    t.start()
-                    threads.append(t)
-                else:
-                    _worker(tasklist.pop(0),task_queue)
-    		# in the case that we have the maximum number of threads check if any of them
-    		# are done. (also do this when we run out of data, until all the threads are done)
-            else:
-                for thread in threads:
-                    if not thread.isAlive():
-                        threads.remove(thread)
-            while task_queue.qsize() > 0:
-                task = task_queue.get() 
-                if task.error:
-                    failed_tasks.append( task )
-                else:
-                    completed_tasks.append(task )
-                if self.disp:
-                    pbar.animate(len(completed_tasks)+len(failed_tasks), 
-                             len(failed_tasks))
-            time.sleep(0.5)
-                
-        totaltime = int(time.clock()-starttime)
-        return (completed_tasks, failed_tasks, totaltime)
-    
-    
-def _summery(tasks,duration=None):
 
-    summery = []
-    for task in tasks:
-        entry = ''
-        if task.error:
-            entry += 'Failed '
-        else:
-            entry += 'Completed '
-            
-        entry += '{2!s}sec :{0} n={1!s} : '.format(task.name,
-                                                    task.number,
-                                                    task.processtime)            
-        if task.logfile is not None:
-            if _run_from_ipython():
-                entry += '(<a href= "{0}">{1}</a> \
-                                    <a href= "{2}">dir</a>)\
-                                   '.format(task.log,
-                                        os.path.basename(task.logfile),
-                                        os.path.dirname(task.logfile) )
-            else:                        
-                entry += '( {0} )'.format(os.path.basename(task.logfile))
-        summery.append(entry)
+        
+        try:
+            # run until all the threads are done, and there is no data left in
+            # the queue
+            while threads or tasklist or task_queue.qsize():
+                # if we aren't using all the processors AND there is still data left to
+                # compute, then spawn another thread
+                if (len(threads) < self.num_processes) and tasklist:
+                    if use_threading == True:
+                        t = Thread(target=_worker, 
+                                   args=tuple([tasklist.pop(0),task_queue]))
+                        t.daemon = True
+                        t.start()
+                        threads.append(t)
+                    else:
+                        _worker(tasklist.pop(0),task_queue)
+        		# in the case that we have the maximum number of running threads
+                 # or we run out tasks. Check if any of them are done. 
+                else:
+                    for thread in threads:
+                        if not thread.isAlive():
+                            threads.remove(thread)
+                while task_queue.qsize() > 0:
+                    task = task_queue.get() 
+                    processed_tasks.append(task)
+                    if task.error:
+                        no_erros += 1
+                    if self.disp:
+                        pbar.animate( len(processed_tasks),  no_erros)
+                time.sleep(0.2)
+        except KeyboardInterrupt:
+            if len(processed_tasks) < number_tasks:
+                print('\nUser interupted')
+                _kill_running_processes()    
+        
+        totaltime = int(time.clock()-starttime)
+        
+        return totaltime
     
-    if duration is not None:
-        summery.append('Total time: {0} seconds'.format(duration))
     
-    return summery
+def _summery(task,duration=None):
+
+    entry = ''
+    if task.processtime == 0:
+        entry += 'Not completed '
+    elif task.error:
+        entry += 'Failed '
+    else:
+        entry += 'Completed '
+        
+    entry += '{2!s}sec :{0} n={1!s} : '.format(task.name,
+                                                task.number,
+                                                task.processtime)            
+    if task.logfile is not None:
+        if _run_from_ipython():
+            entry += '(<a href= "{0}">{1}</a> \
+                                <a href= "{2}">dir</a>)\
+                               '.format(task.logfile,
+                                    os.path.basename(task.logfile),
+                                    os.path.dirname(task.logfile) )
+        else:                        
+            entry += '( {0} )'.format(os.path.basename(task.logfile))
+    
+    return entry
 
 def _parse_anybodycon_output(strvar):
     out = {};
