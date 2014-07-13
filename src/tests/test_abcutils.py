@@ -110,7 +110,7 @@ class TestAnyPyProcess():
         app = AnyPyProcess(disp = False)
 
         output = app.start_macro(macro)
-        assert True
+        assert Fals
 
         
 if __name__ == '__main__':
