@@ -208,7 +208,7 @@ class AnyPyProcess():
                  anybodycon_path = get_anybodycon_path(), stop_on_error = True,
                  timeout = 3600, disp = True, ignore_errors = [],
                  return_task_info = False,
-                 keep_logfiles = False, cache_dir = None):
+                 keep_logfiles = False, logfile_prefix = '', cache_dir = None):
         self.anybodycon_path = anybodycon_path
         self.stop_on_error = stop_on_error
         self.num_processes = num_processes
@@ -218,6 +218,7 @@ class AnyPyProcess():
         self.return_task_info = return_task_info 
         self.ignore_errors = ignore_errors
         self.keep_logfiles = keep_logfiles
+        self.logfile_prefix = logfile_prefix
         self.cache_dir = None
 
     
@@ -376,7 +377,7 @@ class AnyPyProcess():
             raise IOError('Unable to find folder: ' + task.folder)
         
         macrofile = NamedTemporaryFile(mode='w+b',
-                                         prefix ='macro_',
+                                         prefix ='{}'.format(self.logfile_prefix+'_'),
                                          suffix='.anymcr',
                                          dir = task.folder,
                                          delete = False)
@@ -429,10 +430,7 @@ class AnyPyProcess():
         
         logfile_path = None
         if self.keep_logfiles or 'ERROR' in output:
-            logfilename = macrofile.name[::-1].replace('.anymcr'[::-1],'.log'[::-1],1)[::-1]
-            logfilename = logfilename[::-1].replace('macro_'[::-1],'output_'[::-1],1)[::-1]
-            
-            with open(logfilename,'w') as logfile:
+            with open(os.path.splitext(macrofile.name)[0]+'.log','w+b') as logfile:
                 logfile.write(rawoutput.encode('UTF-8'))
                 logfile_path = logfile.name
         
