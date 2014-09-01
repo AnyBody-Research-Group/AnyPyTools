@@ -14,7 +14,7 @@ setup(
     install_requires=['numpy','scipy'],
     py_modules=['anypytools.abcutils', 'anypytools.h5py_wrapper',
                 'anypytools.datautils', 'anypytools.genereate_macros', 
-                'anypytools.utils.py3k'],
+                'anypytools.utils.py3k', 'anypytools.utils.pytest_plugin'],
     scripts=['src/scripts/pp2any.py'],
     packages=['anypytools'],
     package_dir={'': 'src'},
@@ -22,7 +22,7 @@ setup(
     # the following makes a plugin available to pytest
     entry_points = {
         'pytest11': [
-            'anytest = anypytools.testsupport.pytest_plugin',
+            'anypytools = anypytools.utils.pytest_plugin',
         ]
     },
     author='Morten Lund',
