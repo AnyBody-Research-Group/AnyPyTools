@@ -10,7 +10,7 @@ try:
     from .utils import make_hash
 except (ValueError, SystemError):
     from utils.py3k import * # @UnusedWildImport
-    from .utils import make_hash
+    from utils import make_hash
 
 import copy
 
@@ -232,7 +232,7 @@ class AnyPyProcess():
                 if 'cache_mode' in kwargs:
                     pass
                     #print(kwargs['cache_mode'])
-                #print( make_hash(macro) ) 
+                print( make_hash(macro) ) 
                 output = f(self,*args,**kwargs)
                 return output
                 #print("After f(*args)")
@@ -242,7 +242,7 @@ class AnyPyProcess():
     
     
     
-    @cache_results(1,2,3)
+    #@cache_results(1,2,3)
     def start_macro(self, macrolist, folderlist = None, search_subdirs = None,
                     number_of_macros = None, cache_mode = 'r',**kwargs ):
         """ 
@@ -410,37 +410,38 @@ class AnyPyProcess():
         tmplogfile.close()
         macrofile.close()
                 
+        if not self.keep_logfiles:
+            try:
+                os.remove(macrofile.name) 
+            except:
+                print( 'Error removing macro file')
+                
         output = _parse_anybodycon_output(rawoutput)
-        
+
         # Remove any ERRORs which should be ignored
         if 'ERROR' in output:
             def check_error(error_string):
                 return all( [(err not in error_string) for err in self.ignore_errors])
-            output['ERROR'][:] = [_ for _ in output['ERROR'] if check_error(_)]
+            output['ERROR'][:] = [err for err in output['ERROR'] if check_error(err)]
 
-            if len( output['ERROR'] ) == 0:
+            if not output['ERROR']:
                 del output['ERROR']
         
-        
+        logfile_path = None
         if self.keep_logfiles or 'ERROR' in output:
-            with NamedTemporaryFile(mode='w+b', prefix ='output_',
-                                    suffix='.log',  dir = task.folder,
-                                    delete = False) as logfile:
+            logfilename = macrofile.name[::-1].replace('.anymcr'[::-1],'.log'[::-1],1)[::-1]
+            logfilename = logfilename[::-1].replace('macro_'[::-1],'output_'[::-1],1)[::-1]
+            
+            with open(logfilename,'w') as logfile:
                 logfile.write(rawoutput.encode('UTF-8'))
                 logfile_path = logfile.name
-        else:
-            logfile_path = None
         
         task.processtime = processtime
         task.logfile = logfile_path
         task.error = 'ERROR' in output
         task.process_number =process_number
         
-        
-        try:
-            os.remove(macrofile.name) 
-        except:
-            print( 'Error removing macro file')
+
 
         task.output = output
         task_queue.put(task)
@@ -528,8 +529,8 @@ def _summery(task,duration=None):
                                                 task.processtime)            
     if task.logfile is not None:
         if _run_from_ipython():
-            entry += '(<a href= "{0}">{1}</a> \
-                                <a href= "{2}">dir</a>)\
+            entry += '(<a href= "{0}" target="_blank">{1}</a> \
+                                <a href= "{2}" target="_blank">dir</a>)\
                                '.format(task.logfile,
                                     os.path.basename(task.logfile),
                                     os.path.dirname(task.logfile) )
