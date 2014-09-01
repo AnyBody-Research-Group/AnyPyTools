@@ -10,7 +10,7 @@ from setuptools import setup
 
 setup(
     name='AnyPyTools',
-    version='0.5.4',
+    version='0.5.5',
     install_requires=['numpy','scipy'],
     py_modules=['anypytools.abcutils', 'anypytools.h5py_wrapper',
                 'anypytools.datautils', 'anypytools.genereate_macros', 
@@ -19,6 +19,12 @@ setup(
     packages=['anypytools'],
     package_dir={'': 'src'},
     package_data={'anypytools': ['test_models/Demo.Arm2D.any']},
+    # the following makes a plugin available to pytest
+    entry_points = {
+        'pytest11': [
+            'anytest = anypytools.testsupport.pytest_plugin',
+        ]
+    },
     author='Morten Lund',
     author_email='melund@gmail.com',
     description='A library of python utilities for the AnyBody Modeling System',
