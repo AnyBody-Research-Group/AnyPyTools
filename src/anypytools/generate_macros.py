@@ -383,7 +383,8 @@ class MacroGenerator(object):
         >>> pprint( mg.generate_macros())
         [['classoperation Main.MyStudy.Kinematics "Load design" --file="c:/design.txt"']]
         """
-        self.add_macro('classoperation {} "Load design" --file="{}"'.format(operation, filename))
+        self.add_macro('classoperation {} "Load design" '
+                       '--file="{}"'.format(operation, filename))
 
     def add_save_values(self, filename):
         """ Create a Save Values macro command.
