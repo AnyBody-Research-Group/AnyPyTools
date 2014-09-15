@@ -411,11 +411,6 @@ class AnyPyProcess():
         tmplogfile.close()
         macrofile.close()
                 
-        if not self.keep_logfiles:
-            try:
-                os.remove(macrofile.name) 
-            except:
-                print( 'Error removing macro file')
                 
         output = _parse_anybodycon_output(rawoutput)
 
@@ -433,11 +428,16 @@ class AnyPyProcess():
             with open(os.path.splitext(macrofile.name)[0]+'.log','w+b') as logfile:
                 logfile.write(rawoutput.encode('UTF-8'))
                 logfile_path = logfile.name
+        else:
+            try:
+                os.remove(macrofile.name) 
+            except:
+                print( 'Error removing macro file')
         
         task.processtime = processtime
         task.logfile = logfile_path
         task.error = 'ERROR' in output
-        task.process_number =process_number
+        task.process_number = process_number
         
 
 
