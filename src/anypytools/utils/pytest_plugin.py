@@ -34,55 +34,81 @@ def get_ammr_version(ammr_path):
         vstring = "Unknown AMMR version"
     return vstring
 
-        
-@pytest.yield_fixture(scope='module')
-def copyfiles(request, test_dir):
-    if request.config.getoption('--inplace'):
-        # No need to copy files if test is allready run inplace.
-        yield
-    model_folder = request.fspath.new(basename='')
-    src_files = os.listdir( str( model_folder) )
-    for file_name in src_files:
-        if file_name.endswith('.py') and file_name.find('test') != -1:
-            continue
-        full_file_name = os.path.join( str( model_folder), file_name)
-        if (os.path.isfile(full_file_name) and file_name.find('_test')):
-            shutil.copy(full_file_name, str(test_dir))
-        if os.path.isdir(full_file_name):
-            dest = os.path.join(str(test_dir), file_name)
-            shutil.copytree(full_file_name,dest, 
-                            ignore=shutil.ignore_patterns('test_*.py','*_test.py'))
-    yield
 
-@pytest.yield_fixture(scope='module')
+
+def copy_files(src_dir, dst_dir):
+    src_dir = str(src_dir)
+    dst_dir = str(dst_dir)
+    dirlist = os.listdir( src_dir )
+    for name in dirlist:
+        if name.endswith('.py') and name.find('test') != -1:
+            continue
+        full_name = os.path.join( src_dir, name)
+        if (os.path.isfile(full_name) and name.find('_test')):
+            shutil.copy(full_name, dst_dir)
+        if os.path.isdir(full_name):
+            dst_subdir = os.path.join(dst_dir, name)
+            shutil.copytree(full_name,dst_subdir, 
+                            ignore=shutil.ignore_patterns('test_*.py','*_test.py'))
+
+
+        
+@pytest.fixture(scope='module')
+def copyfiles(request, test_dir):
+    if request.config.getoption('--inplace') or request.getoption('--copyfiles'):
+        # No need to copy files if test is allready run inplace, or if it
+        # is done as a global option.
+        pass
+    else:
+        model_folder = request.fspath.new(basename='')
+        copy_files(model_folder, test_dir)
+    return test_dir
+
+
+
+@pytest.fixture(scope='module')
 def test_dir(request):
     model_folder = request.fspath.new(basename='')
-    if request.config.getoption('--inplace'):
-        yield model_folder
+    if ( request.config.getoption('--inplace') 
+         and not request.config.getoption('--inplace')):
+        return model_folder
     else:
         tempdir = request.config._tmpdirhandler.mktemp(model_folder.basename,
                                                    numbered=True)
-        yield tempdir
+        return tempdir
+
+@pytest.fixture(scope='module')
+def model_dir(request, test_dir):
+    model_folder = request.fspath.new(basename='')
+    if (request.config.getoption('--copyfiles') ):
+        copy_files(model_folder, test_dir)
+        model_folder = test_dir
+    return model_folder
+
 
 def pytest_addoption(parser):
-    parser.addoption("--ammr", action="store", default="built-in",
+    group = parser.getgroup("anypytools", "testing AnyBody models")
+
+    group._addoption("--ammr", action="store", default="built-in", metavar="path",
         help="AMMR used in test: built-in or path-to-ammr")
-    parser.addoption("--anybodycon", action="store", default="default",
+    group._addoption("--anybodycon", action="store", default="default", metavar="path",
         help="anybodycon.exe used in test: default or path-to-anybodycon")
-    parser.addoption("--inplace", action="store_true",
-        help="Run test in place, i.e. do not copy folder")
-
-
-@pytest.yield_fixture()
-def anymocap(request, scope="session"):  
-    anymocap_path = os.path.join(os.getcwd(), 'Model', 'AnyMocapModel.any')
-    yield anymocap_path
-        
-
-  
-def pytest_report_header(config):
-    return '\nAnyPyTools Test Plugin\n'
+    group._addoption("--inplace", action="store_true",
+        help="Run tests in place. The macro file will be placed together with "
+             "the model files. It becomes the responsobility of the model to "
+             "ensure that the correct path statements are set.")
+    group._addoption("--copyfiles", action="store_true",
+        help=("Copy all test files to temp dir before test." 
+              "This option has no effect if --inplace is set.") )
+    group._addoption("--ammrdirs", action="append", default=[], metavar="path",
+           help="add AMMR path to test for. (still under test)")
     
+    parser.addini('ammrdirs', 'list of ammr paths to test against.', type="pathlist")
+
+
+#def pytest_report_header(config):
+#    return '\nAnyPyTools Test Plugin\n'
+#    
 
 
 def pytest_configure(config):
@@ -90,44 +116,36 @@ def pytest_configure(config):
     if anybodycon_path == 'default':
         anybodycon_path = get_anybodycon_path()
 
-    ammr_path = config.getoption("--ammr")
-    if ammr_path == 'built-in':
-        ammr_path = os.path.join(os.path.dirname(get_anybodycon_path()),'AMMR')
-
-    if not os.path.exists(ammr_path):
-        raise IOError('Cound not find: {}'.format(ammr_path))
     if not os.path.isfile(anybodycon_path):
         raise IOError('Cound not find: {}'.format(anybodycon_path))
     
     console_output = subprocess.check_output([anybodycon_path, '/ni'])
     ams_version = console_output.splitlines()[2].decode()[23:]
-    ammr_version = get_ammr_version(ammr_path)
-    setattr(config, 'ammr_path', ammr_path)
-    setattr(config, 'ammr_version', ammr_version)
     setattr(config, 'anybodycon_version', ams_version)
     setattr(config,'anybodycon_path', anybodycon_path)
     
 
 class AnyTestFixture():
-    def __init__(self, test_dir, model_dir, app, ammr, anymocap):
+    def __init__(self, test_dir, model_dir, app, ammr):
         self.app = app
         self.ammr = ammr
-        self.anymocap = anymocap
         self.model_path = model_dir
         self.test_dir = test_dir
         self.macro_gen = MacroGenerator()
+        self.path_kw = {'AMMR_PATH':ammr,
+                        'TEMP_PATH': test_dir, 
+                        'ANYBODY_PATH_OUTPUT':test_dir}
+        self.define_kw = {}
 
        
     def load_macro(self,mainfile,define={},path={}):
         main_path = os.path.join(self.model_path,mainfile)
         load_str = 'load "{}" '.format(main_path)
-        path['AMMR_PATH'] = self.ammr
-        path['ANYMOCAP'] = self.anymocap
-        path['TEMP_PATH'] = self.test_dir
-        path['ANYBODY_PATH_OUTPUT'] = self.test_dir
-        for key,value in path.items():
+        self.path_kw.update(path)
+        self.define_kw.update(define)
+        for key,value in self.path_kw.items():
             load_str += self.path2str(key,value)+" "
-        for key,value in define.items():
+        for key,value in self.define_kw.items():
             load_str += self.define2str(key,value)+" "
         return load_str
 
@@ -155,18 +173,58 @@ class AnyTestFixture():
         
         
         
+@pytest.fixture(scope='session')
+def ammr(request):
+    ammr_path = request.config.getoption("--ammr")
+    if ammr_path == 'built-in':
+        ammr_path = os.path.join(os.path.dirname(get_anybodycon_path()),'AMMR')
+    if not os.path.exists(ammr_path):
+        raise IOError('Cound not find: {}'.format(ammr_path))
+    ammr_version = get_ammr_version(ammr_path)
+
+    return ammr_path
+        
+        
+@pytest.fixture(scope='session')
+def anybodycon(request):
+    anybodycon_path = request.config.getoption("--anybodycon")
+    if anybodycon_path == 'default':
+        anybodycon_path = get_anybodycon_path()
+    if not os.path.isfile(anybodycon_path):
+        raise IOError('Cound not find: {}'.format(anybodycon_path))
+    console_output = subprocess.check_output([anybodycon_path, '/ni'])
+    ams_version = console_output.splitlines()[2].decode()[23:]
+    return anybodycon_path
+        
+
+        
 @pytest.yield_fixture()
-def anytest(request, anymocap, test_dir):  
+def anytest(request, test_dir, model_dir, ammr, anybodycon):  
     #global _anybodycon_path, _ammr_path
     
-    ammr = request.config.ammr_path
-    model_dir = request.fspath.new(basename='')
+    ammr_path = ammr
+    abc_path = anybodycon
     
-    app = AnyPyProcess( anybodycon_path = request.config.anybodycon_path,
-                        keep_logfiles=True,
+    if (request.config.getoption('--inplace') 
+          and not request.config.getoption('--copyfiles') ):
+        # Don't keep log files if test are not copied and inplace option is set.
+        # This avoids clutter in the model directory
+        keep_files = False
+    else:
+        keep_files = True
+        
+    
+    
+    app = AnyPyProcess( anybodycon_path = abc_path,
+                        keep_logfiles = keep_files,
                         logfile_prefix = request.function.__name__, 
                         disp=False)
     
-    atf = AnyTestFixture(str(test_dir), str(model_dir), app, ammr, anymocap)
+    atf = AnyTestFixture(str(test_dir), str(model_dir), app, ammr_path)
+    if request.config.getoption('--inplace'):
+        atf.path_kw = {}
+        atf.model_path = ''
+        
+    
     with test_dir.as_cwd():
         yield atf
