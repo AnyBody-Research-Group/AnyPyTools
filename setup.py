@@ -15,7 +15,7 @@ setup(
     py_modules=['anypytools.abcutils', 'anypytools.h5py_wrapper',
                 'anypytools.datautils', 'anypytools.genereate_macros', 
                 'anypytools.utils.py3k', 'anypytools.utils.pytest_plugin',
-                'anypytools.utils.support_functions.py'],
+                'anypytools.utils.support_functions'],
     scripts=['src/scripts/pp2any.py'],
     packages=['anypytools'],
     package_dir={'': 'src'},
