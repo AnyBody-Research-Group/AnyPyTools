@@ -71,34 +71,51 @@ def open_anyoutputfile(filepath,DEBUG = False):
             const,value= _parse_anyoutputfile_constants(row)
             if const is not None:
                 constants[const] = value
-            fpos1 = fpos0
-            fpos0 = anyoutputfile.tell()
+            fpos1, fpos0 = fpos0, anyoutputfile.tell()
         else:
             if DEBUG: print ( "No numeric data in " + os.path.basename(filepath) )
-            return (None,None,None)
+            return (None,None,constants)
         # Read last line of the header section if there is a header
         if fpos0 != 0:
             anyoutputfile.seek(fpos1)
-            header = reader.next().strip('\n').split(',')
+            header = next(reader).strip('\n').split(',')
         else:
             header = None
-        data = np.array([[float(col) for col in row.strip('\n').split(',')] for row in reader])
+          
+        data = []
+        for row in reader:
+            try:
+                data.append([float(val) for val in row.strip('\n').split(',')])
+            except ValueError:
+                break
+        data = np.array(data)
     return (data, header, constants)   
         
 
 
 def _parse_anyoutputfile_constants(strvar):
-    varname = None
     value = None
+    varname = None
     if strvar.count('=') == 1 and strvar.startswith('Main'):
         (first, last) = strvar.split('=')
-        first = first.strip()
-        last = last.strip('\n').replace('{','[').replace('}',']')
         varname = first.strip()
-        try:
-            value = np.array(eval(last))
-        except:
-            value = np.array(eval('"'+last+'"') )
+        last = last.strip()
+        value = None
+        last = last.strip('\n')
+        if last.find('{') == -1:
+            try:
+                value = str(eval("'''"+last+"'''") )
+                value = str(eval(last))
+                value = float(eval(last))
+            except:
+                pass
+        else:
+            last = last.replace('{','[').replace('}',']')
+            try:
+                value = np.array(eval("'''"+last+"'''") ) 
+                value = np.array(eval(last))
+            except:
+                pass
     return (varname, value)
 
 
