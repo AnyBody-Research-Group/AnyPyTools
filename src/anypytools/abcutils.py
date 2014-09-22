@@ -143,7 +143,7 @@ class _Task():
         if taskname is None:
             head, folder = os.path.split(folder)
             parentfolder = os.path.basename(head)
-            self.name = parentfolder+'/'+folder + str(number)
+            self.name = parentfolder+'/'+folder + '_'+ str(number)
     
                              
     def get_output(self, task_info = False):
