@@ -384,7 +384,7 @@ class AnyPyProcess():
         macrofile.write( '\n'.join(task.macro).encode('UTF-8') )
         macrofile.flush()
             
-        anybodycmd = [os.path.realpath(self.anybodycon_path), '--macro=', macrofile.name, '/ni', ' '] 
+        anybodycmd = [os.path.realpath(self.anybodycon_path), '--macro=', macrofile.name, '/ni'] 
         
         tmplogfile = TemporaryFile()            
         proc = Popen(anybodycmd, stdout=tmplogfile,
@@ -455,7 +455,7 @@ class AnyPyProcess():
         number_tasks = len(tasklist)
         tasklist = copy.copy(tasklist)
         if len(tasklist) == 0:
-            return ([],[], 0)
+            return 0
             
         if number_tasks > 1 and self.num_processes > 1:
             use_threading = True
