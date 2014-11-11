@@ -10,10 +10,28 @@ try:
 except (ValueError, SystemError):
     from utils.py3k import * # @UnusedWildImport
 
+
 pprint = py3k_pprint
 
-import numpy as np
+import sys
 from scipy.stats import distributions
+
+if sys.platform.startswith("win"):
+    # This is a horrible hack to work around a bug in
+    # scipy http://stackoverflow.com/questions/15457786/ctrl-c-crashes-python-after-importing-scipy-stats
+    try:
+        import _thread #, imp, ctypes, os
+    except ImportError:
+        import thread as _thread 
+    import win32api
+    def handler(sig, hook=_thread.interrupt_main):
+        hook()
+        return 1
+    win32api.SetConsoleCtrlHandler(handler, 1)
+
+
+
+import numpy as np
 from numpy.random import random, seed
 
 try:
@@ -603,6 +621,8 @@ class MonteCarloMacroGenerator(MacroGenerator):
 
     def __init__(self, *args, **kwargs):
         super(self.__class__,self).__init__(*args, **kwargs)
+
+
                 
     def add_set_value_random_uniform(self, variable, means, scale ):
         """ Add a 'Set Value' macro command where the value is chosen from a
