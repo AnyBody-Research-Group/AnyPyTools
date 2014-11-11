@@ -20,11 +20,11 @@ if sys.platform.startswith("win"):
     # This is a horrible hack to work around a bug in
     # scipy http://stackoverflow.com/questions/15457786/ctrl-c-crashes-python-after-importing-scipy-stats
     try:
-        import _thread #, imp, ctypes, os
+        import thread #, imp, ctypes, os
     except ImportError:
-        import thread as _thread 
+        import _thread as thread 
     import win32api
-    def handler(sig, hook=_thread.interrupt_main):
+    def handler(sig, hook=thread.interrupt_main):
         hook()
         return 1
     win32api.SetConsoleCtrlHandler(handler, 1)
