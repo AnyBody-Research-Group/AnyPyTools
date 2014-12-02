@@ -52,6 +52,22 @@ class TestAnyPyProcess():
         assert 'Main.ArmModel.GlobalRef.t' in output[0]
         assert 'ERROR' not in output[0]
         
+    def test_start_macro_with_task_info(self,init_simple_model, default_macro):
+        app = AnyPyProcess(disp = False, return_task_info=True)
+        
+        default_macro[0].extend(['classoperation Main.ArmModelStudy.Output.MaxMuscleActivity "Dump"', 
+                         'classoperation Main.ArmModel.GlobalRef.t "Dump"'])
+        
+        output = app.start_macro(default_macro,)
+        
+        assert len(output) == 1
+        assert 'task_info' in output[0]
+        assert 'work_dir' in output[0]
+        assert 'macro_id' in output[0]
+        assert 'task_id' in output[0]
+        assert 'task_name' in output[0]
+        
+        
     def test_start_macro_subdirs(self, tmpdir, default_macro ):
         number_of_models = 5
         setup_models_in_subdirs(tmpdir, number_of_models)   

@@ -149,6 +149,10 @@ class _Task():
     def get_output(self, task_info = False):
         out = self.output
         if task_info is True:
+            out['macro_id'] = make_hash( self.macro ) 
+            out['task_id'] = self.number
+            out['work_dir'] = self.folder
+            out['task_name'] = self.name
             out['task_info']  = dict(logfile = self.logfile,
                                 processtime = self.processtime,
                                 taskname = self.name,
@@ -245,7 +249,7 @@ class AnyPyProcess():
     
     #@cache_results(1,2,3)
     def start_macro(self, macrolist, folderlist = None, search_subdirs = None,
-                    number_of_macros = None, cache_mode = 'r',**kwargs ):
+                    number_of_macros = None,**kwargs ):
         """ 
         app.start_marco(macrolist, folderlist = None, search_subdirs =None )        
         
@@ -270,8 +274,6 @@ class AnyPyProcess():
         number_of_macros:
             Number of macros in macrolist. Must be specified if macrolist
             is a genertors expression. 
-        cache_mode: 
-            Determines the mode when cache_results
                         
             For example:
                         
@@ -366,52 +368,56 @@ class AnyPyProcess():
             print( 'Total time: {:d} seconds'.format(duration))
 
 
-    def _worker (self, task, task_queue):
-        """ Executes AnyBody console application on the task object
-        """
-#        task = task[0]        
-        process_number = self.counter 
-        self.counter += 1
-        
-        if not os.path.exists(task.folder):
-            raise IOError('Unable to find folder: ' + task.folder)
-        
+    def _execute_task(self, task):
+        # Launches the AnyBodyConsole applicaiton with the specific task object
         macrofile = NamedTemporaryFile(mode='w+b',
-                                         prefix ='{}'.format(self.logfile_prefix+'_'),
-                                         suffix='.anymcr',
-                                         dir = task.folder,
-                                         delete = False)
+                                       prefix =self.logfile_prefix + '_' ,
+                                       suffix='.anymcr',
+                                       dir = task.folder,
+                                       delete = False)
         macrofile.write( '\n'.join(task.macro).encode('UTF-8') )
         macrofile.flush()
             
-        anybodycmd = [os.path.realpath(self.anybodycon_path), '--macro=', macrofile.name, '/ni'] 
+        anybodycmd = [os.path.realpath(self.anybodycon_path), 
+                      '--macro=', macrofile.name, '/ni'] 
         
         tmplogfile = TemporaryFile()            
-        proc = Popen(anybodycmd, stdout=tmplogfile,
-                                stderr=tmplogfile,shell= False)                      
+        proc = Popen(anybodycmd, stdout=tmplogfile, stderr=tmplogfile)                      
         _pids.add(proc.pid)
-        starttime = time.clock()
-        timeout =starttime + self.timeout
+        timeout =time.clock() + self.timeout
+        
         while proc.poll() is None:
             if time.clock() > timeout:
                 proc.terminate()
                 proc.communicate()
                 tmplogfile.seek(0,2)
-                tmplogfile.write('ERROR: Timeout. Terminate by batch processor'.encode('UTF-8') )
+                tmplogfile.write('ERROR: Timeout. Terminated by'
+                                 ' AnyPyTools'.encode('UTF-8') )
                 break
             time.sleep(0.3)
         else:
             if proc.pid in _pids:
                 _pids.remove(proc.pid)
         
-        processtime = round(time.clock()-starttime, 2)
-        
         tmplogfile.seek(0)
         rawoutput = "\n".join( s.decode('UTF-8') for s in tmplogfile.readlines() )
         tmplogfile.close()
         macrofile.close()
-                
-                
+        return rawoutput
+
+    def _worker (self, task, task_queue):
+        """ Launches an AnyBody 
+        """
+#        task = task[0]        
+        task.process_number = self.counter 
+        self.counter += 1
+        
+        starttime = time.clock()
+        if os.path.exists(task.folder):
+            rawoutput = self._execute_task(task)
+        else:
+            rawoutput = 'ERROR: Could not find folder: {}'.format(task.folder) 
+                   
         output = _parse_anybodycon_output(rawoutput)
 
         # Remove any ERRORs which should be ignored
@@ -423,23 +429,19 @@ class AnyPyProcess():
             if not output['ERROR']:
                 del output['ERROR']
         
-        logfile_path = None
+        task.error = 'ERROR' in output
+        
         if self.keep_logfiles or 'ERROR' in output:
             with open(os.path.splitext(macrofile.name)[0]+'.log','w+b') as logfile:
                 logfile.write(rawoutput.encode('UTF-8'))
-                logfile_path = logfile.name
+                task.logfile = logfile.name
         else:
             try:
                 os.remove(macrofile.name) 
             except:
                 print( 'Error removing macro file')
         
-        task.processtime = processtime
-        task.logfile = logfile_path
-        task.error = 'ERROR' in output
-        task.process_number = process_number
-        
-
+        task.processtime = round(time.clock()-starttime, 2)
 
         task.output = output
         task_queue.put(task)
@@ -503,9 +505,9 @@ class AnyPyProcess():
                         pbar.animate( len(processed_tasks),  no_erros)
                 time.sleep(0.2)
         except KeyboardInterrupt:
-            if len(processed_tasks) < number_tasks:
-                print('\nUser interupted')
-                _kill_running_processes()    
+            #if len(processed_tasks) < number_tasks:
+            print('\nUser interupted')
+            _kill_running_processes()    
         
         totaltime = int(time.clock()-starttime)
         
