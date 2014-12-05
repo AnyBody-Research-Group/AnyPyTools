@@ -766,17 +766,18 @@ class LatinHyperCubeMacroGenerator(MacroGenerator):
         self.lhd = np.zeros((2,100))
         
                 
-    def add_set_value_LHS_uniform(self, variable, means, scale ) :
+    def add_set_value_LHS_uniform(self, variable, loc, scale ) :
         """ Add a 'Set Value' macro command where the values are uniformly
-        chosen using Latin Hyper Cube Sampling.
+        chosen from the  interval [loc - loc + scale] 
+        using a Latin Hyper Cube sampler.
         
         Parameters
         ----------
         variable: string
             An AnyScript variable or a list of AnyScript variables. 
-        means: int,float, numpy.ndarray
-            The mean value of the sampled space
-        scale: The range of the variable from means-scale/2 to means+scale/2]
+        loc: int,float, numpy.ndarray
+            The start of the interval for uniform sampling.
+        scale: The range of the sample interval 
         
                                          
         Examples:
@@ -788,29 +789,29 @@ class LatinHyperCubeMacroGenerator(MacroGenerator):
         >>> mg.add_set_value_LHS_uniform('Main.myvar1',1,2)
         >>> mg.add_set_value_LHS_uniform('Main.myvar2',10,10)
         >>> pprint( mg.generate_macros() )
-        [['classoperation Main.myvar1 "Set Value" --value="1"',
-          'classoperation Main.myvar2 "Set Value" --value="10"'],
-         ['classoperation Main.myvar1 "Set Value" --value="{1.09919186856}"',
-          'classoperation Main.myvar2 "Set Value" --value="{7.61542324346}"'],
-         ['classoperation Main.myvar1 "Set Value" --value="{0.796565052844}"',
-          'classoperation Main.myvar2 "Set Value" --value="{10.6735209175}"'],
-         ['classoperation Main.myvar1 "Set Value" --value="{1.3547986286}"',
-          'classoperation Main.myvar2 "Set Value" --value="{9.1819509088}"'],
-         ['classoperation Main.myvar1 "Set Value" --value="{0.536688972704}"',
-          'classoperation Main.myvar2 "Set Value" --value="{5.9004056168}"'],
-         ['classoperation Main.myvar1 "Set Value" --value="{0.104255501176}"',
-          'classoperation Main.myvar2 "Set Value" --value="{13.5976467955}"'],
-         ['classoperation Main.myvar1 "Set Value" --value="{1.55111306243}"',
-          'classoperation Main.myvar2 "Set Value" --value="{14.5880843877}"'],
-         ['classoperation Main.myvar1 "Set Value" --value="{0.250028593704}"',
-          'classoperation Main.myvar2 "Set Value" --value="{12.1065243755}"']]
+        [['classoperation Main.myvar1 "Set Value" --value="2"',
+          'classoperation Main.myvar2 "Set Value" --value="15"'],
+         ['classoperation Main.myvar1 "Set Value" --value="2.09919186856"',
+          'classoperation Main.myvar2 "Set Value" --value="12.6154232435"'],
+         ['classoperation Main.myvar1 "Set Value" --value="1.79656505284"',
+          'classoperation Main.myvar2 "Set Value" --value="15.6735209175"'],
+         ['classoperation Main.myvar1 "Set Value" --value="2.3547986286"',
+          'classoperation Main.myvar2 "Set Value" --value="14.1819509088"'],
+         ['classoperation Main.myvar1 "Set Value" --value="1.5366889727"',
+          'classoperation Main.myvar2 "Set Value" --value="10.9004056168"'],
+         ['classoperation Main.myvar1 "Set Value" --value="1.10425550118"',
+          'classoperation Main.myvar2 "Set Value" --value="18.5976467955"'],
+         ['classoperation Main.myvar1 "Set Value" --value="2.55111306243"',
+          'classoperation Main.myvar2 "Set Value" --value="19.5880843877"'],
+         ['classoperation Main.myvar1 "Set Value" --value="1.2500285937"',
+          'classoperation Main.myvar2 "Set Value" --value="17.1065243755"']]
             
         """        
-        if isinstance(means,list):
-            means = np.array(means)
+        if isinstance(loc,list):
+            loc = np.array(loc)
         if isinstance(scale,list):
             scale = np.array(scale)
-        dist = distributions.uniform(means-scale/2.0,scale)
+        dist = distributions.uniform(loc,scale)
         self.add_set_value_LHS(variable,dist)
 
 
@@ -855,20 +856,25 @@ class LatinHyperCubeMacroGenerator(MacroGenerator):
         
         mean_value = frozen_dist.mean()
         
-        if isinstance(mean_value,np.ndarray):
+        if isinstance(mean_value, np.ndarray):
             shape = mean_value.shape
             n_elem = np.prod(shape)
             lhs_slice = np.s_[self.LHS_factors:self.LHS_factors+n_elem]
+            # Create a generator which will later be used to generate the values
+            # based on the variables in self.lhd matrix
             values = (frozen_dist.ppf(self.lhd[i , lhs_slice ].reshape(shape) )\
                         for i in  range(self.number_of_macros-1) )
         else:
-            shape = None
+            #shape = None
             n_elem = 1
-            lhs_slice = np.s_[self.LHS_factors:self.LHS_factors+n_elem]
-            values = (frozen_dist.ppf(self.lhd[i , lhs_slice ] )\
+            lhs_index = self.LHS_factors
+            # Create a generator which will later be used to generate the values
+            # based on the variables in self.lhd matrix
+            values = (frozen_dist.ppf(self.lhd[i , lhs_index ])\
                         for i in range(self.number_of_macros-1) )
         
-        macro_generator = self._generator_set_value(var, values, mean_value)
+        macro_generator = self._generator_set_value(var,  values,
+                                                    special_first_values = mean_value)
         self.add_macro(macro_generator)
 
         self.LHS_factors += n_elem
@@ -878,8 +884,11 @@ class LatinHyperCubeMacroGenerator(MacroGenerator):
             import pyDOE
         except ImportError:
             raise ImportError('The pyDOE package must be install to use this class')
-
+        
+        # Create the Latin hyper cube sample matrix. This is used by the
+        # individual macro generator functions when macros are created.
         self.lhd = pyDOE.lhs(self.LHS_factors, samples=self.number_of_macros)
+        
         return super(LatinHyperCubeMacroGenerator,self).generate_macros(batch_size)
         
         
