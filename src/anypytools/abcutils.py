@@ -419,7 +419,12 @@ class AnyPyProcess():
         rawoutput = "\n".join( s.decode('UTF-8') for s in tmplogfile.readlines() )
         tmplogfile.close()
         macrofile.close()
-        return rawoutput
+        try:
+            os.remove(macrofile) 
+        except:
+            pass
+
+        return rawoutput, os.path.splitext(macrofile.name)[0]
 
     def _worker (self, task, task_queue):
         """ Launches an AnyBody 
@@ -430,9 +435,10 @@ class AnyPyProcess():
         
         starttime = time.clock()
         if os.path.exists(task.folder):
-            rawoutput = self._execute_task(task)
+            rawoutput, logname = self._execute_task(task)
         else:
             rawoutput = 'ERROR: Could not find folder: {}'.format(task.folder) 
+            logname = None
                    
         output = _parse_anybodycon_output(rawoutput)
 
@@ -447,15 +453,14 @@ class AnyPyProcess():
         
         task.error = 'ERROR' in output
         
-        if self.keep_logfiles or 'ERROR' in output:
-            with open(os.path.splitext(macrofile.name)[0]+'.log','w+b') as logfile:
-                logfile.write(rawoutput.encode('UTF-8'))
-                task.logfile = logfile.name
-        else:
-            try:
-                os.remove(macrofile.name) 
-            except:
-                print( 'Error removing macro file')
+        if logname:
+            if self.keep_logfiles or 'ERROR' in output:
+                with open(logname +'.log','w+b') as logfile:
+                    logfile.write('########### MACRO #############\r\n')
+                    logfile.write("\r\n".join(task.macro))
+                    logfile.write('\r\n\r\n######### OUTPUT LOG ##########')
+                    logfile.write(rawoutput.encode('UTF-8'))
+                    task.logfile = logfile.name
         
         task.processtime = round(time.clock()-starttime, 2)
 
