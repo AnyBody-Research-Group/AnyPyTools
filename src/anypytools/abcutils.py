@@ -381,8 +381,24 @@ class AnyPyProcess():
         anybodycmd = [os.path.realpath(self.anybodycon_path), 
                       '--macro=', macrofile.name, '/ni'] 
         
-        tmplogfile = TemporaryFile()            
-        proc = Popen(anybodycmd, stdout=tmplogfile, stderr=tmplogfile)                      
+        tmplogfile = TemporaryFile()       
+        
+        if sys.platform.startswith("win"):
+            # Don't display the Windows GPF dialog if the invoked program dies.
+            # See comp.os.ms-windows.programmer.win32
+            # How to suppress crash notification dialog?, Jan 14,2004 -
+            # Raymond Chen's response [1]
+            import ctypes
+            SEM_NOGPFAULTERRORBOX = 0x0002 # From MSDN
+            ctypes.windll.kernel32.SetErrorMode(SEM_NOGPFAULTERRORBOX);
+            subprocess_flags = 0x8000000 #win32con.CREATE_NO_WINDOW?
+        else:
+            subprocess_flags = 0
+             
+        proc = Popen(anybodycmd, stdout=tmplogfile, 
+                                stderr=tmplogfile, 
+                                creationflags=subprocess_flags,
+                                shell= False)                      
         _pids.add(proc.pid)
         timeout =time.clock() + self.timeout
         
@@ -530,7 +546,7 @@ def _summery(task,duration=None):
     if task.logfile is not None:
         if _run_from_ipython():
             entry += '(<a href= "{0}" target="_blank">{1}</a> \
-                                <a href= "{2}" target="_blank">dir</a>)\
+                       <a href= "{2}" target="_blank">dir</a>)\
                                '.format(task.logfile,
                                     os.path.basename(task.logfile),
                                     os.path.dirname(task.logfile) )
@@ -577,6 +593,7 @@ class ProgressBar:
         self.update_iteration(iter,failed)
         if _run_from_ipython():
             clear_output(wait=True)
+            #clear_output()
         print('\r', self, end="")
         sys.stdout.flush()
 
