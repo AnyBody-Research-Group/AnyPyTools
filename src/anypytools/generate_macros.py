@@ -12,7 +12,7 @@ except (ValueError, SystemError):
 
 pprint = py3k_pprint
 
-import numpy as np
+import sys
 from scipy.stats import distributions
 if sys.platform.startswith("win"):
     # This is a horrible hack to work around a bug in
@@ -29,7 +29,7 @@ if sys.platform.startswith("win"):
 
 
 
-
+import numpy as np
 from numpy.random import random, seed
 
 try:
