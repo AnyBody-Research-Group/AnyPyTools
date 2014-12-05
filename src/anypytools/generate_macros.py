@@ -14,6 +14,22 @@ pprint = py3k_pprint
 
 import numpy as np
 from scipy.stats import distributions
+if sys.platform.startswith("win"):
+    # This is a horrible hack to work around a bug in
+    # scipy http://stackoverflow.com/questions/15457786/ctrl-c-crashes-python-after-importing-scipy-stats
+    try:
+        import thread #, imp, ctypes, os
+    except ImportError:
+        import _thread as thread 
+    import win32api
+    def handler(sig, hook=thread.interrupt_main):
+        hook()
+        return 1
+    win32api.SetConsoleCtrlHandler(handler, 1)
+
+
+
+
 from numpy.random import random, seed
 
 try:
