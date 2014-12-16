@@ -134,7 +134,7 @@ class _Task():
         if folder is None:
             self.folder = os.getcwd()
         self.macro = macro
-        self.output = None
+        self.output = dict()
         self.number = number
         self.logfile = None
         self.processtime = 0
