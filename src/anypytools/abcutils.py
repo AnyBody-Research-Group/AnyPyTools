@@ -136,7 +136,7 @@ class _Task():
         self.macro = macro
         self.output = dict()
         self.number = number
-        self.logfile = None
+        self.logfile = ""
         self.processtime = 0
         self.name = taskname
         self.error = False
@@ -548,7 +548,7 @@ def _summery(task,duration=None):
     entry += '{2!s}sec :{0} n={1!s} : '.format(task.name,
                                                 task.number,
                                                 task.processtime)            
-    if task.logfile is not None:
+    if task.logfile is not "":
         if _run_from_ipython():
             entry += '(<a href= "{0}" target="_blank">{1}</a> \
                        <a href= "{2}" target="_blank">dir</a>)\
