@@ -14,6 +14,7 @@ except (ValueError, SystemError):
 import os
 import numpy as np
 import copy
+from collections import OrderedDict
 
 
 
@@ -98,6 +99,84 @@ def _run_from_ipython():
          return True
     except NameError:
         return False
+        
+def _get_datashape(result_list):
+    try: 
+        from datashape import discover
+        from datashape.coretypes import (Record, var,Option,
+                                        int64,string, float64, Fixed)
+    except ImportError:
+        import warnings
+        warnings.warn('blaze and datashape packages must be installed,' 
+                      ' to convert data to the blaze format.',
+                      ImportWarning)
+        raise ImportWarning
+
+    fields = OrderedDict()
+    for result in result_list:
+        for key in result.keys():
+            if key not in fields:
+                dshape = discover(result[key])
+                if len(dshape) > 1:
+                    dshape = var * dshape.subarray(1) 
+                else:
+                    dshape = dshape
+                fields[key] = dshape
+    
+    def update_fields(key, ds):
+        if key in fields:
+            del fields[key]
+            fields[key] = ds
+    
+    update_fields('ERROR', var*string )
+    update_fields('task_macro_hash',  Fixed(1) *int64 ) 
+    update_fields('task_id',   Fixed(1) *int64 )
+    update_fields('task_work_dir',  Fixed(1) *string )
+    update_fields('task_name',  Fixed(1) *string )
+    update_fields('task_processtime', Fixed(1) *float64 )
+    update_fields('task_macro', var*string ) 
+    
+    if not fields:
+        return Fixed(len(result_list)) * Option(float64)
+    else:
+        return ( Fixed(len(result_list)) * 
+                 Record( tuple( (k, v) for k, v in fields.items()) ) )
+        
+        
+def convert_to_blaze_data(result_list):
+    from blaze import Data
+    
+    # Remove all '.' in keys
+    for result in result_list:
+        for key in result.keys():
+            if '.' in key:
+                result[key.replace('.','_')] = result.pop(key)
+                
+    datashape = _get_datashape( result_list ) 
+
+    # Create a set of all keys in all results
+    fields_set = set()
+    for result in result_list:
+        fields_set.update( result.keys() ) 
+    # Ensure that these keys are present in all results.
+    for result in result_list:
+        for field in fields_set:
+            if field not in result:
+                result[field] = []
+    # If there are no keys, just make the result a list of 
+    # None instead of list empty dicts
+    
+    if not fields_set:
+        return None
+    
+    return  Data(result_list, dshape = datashape)  
+    
+    
+    
+    
+    
+    
+        
         
         
 def make_hash(o):

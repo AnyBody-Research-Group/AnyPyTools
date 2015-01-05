@@ -22,6 +22,7 @@ import numpy as np
 from tempfile import NamedTemporaryFile, TemporaryFile
 from threading import Thread
 from functools import wraps
+from collections import OrderedDict
 import time 
 import signal
 import re
@@ -39,7 +40,7 @@ try:
 except ImportError:
     have_ipython = False
     
-    
+
 
 #print_lock = Lock()
 
@@ -86,11 +87,6 @@ def _run_from_ipython():
  
 
 
-
-
-
-    
-
 def getsubdirs(toppath, search_string = "."):
     """ Find all directories below a given top path. 
     
@@ -127,40 +123,43 @@ class _Task():
         name: name of the task, which is used for printing status informations
     """
     def __init__(self,folder=None, macro = [], 
-                 taskname = None, number = 1):
+                 taskname = None, number = 1, return_task_info = True):
         """ Init the Task class with the class attributes
         """
         self.folder = folder
         if folder is None:
             self.folder = os.getcwd()
         self.macro = macro
-        self.output = dict()
+        self.output = OrderedDict()
         self.number = number
         self.logfile = ""
         self.processtime = 0
         self.name = taskname
         self.error = False
+        self.return_task_info = return_task_info
         if taskname is None:
             head, folder = os.path.split(folder)
             parentfolder = os.path.basename(head)
             self.name = parentfolder+'/'+folder + '_'+ str(number)
     
                              
-    def get_output(self, task_info = False):
+    def get_output(self):
         out = self.output
-        if task_info is True:
-            out['macro_id'] = make_hash( self.macro ) 
-            out['task_id'] = self.number
-            out['work_dir'] = self.folder
-            out['task_name'] = self.name
-            out['task_info']  = dict(logfile = self.logfile,
-                                processtime = self.processtime,
-                                taskname = self.name,
-                                macro = self.macro,
-                                index = self.number,
-                                workdir = self.folder)
-        return out
+#        if 'ERROR' not in out:
+#            out['ERROR'] = []
+        if self.return_task_info is True:
+            out['task_macro_hash'] = [ hash(frozenset(self.macro) ) ]
+            out['task_id'] =  [ self.number ]
+            out['task_work_dir'] =   [ self.folder ]
+            out['task_name'] =  [ self.name ]
+            out['task_processtime'] = [ self.processtime ]
+            out['task_macro'] =  self.macro
             
+        return out
+      
+           
+            
+        
     
 class AnyPyProcess():
     """
@@ -212,7 +211,7 @@ class AnyPyProcess():
                  anybodycon_path = get_anybodycon_path(), stop_on_error = True,
                  timeout = 3600, disp = True, ignore_errors = [],
                  return_task_info = False,
-                 keep_logfiles = False, logfile_prefix = '', cache_dir = None):
+                 keep_logfiles = False, logfile_prefix = '', blaze_ouput = False):
         self.anybodycon_path = anybodycon_path
         self.stop_on_error = stop_on_error
         self.num_processes = num_processes
@@ -223,7 +222,7 @@ class AnyPyProcess():
         self.ignore_errors = ignore_errors
         self.keep_logfiles = keep_logfiles
         self.logfile_prefix = logfile_prefix
-        self.cache_dir = None
+        self.blaze_output = blaze_ouput
 
     
     def cache_results(arg1, arg2, arg3):
@@ -325,8 +324,10 @@ class AnyPyProcess():
                             taskname = taskname + ' macro '+str(i_macro) 
                     else:
                         taskname = None
-                    yield _Task(folder, macro, taskname = taskname,
-                                    number = taskid)
+                    yield _Task(folder, macro, 
+                                taskname = taskname,
+                                number = taskid,
+                                return_task_info=self.return_task_info)
                     taskid += 1
 
 
@@ -336,9 +337,14 @@ class AnyPyProcess():
         process_time = self._schedule_processes(tasklist, self._worker)
         
         self._print_summery(tasklist,process_time)
-        
                 
-        return [task.get_output(task_info = self.return_task_info ) for task in tasklist]
+        return_data = [task.get_output() for task in tasklist] 
+
+        if self.blaze_output:
+            from .utils.support_functions import convert_to_blaze_data
+            return convert_to_blaze_data(return_data) 
+            
+        return return_data
         
         
     def _print_summery(self, tasks ,duration):
@@ -561,7 +567,7 @@ def _summery(task,duration=None):
     return entry
 
 def _parse_anybodycon_output(strvar):
-    out = {};
+    out = OrderedDict();
     dump_path = None
     for line in strvar.splitlines():
         if line.count('#### Macro command') and line.count('"Dump"'):
@@ -575,7 +581,11 @@ def _parse_anybodycon_output(strvar):
             if dump_path is not None:
                 first = dump_path
                 dump_path = None
-            out[first.strip()] = np.array(eval(last))
+            if True:
+                out[first.strip().replace('.','_')] = eval(last)
+            else:
+                out[first.strip()] = np.array(eval(last))
+
         if line.startswith('ERROR') or line.startswith('Error'): 
             if line.endswith('Path does not exist.'):
                 continue # hack to avoid detecting #path error this error which is always present
