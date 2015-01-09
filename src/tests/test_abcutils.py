@@ -61,12 +61,12 @@ class TestAnyPyProcess():
         output = app.start_macro(default_macro,)
         
         assert len(output) == 1
-        assert 'task_info' in output[0]
-        assert 'work_dir' in output[0]
-        assert 'macro_id' in output[0]
+        assert 'task_macro_hash' in output[0]
         assert 'task_id' in output[0]
+        assert 'task_work_dir' in output[0]
         assert 'task_name' in output[0]
-        
+        assert 'task_processtime' in output[0]
+        assert 'task_macro' in output[0]
         
     def test_start_macro_subdirs(self, tmpdir, default_macro ):
         number_of_models = 5
