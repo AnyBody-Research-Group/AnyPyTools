@@ -135,6 +135,7 @@ def _get_datashape(result_list):
     update_fields('task_name',  Fixed(1) *string )
     update_fields('task_processtime', Fixed(1) *float64 )
     update_fields('task_macro', var*string ) 
+    update_fields('task_logfile', Fixed(1) *string ) 
     
     if not fields:
         return Fixed(len(result_list)) * Option(float64)
