@@ -39,6 +39,13 @@ def default_macro():
 
     
 class TestAnyPyProcess():
+    def test_logfile_persistance(self, init_simple_model, default_macro) :
+        app = AnyPyProcess(disp = False, keep_logfiles=True, 
+                           return_task_info=True)
+        output = app.start_macro(default_macro)
+        assert os.path.isfile(output[0]['task_logfile'])
+
+    
     def test_start_macro(self,init_simple_model, default_macro):
         app = AnyPyProcess(disp = False)
         
@@ -67,6 +74,8 @@ class TestAnyPyProcess():
         assert 'task_name' in output[0]
         assert 'task_processtime' in output[0]
         assert 'task_macro' in output[0]
+        assert 'task_logfile' in output[0]
+        
         
     def test_start_macro_subdirs(self, tmpdir, default_macro ):
         number_of_models = 5

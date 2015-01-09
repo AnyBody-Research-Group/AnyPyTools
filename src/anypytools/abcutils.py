@@ -17,7 +17,7 @@ import copy
 
 
 import os
-from subprocess import Popen
+from subprocess import Popen, CREATE_NEW_PROCESS_GROUP
 import numpy as np
 from tempfile import NamedTemporaryFile, TemporaryFile
 from threading import Thread
@@ -136,14 +136,16 @@ class _Task():
         self.logfile = ""
         self.processtime = 0
         self.name = taskname
-        self.error = False
         self.return_task_info = return_task_info
         if taskname is None:
             head, folder = os.path.split(folder)
             parentfolder = os.path.basename(head)
             self.name = parentfolder+'/'+folder + '_'+ str(number)
     
-                             
+    @property
+    def error(self):
+        return 'ERROR' in self.output
+                         
     def get_output(self):
         out = self.output
 #        if 'ERROR' not in out:
@@ -155,6 +157,7 @@ class _Task():
             out['task_name'] =  [ self.name ]
             out['task_processtime'] = [ self.processtime ]
             out['task_macro'] =  self.macro
+            out['task_logfile'] = self.logfile
             
         return out
       
@@ -338,7 +341,15 @@ class AnyPyProcess():
         process_time = self._schedule_processes(tasklist, self._worker)
         
         self._print_summery(tasklist,process_time)
-                
+        
+        for task in tasklist:
+            if not task.error and not self.keep_logfiles:
+                if os.path.isfile(task.logfile):                
+                    try:
+                        os.unlink(task.logfile)
+                    except:
+                        print('Could not remove logfile: ' + task.logfile )
+        
         return_data = [task.get_output() for task in tasklist] 
 
         if self.blaze_output:
@@ -375,22 +386,17 @@ class AnyPyProcess():
             print( 'Total time: {:d} seconds'.format(duration))
 
 
-    def _execute_task(self, task):
-        # Launches the AnyBodyConsole applicaiton with the specific task object
-        macrofile = NamedTemporaryFile(mode='w+b',
-                                       prefix =self.logfile_prefix + '_' ,
-                                       suffix='.anymcr',
-                                       dir = task.folder,
-                                       delete = False)
-        macrofile.write( '\n'.join(task.macro).encode('UTF-8') )
-        macrofile.flush()
-        macrofile.close()
-        
+    def _execute_task(self, macro, logfile):
+        """ Launches the AnyBodyConsole applicaiton with the specified macro
+            saving the result to logfile
+        """
+        with open(os.path.splitext(logfile.name)[0] + '.anymcr', 'w+b' ) as macrofile:
+            macrofile.write( '\n'.join(macro).encode('UTF-8') )
+            macrofile.flush()
         anybodycmd = [os.path.realpath(self.anybodycon_path), 
                       '--macro=', macrofile.name, '/ni'] 
-        
-        tmplogfile = TemporaryFile()       
-        
+   
+   
         if sys.platform.startswith("win"):
             # Don't display the Windows GPF dialog if the invoked program dies.
             # See comp.os.ms-windows.programmer.win32
@@ -402,9 +408,9 @@ class AnyPyProcess():
             subprocess_flags = 0x8000000 #win32con.CREATE_NO_WINDOW?
         else:
             subprocess_flags = 0
-             
-        proc = Popen(anybodycmd, stdout=tmplogfile, 
-                                stderr=tmplogfile, 
+                
+        proc = Popen(anybodycmd, stdout=logfile, 
+                                stderr=logfile, 
                                 creationflags=subprocess_flags)                      
         _pids.add(proc.pid)
         timeout =time.clock() + self.timeout
@@ -413,8 +419,8 @@ class AnyPyProcess():
             if time.clock() > timeout:
                 proc.terminate()
                 proc.communicate()
-                tmplogfile.seek(0,2)
-                tmplogfile.write('ERROR: Timeout. Terminated by'
+                logfile.seek(0,2)
+                logfile.write('ERROR: Timeout. Terminated by'
                                  ' AnyPyTools'.encode('UTF-8') )
                 break
             time.sleep(0.3)
@@ -422,13 +428,8 @@ class AnyPyProcess():
             if proc.pid in _pids:
                 _pids.remove(proc.pid)
         
-        tmplogfile.seek(0)
-        rawoutput = "\n".join( s.decode('UTF-8') for s in tmplogfile.readlines() )
-        tmplogfile.close()
-
         os.unlink(macrofile.name)
 
-        return rawoutput, os.path.splitext(macrofile.name)[0]          
 
     def _worker (self, task, task_queue):
         """ Launches an AnyBody 
@@ -438,42 +439,39 @@ class AnyPyProcess():
         self.counter += 1
         
         starttime = time.clock()
-        if os.path.exists(task.folder):
-            rawoutput, logname = self._execute_task(task)
+        if not os.path.exists(task.folder):
+            task.output = {'ERROR':' Could not find folder: {}'.format(task.folder)} 
+            task.logfile = None
         else:
-            rawoutput = 'ERROR: Could not find folder: {}'.format(task.folder) 
-            logname = None
-                   
-        output = _parse_anybodycon_output(rawoutput)
+            with NamedTemporaryFile(mode='a+',
+                                    prefix =self.logfile_prefix + '_' ,
+                                    suffix='.log',
+                                    dir = task.folder,
+                                    delete = False) as logfile:
+                logfile.write('########### MACRO #############\n')
+                logfile.write("\n".join(task.macro))
+                logfile.write('\n\n######### OUTPUT LOG ##########')
+                logfile.flush()
+                
+                self._execute_task(task.macro, logfile)            
+    
+                logfile.seek(0)
+                task.output = _parse_anybodycon_output(logfile.read() )
+                task.logfile = logfile.name
 
         # Remove any ERRORs which should be ignored
-        if 'ERROR' in output:
+        if 'ERROR' in task.output:
             def check_error(error_string):
                 return all( [(err not in error_string) for err in self.ignore_errors])
-            output['ERROR'][:] = [err for err in output['ERROR'] if check_error(err)]
+            task.output['ERROR'][:] = [err for err in output['ERROR'] if check_error(err)]
 
-            if not output['ERROR']:
-                del output['ERROR']
+            if not task.output['ERROR']:
+                del task.output['ERROR']
         
-        task.error = 'ERROR' in output
+        task.processtime = time.clock() - starttime
         
-        if logname:
-            if self.keep_logfiles or 'ERROR' in output:
-                with open(logname +'.log','w+b') as logfile:
-                    logfile.write('########### MACRO #############\r\n')
-                    logfile.write("\r\n".join(task.macro))
-                    logfile.write('\r\n\r\n######### OUTPUT LOG ##########')
-                    logfile.write(rawoutput.encode('UTF-8'))
-                    task.logfile = logfile.name
-        
-        task.processtime = round(time.clock()-starttime, 2)
-
-        task.output = output
         task_queue.put(task)
-
-
-            
-    
+         
        
 
     def _schedule_processes(self, tasklist, _worker):
