@@ -55,7 +55,7 @@ def copy_files(src_dir, dst_dir):
         
 @pytest.fixture(scope='module')
 def copyfiles(request, test_dir):
-    if request.config.getoption('--inplace') or request.getoption('--copyfiles'):
+    if request.config.getoption('--inplace') or request.config.getoption('--copyfiles'):
         # No need to copy files if test is allready run inplace, or if it
         # is done as a global option.
         pass
@@ -70,7 +70,7 @@ def copyfiles(request, test_dir):
 def test_dir(request):
     model_folder = request.fspath.new(basename='')
     if ( request.config.getoption('--inplace') 
-         and not request.config.getoption('--inplace')):
+         and not request.config.getoption('--copyfiles')):
         return model_folder
     else:
         tempdir = request.config._tmpdirhandler.mktemp(model_folder.basename,
@@ -155,6 +155,15 @@ class AnyTestFixture():
             if 'ERROR' in result:
                 for err in result['ERROR']:
                     pytest.fail(err)
+    
+    def check_model_load_failure(self, result_list):
+        __tracebackhide__ = True
+        for result in result_list:
+            if 'ERROR' in result:
+                for err in result['ERROR']:
+                    if 'Model loading skipped' in err:
+                        pytest.fail(err)
+    
     
     def define2str(self,key,value=None):
         if isinstance(value, string_types):
