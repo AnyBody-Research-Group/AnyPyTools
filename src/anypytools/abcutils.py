@@ -27,6 +27,7 @@ import time
 import signal
 import re
 import atexit
+from ast import literal_eval
 try:
     import Queue as queue
 except ImportError:
@@ -581,14 +582,14 @@ def _parse_anybodycon_output(strvar):
             if dump_path is not None:
                 first = dump_path
                 dump_path = None
-            if True:
-                out[first.strip().replace('.','_')] = eval(last)
-            else:
-                out[first.strip()] = np.array(eval(last))
+            try:
+                out[first.strip()] = np.array(literal_eval(last))
+            except SyntaxError:
+                pass
 
-        if line.startswith('ERROR') or line.startswith('Error'): 
-            if line.endswith('Path does not exist.'):
-                continue # hack to avoid detecting #path error this error which is always present
+        if ( line.startswith('ERROR') or
+             line.startswith('Error') or 
+             line.startswith('Model loading skipped')) : 
             if 'ERROR' not in out:
                 out['ERROR'] = []
             out['ERROR'].append(line)
