@@ -142,13 +142,14 @@ def _get_datashape(result_list):
         return ( Fixed(len(result_list)) * 
                  Record( tuple( (k, v) for k, v in fields.items()) ) )
         
-        
 def convert_to_blaze_data(result_list):
     from blaze import Data
     
     # Remove all '.' in keys
     for result in result_list:
         for key in result.keys():
+            if isinstance(result[key], np.ndarray):
+                result[key] = result.pop(key).tolist()
             if '.' in key:
                 result[key.replace('.','_')] = result.pop(key)
                 
