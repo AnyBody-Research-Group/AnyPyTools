@@ -384,7 +384,8 @@ class AnyPyProcess():
                                        delete = False)
         macrofile.write( '\n'.join(task.macro).encode('UTF-8') )
         macrofile.flush()
-            
+        macrofile.close()
+        
         anybodycmd = [os.path.realpath(self.anybodycon_path), 
                       '--macro=', macrofile.name, '/ni'] 
         
@@ -404,8 +405,7 @@ class AnyPyProcess():
              
         proc = Popen(anybodycmd, stdout=tmplogfile, 
                                 stderr=tmplogfile, 
-                                creationflags=subprocess_flags,
-                                shell= False)                      
+                                creationflags=subprocess_flags)                      
         _pids.add(proc.pid)
         timeout =time.clock() + self.timeout
         
@@ -425,13 +425,10 @@ class AnyPyProcess():
         tmplogfile.seek(0)
         rawoutput = "\n".join( s.decode('UTF-8') for s in tmplogfile.readlines() )
         tmplogfile.close()
-        macrofile.close()
-        try:
-            os.remove(macrofile) 
-        except:
-            pass
 
-        return rawoutput, os.path.splitext(macrofile.name)[0]
+        os.unlink(macrofile.name)
+
+        return rawoutput, os.path.splitext(macrofile.name)[0]          
 
     def _worker (self, task, task_queue):
         """ Launches an AnyBody 
