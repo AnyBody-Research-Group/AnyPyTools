@@ -46,6 +46,27 @@ class TestAnyPyProcess():
         assert os.path.isfile(output[0]['task_logfile'])
 
     
+    def test_macro_with_erros(self,init_simple_model, default_macro):
+        app = AnyPyProcess(disp = False, return_task_info=True, 
+                           ignore_errors = ['Unresolved object'])
+        macro = [ ['load "model.main.any"'
+                  ,'operation Main.ArmModelStudy.InverseDynamics'
+                  ]
+                , ['load "model.main.any"'
+                  , 'operation Main.NonExistentOpeation'
+                  ]
+                , ['load "not_a_model.any"'
+                  , 'operation Main.ArmModelStudy.InverseDynamics'
+                  ]
+                ]
+             
+        
+        output = app.start_macro(macro)
+    
+        assert not 'ERROR' in output[0]
+        assert not 'ERROR' in output[1]
+        assert 'ERROR' in output[2]
+    
     def test_start_macro(self,init_simple_model, default_macro):
         app = AnyPyProcess(disp = False)
         

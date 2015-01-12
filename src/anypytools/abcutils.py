@@ -463,7 +463,7 @@ class AnyPyProcess():
         if 'ERROR' in task.output:
             def check_error(error_string):
                 return all( [(err not in error_string) for err in self.ignore_errors])
-            task.output['ERROR'][:] = [err for err in output['ERROR'] if check_error(err)]
+            task.output['ERROR'][:] = [err for err in task.output['ERROR'] if check_error(err)]
 
             if not task.output['ERROR']:
                 del task.output['ERROR']
