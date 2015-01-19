@@ -10,12 +10,13 @@ from setuptools import setup
 
 setup(
     name='AnyPyTools',
-    version='0.5.8',
+    version='0.6.0',
     install_requires=['numpy','scipy'],
     py_modules=['anypytools.abcutils', 'anypytools.h5py_wrapper',
                 'anypytools.datautils', 'anypytools.genereate_macros', 
                 'anypytools.utils.py3k', 'anypytools.utils.pytest_plugin',
-                'anypytools.utils.support_functions'],
+                'anypytools.utils.support_functions',
+                'anypytools.utils.blaze_converter.py'],
     scripts=['src/scripts/pp2any.py'],
     packages=['anypytools'],
     package_dir={'': 'src'},
