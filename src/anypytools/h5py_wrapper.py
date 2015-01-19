@@ -7,8 +7,7 @@ Created on Mon Jan 16 11:40:42 2012
 from __future__ import division, absolute_import, print_function, unicode_literals
 from .utils.py3k import * # @UnusedWildImport
 
-from h5py import Group as BaseGroup, Dataset as BaseDataset, File as BaseFile
-from h5py import *
+import h5py
 
 def _follow_reftarget(elem):
     completename = elem.attrs['CompleteName']
@@ -29,7 +28,7 @@ def _check_input_path(path):
     return path
     
 
-class File(BaseFile):
+class File(h5py.File):
     def __init__(self,arg):
          super(File, self).__init__(arg)
          self.wrapped = True
@@ -38,7 +37,7 @@ class File(BaseFile):
         path = _check_input_path(path)
         try:
             elem = super(File, self).file[path]
-            if isinstance(elem, BaseGroup) and not len(elem.keys()):
+            if isinstance(elem, h5py.Group) and not len(elem.keys()):
                 if 'RefTarget' in elem.attrs:
                     elem = _follow_reftarget(elem)
         except KeyError:
@@ -53,11 +52,11 @@ class File(BaseFile):
                         elem = elem.__getitem__(level)
                     except:
                         raise KeyError('Entry not found: '+path    )
-        if isinstance(elem, BaseGroup):
+        if isinstance(elem, h5py.Group):
             return Group(elem.id)
-        elif isinstance(elem, BaseDataset):
+        elif isinstance(elem, h5py.Dataset):
             return Dataset(elem.id)
-        elif isinstance(elem,BaseFile):
+        elif isinstance(elem,h5py.File):
             return File(elem.id)
           
     @property
@@ -84,7 +83,7 @@ class File(BaseFile):
         return False
 
           
-class Group(BaseGroup):
+class Group(h5py.Group):
     def __init__(self,arg):
         super(Group, self).__init__(arg)
         self.wrapped = True
@@ -93,7 +92,7 @@ class Group(BaseGroup):
         path = _check_input_path(path)
         try:
             elem = super(Group, self).__getitem__(path)
-            if isinstance(elem, BaseGroup) and not len(elem.keys()):
+            if isinstance(elem, h5py.Group) and not len(elem.keys()):
                 if 'RefTarget' in elem.attrs:
                     elem = _follow_reftarget(elem)            
         except KeyError:
@@ -108,11 +107,11 @@ class Group(BaseGroup):
                         elem = elem.__getitem__(level)
                     except:
                         raise KeyError('Entry not found: '+path    )
-        if isinstance(elem, BaseGroup):
+        if isinstance(elem, h5py.Group):
             return Group(elem.id)
-        elif isinstance(elem, BaseDataset):
+        elif isinstance(elem, h5py.Dataset):
             return Dataset(elem.id)
-        elif isinstance(elem,BaseFile):
+        elif isinstance(elem,h5py.File):
             return File(elem.id)
             
     @property
@@ -137,7 +136,7 @@ class Group(BaseGroup):
                 pass
         return False
 
-class Dataset(BaseDataset):
+class Dataset(h5py.Dataset):
     def __init__(self,arg):
         super(Dataset, self).__init__(arg)
         self.wrapped = True
