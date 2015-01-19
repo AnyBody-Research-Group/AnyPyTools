@@ -22,7 +22,7 @@ import numpy as np
 from tempfile import NamedTemporaryFile, TemporaryFile
 from threading import Thread
 from functools import wraps
-from collections import OrderedDict
+import collections
 import time 
 import signal
 import re
@@ -34,6 +34,9 @@ except ImportError:
     import queue
 import sys
 import types
+import ctypes
+
+
 
 try:
     from IPython.display import clear_output, HTML, display, FileLinks
@@ -114,6 +117,56 @@ def getsubdirs(toppath, search_string = "."):
             uniqueList.append(value)    
     return uniqueList
 
+
+def _execute_anybodycon( macro, logfile, anybodycon_path, timeout):
+    """ Launches the AnyBodyConsole applicaiton with the specified macro
+        saving the result to logfile
+    """
+    with open(os.path.splitext(logfile.name)[0] + '.anymcr', 'w+b' ) as macrofile:
+        macrofile.write( '\n'.join(macro).encode('UTF-8') )
+        macrofile.flush()
+    anybodycmd = [os.path.realpath(anybodycon_path), 
+                  '--macro=', macrofile.name, '/ni'] 
+   
+   
+    if sys.platform.startswith("win"):
+        # Don't display the Windows GPF dialog if the invoked program dies.
+        # See comp.os.ms-windows.programmer.win32
+        # How to suppress crash notification dialog?, Jan 14,2004 -
+        # Raymond Chen's response [1]
+        SEM_NOGPFAULTERRORBOX = 0x0002 # From MSDN
+        ctypes.windll.kernel32.SetErrorMode(SEM_NOGPFAULTERRORBOX);
+        subprocess_flags = 0x8000000 #win32con.CREATE_NO_WINDOW?
+    else:
+        subprocess_flags = 0
+            
+    proc = Popen(anybodycmd, stdout=logfile, 
+                            stderr=logfile, 
+                            creationflags=subprocess_flags)                      
+    _pids.add(proc.pid)
+    timeout_time =time.clock() + timeout
+    
+    while proc.poll() is None:
+        if time.clock() > timeout_time:
+            proc.terminate()
+            proc.communicate()
+            logfile.seek(0,2)
+            logfile.write('ERROR: Timeout. Terminated by'
+                             ' AnyPyTools'.encode('UTF-8') )
+            break
+        time.sleep(0.3)
+    else:
+        if proc.pid in _pids:
+            _pids.remove(proc.pid)
+    
+    os.unlink(macrofile.name)
+
+
+class AnyPyProcessOutputList(list):
+    pass
+
+
+
 class _Task():
     """Class for storing processing jobs
 
@@ -131,7 +184,7 @@ class _Task():
         if folder is None:
             self.folder = os.getcwd()
         self.macro = macro
-        self.output = OrderedDict()
+        self.output = collections.OrderedDict()
         self.number = number
         self.logfile = ""
         self.processtime = 0
@@ -150,21 +203,38 @@ class _Task():
         out = self.output
 #        if 'ERROR' not in out:
 #            out['ERROR'] = []
-        if self.return_task_info is True:
-            out['task_macro_hash'] = [ hash(frozenset(self.macro) ) ]
-            out['task_id'] =  [ self.number ]
-            out['task_work_dir'] =   [ self.folder ]
-            out['task_name'] =  [ self.name ]
-            out['task_processtime'] = [ self.processtime ]
+        if self.return_task_info is True:           
+            out['task_macro_hash'] =  make_hash(self.macro)  
+            out['task_id'] =  self.number
+            out['task_work_dir'] =   self.folder 
+            out['task_name'] =   self.name 
+            out['task_processtime'] = self.processtime
             out['task_macro'] =  self.macro
             out['task_logfile'] = self.logfile
-            
         return out
       
-           
-            
+    @staticmethod
+    def init_from_output( task_output):
+        if not _Task.is_valid( task_output):
+            raise ValueError('Output can only be reprocessed, if "Task info" is '
+                             'included in the output.')
         
-    
+        task = _Task(folder = task_output['task_work_dir'], 
+                     macro = task_output['task_macro'],
+                     taskname = task_output['task_name'], 
+                     number = task_output['task_id'])
+        task.processtime = task_output['task_processtime']
+        task.output = task_output
+        return task
+        
+        
+    @staticmethod
+    def is_valid(output_elem):
+        keys =  ( 'task_macro_hash','task_id','task_work_dir','task_name',
+                  'task_processtime','task_macro','task_logfile')
+        return all(k in output_elem for k in keys)
+        
+        
 class AnyPyProcess():
     """
     AnyPyProcess(num_processes = nCPU,\
@@ -227,6 +297,8 @@ class AnyPyProcess():
         self.keep_logfiles = keep_logfiles
         self.logfile_prefix = logfile_prefix
         self.blaze_output = blaze_ouput
+        self.cached_arg_hash = None
+        self.cached_output = None
 
     
     def cache_results(arg1, arg2, arg3):
@@ -247,12 +319,14 @@ class AnyPyProcess():
             return wrapper
         return _cach_result
 
-    
+    def set_cached_output(self, results):
+        self.cached_output = results
+        self.cached_arg_hash = None
     
     
     #@cache_results(1,2,3)
     def start_macro(self, macrolist, folderlist = None, search_subdirs = None,
-                    number_of_macros = None,**kwargs ):
+                    number_of_macros = 0,**kwargs ):
         """ 
         app.start_marco(macrolist, folderlist = None, search_subdirs =None )        
         
@@ -289,21 +363,24 @@ class AnyPyProcess():
             >>> folderlist = [('path1/', 'name1'), ('path2/', 'name2')] 
             >>> start_macro(macro, folderlist, search_subdirs = "*.main.any")
             
-        """        
+        """ 
+        if isinstance(macrolist, types.GeneratorType):
+            macrolist = list(macrolist)
+        assert isinstance(macrolist, collections.Iterable), "Macrolist must be iterable"
+        
+        if not isinstance(macrolist[0], collections.Mapping) :
+            cached_arg_hash = make_hash([macrolist, folderlist, search_subdirs])
+            if self.cached_output and cached_arg_hash == self.cached_arg_hash:
+                macrolist = self.cached_output
+            else:
+                self.cached_arg_hash = cached_arg_hash
+        
 
         if folderlist is None:
             folderlist = [os.getcwd()]
             
-
         if not isinstance(folderlist,list):
             raise TypeError('folderlist must be a list of folders')
-            
-        if isinstance(macrolist, types.GeneratorType) and number_of_macros is None:
-            raise ValueError('number_of_macros must be specified if\
-                              macrolist is a generator' )            
-            
-        #create a list of tasks
-        tasklist = []
         
         # Extend the folderlist if search_subdir is given
         if isinstance(search_subdirs,string_types) and isinstance(folderlist[0], string_types):
@@ -316,10 +393,39 @@ class AnyPyProcess():
         if isinstance(macrolist, list):
             if isinstance(macrolist[0], string_types):
                 macrolist = [macrolist]
-            number_of_macros = len(macrolist)
-                    
+             
+             
+        if isinstance(macrolist[0], collections.Mapping):
+            # start_macro was called with the result of a previous analysis
+            tasklist = [_Task.init_from_output(t) for t in macrolist] 
+        else:
+            tasklist = self._create_task_list(macrolist, folderlist)
+            assert len(tasklist) == len(macrolist) * len(folderlist)
+        
+        process_time = self._schedule_processes(tasklist, self._worker)
+        
+        self._print_summery(tasklist,process_time)
+               
+        return_data = AnyPyProcessOutputList([task.get_output() for task in tasklist])
+
+        if self.blaze_output:
+            from .utils.blaze_converter import convert_data
+            return_data = convert_data(return_data) 
+
+        if self.return_task_info:
+            self.cached_output = return_data
+        else:
+            self.cached_output = None
+        
+        return return_data
+   
+     
+   
+   
+    def _create_task_list(self, macrolist , folderlist ) :
         def generate_tasks(macros, folders):
             taskid = 0
+            number_of_macros = len(macrolist)
             for i_macro, macro in enumerate(macros):
                 for folder in folders:
                     if isinstance(folder ,tuple) and len(folder) ==2:
@@ -333,30 +439,11 @@ class AnyPyProcess():
                                 number = taskid,
                                 return_task_info=self.return_task_info)
                     taskid += 1
-
-
-        tasklist = list(generate_tasks(macrolist, folderlist) )
-        assert len(tasklist) == number_of_macros * len(folderlist)
+        if not macrolist:
+            return []
+        else:
+            return list(generate_tasks(macrolist, folderlist) )        
         
-        process_time = self._schedule_processes(tasklist, self._worker)
-        
-        self._print_summery(tasklist,process_time)
-        
-        for task in tasklist:
-            if not task.error and not self.keep_logfiles:
-                if os.path.isfile(task.logfile):                
-                    try:
-                        os.unlink(task.logfile)
-                    except:
-                        print('Could not remove logfile: ' + task.logfile )
-        
-        return_data = [task.get_output() for task in tasklist] 
-
-        if self.blaze_output:
-            from .utils.support_functions import convert_to_blaze_data
-            return convert_to_blaze_data(return_data) 
-            
-        return return_data
         
         
     def _print_summery(self, tasks ,duration):
@@ -379,65 +466,30 @@ class AnyPyProcess():
         
         if len(unfinished_tasks):
             print('Tasks that did not complete: {:d}'.format(len(unfinished_tasks)) )
-        for task in unfinished_tasks:
-            _display( _summery(task) ) 
+#        for task in unfinished_tasks:
+#            _display( _summery(task) ) 
 
         if duration is not None:
             print( 'Total time: {:d} seconds'.format(duration))
 
 
-    def _execute_task(self, macro, logfile):
-        """ Launches the AnyBodyConsole applicaiton with the specified macro
-            saving the result to logfile
-        """
-        with open(os.path.splitext(logfile.name)[0] + '.anymcr', 'w+b' ) as macrofile:
-            macrofile.write( '\n'.join(macro).encode('UTF-8') )
-            macrofile.flush()
-        anybodycmd = [os.path.realpath(self.anybodycon_path), 
-                      '--macro=', macrofile.name, '/ni'] 
-   
-   
-        if sys.platform.startswith("win"):
-            # Don't display the Windows GPF dialog if the invoked program dies.
-            # See comp.os.ms-windows.programmer.win32
-            # How to suppress crash notification dialog?, Jan 14,2004 -
-            # Raymond Chen's response [1]
-            import ctypes
-            SEM_NOGPFAULTERRORBOX = 0x0002 # From MSDN
-            ctypes.windll.kernel32.SetErrorMode(SEM_NOGPFAULTERRORBOX);
-            subprocess_flags = 0x8000000 #win32con.CREATE_NO_WINDOW?
-        else:
-            subprocess_flags = 0
-                
-        proc = Popen(anybodycmd, stdout=logfile, 
-                                stderr=logfile, 
-                                creationflags=subprocess_flags)                      
-        _pids.add(proc.pid)
-        timeout =time.clock() + self.timeout
-        
-        while proc.poll() is None:
-            if time.clock() > timeout:
-                proc.terminate()
-                proc.communicate()
-                logfile.seek(0,2)
-                logfile.write('ERROR: Timeout. Terminated by'
-                                 ' AnyPyTools'.encode('UTF-8') )
-                break
-            time.sleep(0.3)
-        else:
-            if proc.pid in _pids:
-                _pids.remove(proc.pid)
-        
-        os.unlink(macrofile.name)
 
 
     def _worker (self, task, task_queue):
-        """ Launches an AnyBody 
+        """ Handles processing of the tasks.  
         """
-#        task = task[0]        
+ 
         task.process_number = self.counter 
         self.counter += 1
-        
+ 
+        if task.output:
+            if not 'ERROR' in task.output and task.processtime > 0:
+                if not os.path.isfile(task.logfile):
+                    task.logfile = ""
+                task_queue.put(task)
+                return
+            
+
         starttime = time.clock()
         if not os.path.exists(task.folder):
             task.output = {'ERROR':' Could not find folder: {}'.format(task.folder)} 
@@ -453,7 +505,10 @@ class AnyPyProcess():
                 logfile.write('\n\n######### OUTPUT LOG ##########')
                 logfile.flush()
                 
-                self._execute_task(task.macro, logfile)            
+                _execute_anybodycon( macro = task.macro, 
+                                     logfile = logfile, 
+                                     anybodycon_path = self.anybodycon_path,
+                                     timeout = self.timeout )            
     
                 logfile.seek(0)
                 task.output = _parse_anybodycon_output(logfile.read() )
@@ -477,35 +532,34 @@ class AnyPyProcess():
     def _schedule_processes(self, tasklist, _worker):
         # Make a shallow copy of the task list, so we don't mess with the callers
         # list. 
-        number_tasks = len(tasklist)
         tasklist = copy.copy(tasklist)
-        if len(tasklist) == 0:
-            return 0
+        
+        number_tasks = len(tasklist)
+        
+        if number_tasks == 0:
+            totaltime = 0
+            return totaltime
             
-        if number_tasks > 1 and self.num_processes > 1:
-            use_threading = True
-        else: 
-            use_threading = False
+        use_threading = ( number_tasks > 1 and self.num_processes > 1 )
             
         starttime = time.clock()    
         task_queue = queue.Queue()
+        
         if self.disp:
             pbar = ProgressBar(number_tasks)
             pbar.animate(0)
         
         processed_tasks = []
-        no_erros = 0
+        n_errors = 0
         threads = []
-
-        
         try:
-            # run until all the threads are done, and there is no data left in
-            # the queue
+            # run while there is still threads, tasks or stuff in the queue
+            # to process
             while threads or tasklist or task_queue.qsize():
                 # if we aren't using all the processors AND there is still data left to
                 # compute, then spawn another thread
                 if (len(threads) < self.num_processes) and tasklist:
-                    if use_threading == True:
+                    if use_threading:
                         t = Thread(target=_worker, 
                                    args=tuple([tasklist.pop(0),task_queue]))
                         t.daemon = True
@@ -513,20 +567,27 @@ class AnyPyProcess():
                         threads.append(t)
                     else:
                         _worker(tasklist.pop(0),task_queue)
+                else:
         		# in the case that we have the maximum number of running threads
                  # or we run out tasks. Check if any of them are done. 
-                else:
                     for thread in threads:
                         if not thread.isAlive():
                             threads.remove(thread)
-                while task_queue.qsize() > 0:
+                while task_queue.qsize():
                     task = task_queue.get() 
-                    processed_tasks.append(task)
                     if task.error:
-                        no_erros += 1
+                        n_errors += 1
+                    elif not self.keep_logfiles:
+                        if os.path.isfile(task.logfile):
+                            try:
+                                os.unlink(task.logfile)
+                                task.logfile = ""
+                            except:
+                                print('Could not remove logfile: ' + task.logfile )
+                    processed_tasks.append(task)
                     if self.disp:
-                        pbar.animate( len(processed_tasks),  no_erros)
-                time.sleep(0.2)
+                        pbar.animate( len(processed_tasks),  n_errors)
+                time.sleep(0.05)
         except KeyboardInterrupt:
             #if len(processed_tasks) < number_tasks:
             print('\nUser interupted')
@@ -550,23 +611,23 @@ def _summery(task,duration=None):
     entry += '{2!s}sec :{0} n={1!s} : '.format(task.name,
                                                 task.number,
                                                 task.processtime)            
-    if task.logfile is not "":
+    if not task.logfile:
         if _run_from_ipython():
-            entry += '(<a href= "{0}" target="_blank">{1}</a> \
-                       <a href= "{2}" target="_blank">dir</a>)\
-                               '.format(task.logfile,
-                                    os.path.basename(task.logfile),
-                                    os.path.dirname(task.logfile) )
+            print_template = ( '(<a href= "file:///{0}" target="_blank">{1}</a>'
+                               '<a href= "file:///{2}" target="_blank">dir</a>)' )
+            entry += print_template.format(task.logfile,
+                                           os.path.basename(task.logfile),
+                                           os.path.dirname(task.logfile) )
         else:                        
             entry += '( {0} )'.format(os.path.basename(task.logfile))
     
     return entry
 
 def _parse_anybodycon_output(strvar):
-    out = OrderedDict();
+    out = collections.OrderedDict();
     dump_path = None
     for line in strvar.splitlines():
-        if line.count('#### Macro command') and line.count('"Dump"'):
+        if '#### Macro command' in line and "Dump" in line:
             me = re.search('Main[^ \"]*', line)
             if me is not None :
                 dump_path = me.group(0)

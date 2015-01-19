@@ -11,6 +11,8 @@ import shutil
 import pytest
 import numpy as np
 
+from copy import deepcopy
+
 from anypytools.abcutils import AnyPyProcess
 
 demo_model_path = os.path.join(os.path.dirname(__file__), 'Demo.Arm2D.any')
@@ -120,7 +122,7 @@ class TestAnyPyProcess():
         
         app = AnyPyProcess(disp = False)
         macros_gen = generate_macros()
-        output = app.start_macro(macros_gen, number_of_macros= n_macros )
+        output = app.start_macro(macros_gen )
         
         assert len(output) == n_macros
         for result in output:
@@ -143,7 +145,7 @@ class TestAnyPyProcess():
             assert 'ERROR' not in result
             
         
-    def test_start_macro_cached(self,init_simple_model):
+    def test_output_convert_data(self,init_simple_model):
         macro = [['load "model.main.any"',
                  'operation Main.ArmModelStudy.InverseDynamics',
                  'classoperation Main.ArmModelStudy.Output.MaxMuscleActivity "Dump"', 
@@ -151,13 +153,51 @@ class TestAnyPyProcess():
                  ['load "model.main.any"',
                  'operation Main.ArmModelStudy.InverseDynamics',
                  'classoperation Main.ArmModelStudy.Output.MaxMuscleActivity "Dump"', 
+                 'classoperation Main.ArmModel.GlobalRef.t "Dump"'],
+		     ['load "model.main.any"',
+                 'operation Main.ArmModelStudy.InverseDynamics',
+                 'classoperation Main.ArmModelStudy.Output.MaxMuscleActivity "Dump"', 
                  'classoperation Main.ArmModel.GlobalRef.t "Dump"']]
         
-        app = AnyPyProcess(disp = False)
+        from anypytools.utils.blaze_converter import convert_data
+
+        app = AnyPyProcess(return_task_info=True)
 
         output = app.start_macro(macro)
-        assert True
+        out1 = convert_data(deepcopy(output), create_nested_structure = False)
+        assert hasattr(out1, 'Main_ArmModelStudy_Output_MaxMuscleActivity')        
+        assert hasattr(out1, 'Main_ArmModel_GlobalRef_t')
+        
+        out2 = convert_data(deepcopy(output), create_nested_structure = True)							
+        assert hasattr(out2, 'Main')        
+        assert hasattr(out2.Main.ArmModel.GlobalRef, 't')        
+        
+        
+        
+        
+    def test_restart_macro(self,init_simple_model):
+        macro = [['load "model.main.any"',
+                 'classoperation Main.ArmModelStudy.Output.MaxMuscleActivity "Dump"', 
+                 'classoperation Main.ArmModel.GlobalRef.t "Dump"'],
+                 ['load "model.main.any"',
+                 'classoperation Main.ArmModelStudy.Output.MaxMuscleActivity "Dump"', 
+                 'classoperation Main.ArmModel.GlobalRef.t "Dump"']]
+        
+        app = AnyPyProcess(return_task_info=True)
 
+        output = app.start_macro(macro)
+        output = app.start_macro(macro)
+
+        
+        output[0]['ERROR'] = ['SOME ERROR']
+        
+        output = app.start_macro(output)
+        
+        for result in output:
+            assert 'ERROR' not in result
+
+        
+        
         
 if __name__ == '__main__':
     pytest.main(str( 'test_abcutils.py'))    
