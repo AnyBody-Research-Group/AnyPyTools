@@ -93,6 +93,7 @@ class MacroGenerator(object):
         self.number_of_macros = number_of_macros
         self._counter_token = counter_token
         self._new_batch_resets_counter = reset_counter_for_each_batch
+        self.cached_output = None
        
     def add_macro(self,macro):
         """ Add macro code to the generated macro.
@@ -510,9 +511,11 @@ class MacroGenerator(object):
         [['load "c:/Model.main.any"'], ['load "c:/Model.main.any"']]
         """        
         if batch_size is None:
-           return list(self._macro_generator(0))
+            if not self.cached_output:
+                self.cached_output = list(self._macro_generator(0))
+            return self.cached_output
         else:
-           return self._macro_generator(batch_size)
+            return self._macro_generator(batch_size)
     
     
     def _macro_generator(self, batch_size = 0):
@@ -760,10 +763,12 @@ class LatinHyperCubeMacroGenerator(MacroGenerator):
 
     """    
 
-    def __init__(self, *args, **kwargs): 
-        super(self.__class__,self).__init__(*args,**kwargs)
+    def __init__(self, criterion = None, iterations = None, **kwargs ): 
+        super(LatinHyperCubeMacroGenerator, self).__init__( **kwargs)
         self.LHS_factors = 0
         self.lhd = np.zeros((2,100))
+        self.criterion = criterion
+        self.iterations = iterations
         
                 
     def add_set_value_LHS_uniform(self, variable, loc, scale ) :
@@ -887,7 +892,9 @@ class LatinHyperCubeMacroGenerator(MacroGenerator):
         
         # Create the Latin hyper cube sample matrix. This is used by the
         # individual macro generator functions when macros are created.
-        self.lhd = pyDOE.lhs(self.LHS_factors, samples=self.number_of_macros)
+        self.lhd = pyDOE.lhs(self.LHS_factors,  samples=self.number_of_macros,
+                             criterion = self.criterion,
+                             iterations = self.iterations)
         
         return super(LatinHyperCubeMacroGenerator,self).generate_macros(batch_size)
         
