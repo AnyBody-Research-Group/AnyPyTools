@@ -366,14 +366,17 @@ class AnyPyProcess():
         """ 
         if isinstance(macrolist, types.GeneratorType):
             macrolist = list(macrolist)
-        assert isinstance(macrolist, collections.Iterable), "Macrolist must be iterable"
         
-        if not isinstance(macrolist[0], collections.Mapping) :
-            cached_arg_hash = make_hash([macrolist, folderlist, search_subdirs])
-            if self.cached_output and cached_arg_hash == self.cached_arg_hash:
+        if isinstance(macrolist[0], collections.Mapping) :
+            running_on_previous_output = True
+        else:
+            arg_hash = make_hash([macrolist, folderlist, search_subdirs])
+            if self.cached_output and self.cached_arg_hash == arg_hash:
                 macrolist = self.cached_output
+                running_on_previous_output = True
             else:
-                self.cached_arg_hash = cached_arg_hash
+                self.cached_arg_hash = arg_hash
+                running_on_previous_output = False
         
 
         if folderlist is None:
@@ -395,7 +398,7 @@ class AnyPyProcess():
                 macrolist = [macrolist]
              
              
-        if isinstance(macrolist[0], collections.Mapping):
+        if running_on_previous_output:
             # start_macro was called with the result of a previous analysis
             tasklist = [_Task.init_from_output(t) for t in macrolist] 
         else:
@@ -412,7 +415,7 @@ class AnyPyProcess():
             from .utils.blaze_converter import convert_data
             return_data = convert_data(return_data) 
 
-        if self.return_task_info:
+        if self.return_task_info or running_on_previous_output:
             self.cached_output = return_data
         else:
             self.cached_output = None
@@ -470,7 +473,7 @@ class AnyPyProcess():
 #            _display( _summery(task) ) 
 
         if duration is not None:
-            print( 'Total time: {:d} seconds'.format(duration))
+            print( 'Total time: {:.1f} seconds'.format(duration))
 
 
 
@@ -587,13 +590,13 @@ class AnyPyProcess():
                     processed_tasks.append(task)
                     if self.disp:
                         pbar.animate( len(processed_tasks),  n_errors)
-                time.sleep(0.05)
+                time.sleep(0.01)
         except KeyboardInterrupt:
             #if len(processed_tasks) < number_tasks:
             print('\nUser interupted')
             _kill_running_processes()    
         
-        totaltime = int(time.clock()-starttime)
+        totaltime = time.clock()-starttime
         
         return totaltime
     
@@ -611,10 +614,11 @@ def _summery(task,duration=None):
     entry += '{2!s}sec :{0} n={1!s} : '.format(task.name,
                                                 task.number,
                                                 task.processtime)            
-    if not task.logfile:
+    if task.logfile:
         if _run_from_ipython():
             print_template = ( '(<a href= "file:///{0}" target="_blank">{1}</a>'
-                               '<a href= "file:///{2}" target="_blank">dir</a>)' )
+                               ' <a href= "file:///{2}" target="_blank">dir</a>)' )
+                               
             entry += print_template.format(task.logfile,
                                            os.path.basename(task.logfile),
                                            os.path.dirname(task.logfile) )
