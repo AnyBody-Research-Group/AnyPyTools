@@ -13,12 +13,12 @@ import os.path as op
 import csv
 import numpy as np
 import os
-from . import h5py_wrapper as h5py
 from scipy.interpolate import interp1d
 
 
 
 def anydatah5_generator(folder=None, match = ''):    
+    from . import h5py_wrapper
     if folder is None:
         folder = os.getcwd()
     def func(item):
@@ -26,7 +26,7 @@ def anydatah5_generator(folder=None, match = ''):
     filelist = filter(func,  os.listdir(folder)) 
     for filename in filelist:
         try:
-            with h5py.File(op.join(folder,filename)) as h5file:
+            with h5py_wrapper.File(op.join(folder,filename)) as h5file:
                 yield (h5file, filename)
         except IOError:
             pass
