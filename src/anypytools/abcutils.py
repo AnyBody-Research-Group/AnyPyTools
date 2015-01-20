@@ -238,7 +238,7 @@ class _Task():
 class AnyPyProcess():
     """
     AnyPyProcess(num_processes = nCPU,\
-                 anybodycon_path = 'installed version', stop_on_error = True,\
+                 anybodycon_path = 'installed version', \
                  timeout = 3600, disp = True, keep_logfiles = False)
     
     Commen class for setting up batch process jobs of AnyBody models. 
@@ -281,17 +281,22 @@ class AnyPyProcess():
         a AnyPyProcess object for running batch processing, parameter
         studies and pertubation jobs.       
     """    
-    def __init__(self, num_processes = get_ncpu(), 
-                 anybodycon_path = get_anybodycon_path(), stop_on_error = True,
-                 timeout = 3600, disp = True, ignore_errors = [],
+    def __init__(self, 
+                 num_processes = get_ncpu(), 
+                 anybodycon_path = get_anybodycon_path(),
+                 timeout = 3600,
+                 disp = True,
+                 ignore_errors = [],
                  return_task_info = False,
-                 keep_logfiles = False, logfile_prefix = '', blaze_ouput = False):
+                 keep_logfiles = False,
+                 logfile_prefix = '',
+                 blaze_ouput = False,
+                 cache_filename = None):
         self.anybodycon_path = anybodycon_path
-        self.stop_on_error = stop_on_error
         self.num_processes = num_processes
-        self.counter = 0
         self.disp = disp
         self.timeout = timeout
+        self.counter = 0
         self.return_task_info = return_task_info 
         self.ignore_errors = ignore_errors
         self.keep_logfiles = keep_logfiles
@@ -299,34 +304,52 @@ class AnyPyProcess():
         self.blaze_output = blaze_ouput
         self.cached_arg_hash = None
         self.cached_output = None
+        self.cache_filename = cache_filename
+    
+#    def cache_results(arg1, arg2, arg3):
+#        def _cach_result(f):
+#            #print( "Inside wrap()")
+#            @wraps(f)
+#            def wrapper(self, *args, **kwargs):
+#                #print("Inside wrapped_f()" )
+#                #print("Decorator arguments:", arg1, arg2, arg3 )
+#                macro = args[0]
+#                if 'cache_mode' in kwargs:
+#                    pass
+#                    #print(kwargs['cache_mode'])
+#                print( make_hash(macro) ) 
+#                output = f(self,*args,**kwargs)
+#                return output
+#                #print("After f(*args)")
+#            return wrapper
+#        return _cach_result
 
     
-    def cache_results(arg1, arg2, arg3):
-        def _cach_result(f):
-            #print( "Inside wrap()")
-            @wraps(f)
-            def wrapper(self, *args, **kwargs):
-                #print("Inside wrapped_f()" )
-                #print("Decorator arguments:", arg1, arg2, arg3 )
-                macro = args[0]
-                if 'cache_mode' in kwargs:
-                    pass
-                    #print(kwargs['cache_mode'])
-                print( make_hash(macro) ) 
-                output = f(self,*args,**kwargs)
-                return output
-                #print("After f(*args)")
-            return wrapper
-        return _cach_result
-
-    def set_cached_output(self, results):
-        self.cached_output = results
-        self.cached_arg_hash = None
     
-    
+#    def get_cached_output(arg_hash):
+#        if os.path.isfile(self.cache_filename):
+#            #output = #load file
+#            #return output
+#            pass
+#        if self.cached_output and arg_hash == self.arg_hash:
+#            pass            
+#            #return self.cached_output
+#        else:
+#            self.arg_hash = arg_hash
+#            return None
+#            
+#            
+#    def set_cached_output(output):
+#        if self.cache_filename:
+#            pass
+#            #Write to the file
+#        else:
+#            # Store data internally
+#            self.cached_output = output
+#    
     #@cache_results(1,2,3)
     def start_macro(self, macrolist, folderlist = None, search_subdirs = None,
-                    number_of_macros = 0,**kwargs ):
+                    **kwargs ):
         """ 
         app.start_marco(macrolist, folderlist = None, search_subdirs =None )        
         
@@ -348,9 +371,6 @@ class AnyPyProcess():
             Regular expression used to extend the folderlist with all the
             subdirectories that match the regular expression. 
             Defaults to None: subdirectories are included.
-        number_of_macros:
-            Number of macros in macrolist. Must be specified if macrolist
-            is a genertors expression. 
                         
             For example:
                         
@@ -378,7 +398,6 @@ class AnyPyProcess():
                 self.cached_arg_hash = arg_hash
                 running_on_previous_output = False
         
-
         if folderlist is None:
             folderlist = [os.getcwd()]
             
