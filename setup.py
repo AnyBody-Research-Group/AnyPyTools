@@ -16,7 +16,7 @@ setup(
                 'anypytools.datautils', 'anypytools.genereate_macros', 
                 'anypytools.utils.py3k', 'anypytools.utils.pytest_plugin',
                 'anypytools.utils.support_functions',
-                'anypytools.utils.blaze_converter.py'],
+                'anypytools.utils.blaze_converter'],
     scripts=['src/scripts/pp2any.py'],
     packages=['anypytools'],
     package_dir={'': 'src'},
