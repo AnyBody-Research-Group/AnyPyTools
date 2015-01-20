@@ -11,7 +11,7 @@ from setuptools import setup
 setup(
     name='AnyPyTools',
     version='0.6.0',
-    install_requires=['numpy','scipy'],
+    install_requires=['numpy'],
     py_modules=['anypytools.abcutils', 'anypytools.h5py_wrapper',
                 'anypytools.datautils', 'anypytools.genereate_macros', 
                 'anypytools.utils.py3k', 'anypytools.utils.pytest_plugin',
