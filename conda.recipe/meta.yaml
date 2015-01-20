@@ -1,0 +1,52 @@
+package:
+  name: anypytools     # lower case name of package, may contain '-' but no spaces
+  version: {{ environ['GIT_DESCRIBE_TAG'] }}
+  #version: 0.5.5.dev
+source:
+  git_url: https://github.com/AnyBody-Research-Group/AnyPyTools.git
+#   git_url: file://C:/Users/Morten/Dropbox/Software projects/Python/AnyPyTools
+
+build:            # (optional)
+  number: {{ environ.get('GIT_DESCRIBE_NUMBER', 0) }}
+  # Added to allow the pytest entry points in setup.py to work
+  # This is also the reason for setuptools beeing a runtime dependency. 
+  preserve_egg_dir: True
+  
+  
+# the build and runtime requirements:
+requirements:     # (optional)
+  build:
+    - python
+    - setuptools
+    
+  run:
+    - pywin32 # [win]
+    - h5py
+    - setuptools
+    - python
+    
+
+    
+    
+    
+#test:
+#  # Python imports
+#  imports:
+#    - anypytools
+
+app:
+    entry: ${PREFIX}\Scripts\AnyPyToolsTutorial.bat
+    summary: AnyPyTools Tutorial
+    icon: apt_icon.png
+#    type: web
+#    cli_opts:
+#        args: --notebook-dir %s
+#        default: "${PREFIX}/AnyPyToolsTutorial 00_AnyPyTools_tutorial.ipynb"
+#        name: "Start directory"
+
+    
+
+
+about:            # (optional)
+  home: https://github.com/AnyBody-Research-Group/AnyPyTools
+  license: MIT

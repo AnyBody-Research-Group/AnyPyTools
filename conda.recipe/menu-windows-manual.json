@@ -1,0 +1,11 @@
+{
+  "menu_items": [
+    {
+      "name": "AnyPyTools Tutorial",
+      "pyscript": "${PYTHON_SCRIPTS}/ipython-script.py notebook --notebook-dir ${PYTHON_SCRIPTS}/../AnyPyToolsTutorial 00_AnyPyTools_tutorial.ipynb", 
+      "workdir": "${PYTHON_SCRIPTS}/../AnyPyToolsTutorial/",
+      "icon": "${PYTHON_SCRIPTS}/anypytools.ico"
+    }  
+    ],
+    "menu_name": "AnyPyTools"
+}
