@@ -167,7 +167,10 @@ class AnyTestFixture():
     
     def define2str(self,key,value=None):
         if isinstance(value, string_types):
-            defstr =  '-def %s=---"\\"%s\\""'% (key, value)
+            if value.startswith('"') and value.endswith('"'):
+                defstr = '-def %s=---"\\"%s\\""'% (key, value[1:-1])
+            else:
+                defstr = '-def %s="%s"'% (key, value)
         elif value is None:
             defstr = '-def %s=""'% (key)
         elif isinstance(value,float) :
