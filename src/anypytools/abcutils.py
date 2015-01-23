@@ -160,6 +160,7 @@ def _execute_anybodycon( macro, logfile, anybodycon_path, timeout):
             _pids.remove(proc.pid)
     
     os.unlink(macrofile.name)
+    logfile.seek(0)
 
 
 class AnyPyProcessOutputList(list):
@@ -514,7 +515,6 @@ class AnyPyProcess():
                                      anybodycon_path = self.anybodycon_path,
                                      timeout = self.timeout )            
     
-                logfile.seek(0)
                 task.output = _parse_anybodycon_output(logfile.read() )
                 task.logfile = logfile.name
 
