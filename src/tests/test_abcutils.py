@@ -186,7 +186,7 @@ class TestAnyPyProcess():
         app = AnyPyProcess(return_task_info=True)
 
         output = app.start_macro(macro)
-        output = app.start_macro(macro)
+        output = app.start_macro()
 
         
         output[0]['ERROR'] = ['SOME ERROR']
