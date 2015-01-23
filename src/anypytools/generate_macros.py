@@ -350,7 +350,10 @@ class MacroGenerator(object):
         for key in sorted(define_kw):
             value = define_kw[key]
             if isinstance(value,string_types):
-                load_cmd.append('-def %s=---"\\"%s\\""'% (key, value) )
+                if value.startswith('"') and value.endswith('"'):
+                    load_cmd.append('-def %s=---"\\"%s\\""'% (key, value[1:-1]))
+                else:
+                    load_cmd.append('-def %s="%s"'% (key, value))
             elif value is None:
                 load_cmd.append('-def %s=""'% (key) )
             elif isinstance(value,float) :
