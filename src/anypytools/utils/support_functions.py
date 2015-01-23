@@ -18,6 +18,22 @@ from collections import OrderedDict
 from ast import literal_eval
 import collections
 
+def define2str(key,value=None):
+    if isinstance(value, string_types):
+        if value.startswith('"') and value.endswith('"'):
+            defstr = '-def %s=---"\\"%s\\""'% (key, value[1:-1].replace('\\','\\\\'))
+        else:
+            defstr = '-def %s="%s"'% (key, value)
+    elif value is None:
+        defstr = '-def %s=""'% (key)
+    elif isinstance(value,float) :
+        defstr =  '-def %s="%g"'% (key, value) 
+    else:
+        defstr = '-def %s="%d"'% (key, value) 
+    return defstr 
+    
+def path2str(key,path='.'):
+    return '-p %s=---"%s"'% (key, path.replace('\\','\\\\')) 
 
 
 def array2anyscript(arr):
