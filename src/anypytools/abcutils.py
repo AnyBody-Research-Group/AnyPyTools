@@ -177,7 +177,7 @@ class _Task():
         name: name of the task, which is used for printing status informations
     """
     def __init__(self,folder=None, macro = [], 
-                 taskname = None, number = 1, return_task_info = True):
+                 taskname = None, number = 1):
         """ Init the Task class with the class attributes
         """
         self.folder = folder
@@ -189,7 +189,6 @@ class _Task():
         self.logfile = ""
         self.processtime = 0
         self.name = taskname
-        self.return_task_info = return_task_info
         if taskname is None:
             head, folder = os.path.split(folder)
             parentfolder = os.path.basename(head)
@@ -199,11 +198,11 @@ class _Task():
     def error(self):
         return 'ERROR' in self.output
                          
-    def get_output(self):
+    def get_output(self, include_task_info):
         out = self.output
 #        if 'ERROR' not in out:
 #            out['ERROR'] = []
-        if self.return_task_info is True:           
+        if include_task_info is True:           
             out['task_macro_hash'] =  make_hash(self.macro)  
             out['task_id'] =  self.number
             out['task_work_dir'] =   self.folder 
@@ -213,19 +212,33 @@ class _Task():
             out['task_logfile'] = self.logfile
         return out
       
-    @staticmethod
-    def init_from_output( task_output):
-        if not _Task.is_valid( task_output):
+    @classmethod
+    def from_output_data(cls, task_output):
+        if not cls.is_valid( task_output):
             raise ValueError('Output can only be reprocessed, if "Task info" is '
                              'included in the output.')
         
-        task = _Task(folder = task_output['task_work_dir'], 
-                     macro = task_output['task_macro'],
-                     taskname = task_output['task_name'], 
-                     number = task_output['task_id'])
+        task = cls(folder = task_output['task_work_dir'], 
+                   macro = task_output['task_macro'],
+                   taskname = task_output['task_name'], 
+                   number = task_output['task_id'])
         task.processtime = task_output['task_processtime']
         task.output = task_output
         return task
+        
+    @classmethod
+    def from_output_list(cls, outputlist):
+        for elem in outputlist:
+            yield cls.from_output_data(elem)
+        
+        
+    @classmethod     
+    def from_macrofolderlist(cls, macrolist , folderlist ) :
+        if not macrolist:
+            raise StopIteration
+        macrofolderlist = ((m, f) for f in folderlist for m in macrolist)
+        for i, (macro, folder) in enumerate( macrofolderlist) :
+            yield cls(folder, macro , number = i) 
         
         
     @staticmethod
@@ -303,7 +316,7 @@ class AnyPyProcess():
         self.logfile_prefix = logfile_prefix
         self.blaze_output = blaze_ouput
         self.cached_arg_hash = None
-        self.cached_output = None
+        self.cached_tasklist = None
         self.cache_filename = cache_filename
     
 #    def cache_results(arg1, arg2, arg3):
@@ -326,29 +339,29 @@ class AnyPyProcess():
 
     
     
-#    def get_cached_output(arg_hash):
+#    def get_cached_tasklist(arg_hash):
 #        if os.path.isfile(self.cache_filename):
 #            #output = #load file
 #            #return output
 #            pass
-#        if self.cached_output and arg_hash == self.arg_hash:
+#        if self.cached_tasklist and arg_hash == self.arg_hash:
 #            pass            
-#            #return self.cached_output
+#            #return self.cached_tasklist
 #        else:
 #            self.arg_hash = arg_hash
 #            return None
 #            
 #            
-#    def set_cached_output(output):
+#    def set_cached_tasklist(output):
 #        if self.cache_filename:
 #            pass
 #            #Write to the file
 #        else:
 #            # Store data internally
-#            self.cached_output = output
+#            self.cached_tasklist = output
 #    
     #@cache_results(1,2,3)
-    def start_macro(self, macrolist, folderlist = None, search_subdirs = None,
+    def start_macro(self, macrolist=None, folderlist = None, search_subdirs = None,
                     **kwargs ):
         """ 
         app.start_marco(macrolist, folderlist = None, search_subdirs =None )        
@@ -384,88 +397,57 @@ class AnyPyProcess():
             >>> start_macro(macro, folderlist, search_subdirs = "*.main.any")
             
         """ 
+        # Check macrolist input argument
         if isinstance(macrolist, types.GeneratorType):
             macrolist = list(macrolist)
-        
-        if isinstance(macrolist[0], collections.Mapping) :
-            running_on_previous_output = True
-        else:
-            arg_hash = make_hash([macrolist, folderlist, search_subdirs])
-            if self.cached_output and self.cached_arg_hash == arg_hash:
-                macrolist = self.cached_output
-                running_on_previous_output = True
-            else:
-                self.cached_arg_hash = arg_hash
-                running_on_previous_output = False
-        
+        if isinstance(macrolist, list):
+            if isinstance(macrolist[0], string_types):
+                macrolist = [macrolist]
+        # Check folderlist input argument
         if folderlist is None:
             folderlist = [os.getcwd()]
-            
         if not isinstance(folderlist,list):
             raise TypeError('folderlist must be a list of folders')
-        
         # Extend the folderlist if search_subdir is given
         if isinstance(search_subdirs,string_types) and isinstance(folderlist[0], string_types):
             tmplist = []
             for folder in folderlist:
                tmplist.extend(getsubdirs(folder, search_string = search_subdirs) )
             folderlist = tmplist
-        
-        # Wrap macro in extra list if necessary
-        if isinstance(macrolist, list):
-            if isinstance(macrolist[0], string_types):
-                macrolist = [macrolist]
-             
-             
-        if running_on_previous_output:
-            # start_macro was called with the result of a previous analysis
-            tasklist = [_Task.init_from_output(t) for t in macrolist] 
-        else:
-            tasklist = self._create_task_list(macrolist, folderlist)
-            assert len(tasklist) == len(macrolist) * len(folderlist)
-        
+            
+        if not macrolist:
+            if self.cached_tasklist:
+                tasklist = self.cached_tasklist
+            else:
+                raise ValueError('macrolist argument can only be ommitted if '
+                      'the AnyPyProcess object has cached output to process' )          
+        elif isinstance(macrolist[0], collections.Mapping) :
+            tasklist = list( _Task.from_output_list( macrolist ) )
+        elif isinstance(macrolist[0], list):
+            arg_hash = make_hash([macrolist, folderlist, search_subdirs])
+            if self.cached_tasklist and self.cached_arg_hash == arg_hash:
+                tasklist = self.cached_tasklist
+            else:
+                self.cached_arg_hash = arg_hash
+                tasklist = list( _Task.from_macrofolderlist(macrolist, folderlist))   
+          
         process_time = self._schedule_processes(tasklist, self._worker)
         
+        self.cached_tasklist = tasklist
+
         self._print_summery(tasklist,process_time)
                
-        return_data = AnyPyProcessOutputList([task.get_output() for task in tasklist])
+        return_data = AnyPyProcessOutputList(
+                           [task.get_output(include_task_info = self.return_task_info) 
+                             for task in tasklist])
 
         if self.blaze_output:
             from .utils.blaze_converter import convert_data
             return_data = convert_data(return_data) 
 
-        if self.return_task_info or running_on_previous_output:
-            self.cached_output = return_data
-        else:
-            self.cached_output = None
         
         return return_data
-   
-     
-   
-   
-    def _create_task_list(self, macrolist , folderlist ) :
-        def generate_tasks(macros, folders):
-            taskid = 0
-            number_of_macros = len(macrolist)
-            for i_macro, macro in enumerate(macros):
-                for folder in folders:
-                    if isinstance(folder ,tuple) and len(folder) ==2:
-                        folder, taskname = folder
-                        if number_of_macros > 1:
-                            taskname = taskname + ' macro '+str(i_macro) 
-                    else:
-                        taskname = None
-                    yield _Task(folder, macro, 
-                                taskname = taskname,
-                                number = taskid,
-                                return_task_info=self.return_task_info)
-                    taskid += 1
-        if not macrolist:
-            return []
-        else:
-            return list(generate_tasks(macrolist, folderlist) )        
-        
+           
         
         
     def _print_summery(self, tasks ,duration):
