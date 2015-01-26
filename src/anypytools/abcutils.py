@@ -118,7 +118,9 @@ def getsubdirs(toppath, search_string = "."):
     return uniqueList
 
 
-def _execute_anybodycon( macro, logfile, anybodycon_path, timeout):
+def _execute_anybodycon( macro, logfile,
+                        anybodycon_path = get_anybodycon_path(),
+                        timeout = 3600):
     """ Launches the AnyBodyConsole applicaiton with the specified macro
         saving the result to logfile
     """
