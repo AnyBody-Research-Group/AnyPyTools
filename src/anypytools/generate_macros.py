@@ -759,15 +759,33 @@ class LatinHyperCubeMacroGenerator(MacroGenerator):
     ----------
     number_of_macros:
         The number of macros to generate.
-         
+    criterion:
+        A a string that specifies how points are sampled
+        (see: http://pythonhosted.org/pyDOE/randomized.html)
+        
+        - None: Default, points are randomizes within the intervals
+        
+        - "center" or "c": center the points within the sampling intervals
+        
+        - "maximin" or "m": maximize the minimum distance between points, but place 
+           the point in a randomized location within its interval
+        
+        - "centermaximin" or "cm": same as “maximin”, but centered within the intervals
+        
+        - "corr": minimize the maximum correlation coefficient         
+    
+    iterations: int 
+        Specifies how many iterations are used to accomplished the selected criterion
+    
+    
     Returns
     -------
     A LatinHyperCubeMacroGenerator object: 
 
     """    
 
-    def __init__(self, criterion = None, iterations = None, **kwargs ): 
-        super(LatinHyperCubeMacroGenerator, self).__init__( **kwargs)
+    def __init__(self, number_of_macros = 1, criterion = None, iterations = None, **kwargs ): 
+        super(LatinHyperCubeMacroGenerator, self).__init__(number_of_macros **kwargs)
         self.LHS_factors = 0
         self.lhd = np.zeros((2,100))
         self.criterion = criterion
