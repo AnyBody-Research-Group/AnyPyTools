@@ -124,6 +124,10 @@ def _execute_anybodycon( macro, logfile,
     """ Launches the AnyBodyConsole applicaiton with the specified macro
         saving the result to logfile
     """
+    
+    if not os.path.isfile(anybodycon_path):
+        raise IOError("Can not find anybodycon.exe: " + anybodycon_path)
+    
     with open(os.path.splitext(logfile.name)[0] + '.anymcr', 'w+b' ) as macrofile:
         macrofile.write( '\n'.join(macro).encode('UTF-8') )
         macrofile.flush()
