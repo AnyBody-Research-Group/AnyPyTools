@@ -787,7 +787,7 @@ class LatinHyperCubeMacroGenerator(MacroGenerator):
     """    
 
     def __init__(self, number_of_macros = 1, criterion = None, iterations = None, **kwargs ): 
-        super(LatinHyperCubeMacroGenerator, self).__init__(number_of_macros **kwargs)
+        super(LatinHyperCubeMacroGenerator, self).__init__(number_of_macros, **kwargs)
         self.LHS_factors = 0
         self.lhd = np.zeros((2,100))
         self.criterion = criterion
