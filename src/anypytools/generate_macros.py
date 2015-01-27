@@ -351,7 +351,9 @@ class MacroGenerator(object):
             value = define_kw[key]
             if isinstance(value,string_types):
                 if value.startswith('"') and value.endswith('"'):
-                    load_cmd.append('-def %s=---"\\"%s\\""'% (key, value[1:-1]).replace('\\','\\\\'))
+                    value = value[1:-1]
+                    load_cmd.append(
+                          '-def %s=---"\\"%s\\""'% (key, value.replace('\\','\\\\') ) )
                 else:
                     load_cmd.append('-def %s="%s"'% (key, value))
             elif value is None:
