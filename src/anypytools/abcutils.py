@@ -20,7 +20,7 @@ import os
 from subprocess import Popen, CREATE_NEW_PROCESS_GROUP
 import numpy as np
 from tempfile import NamedTemporaryFile, TemporaryFile
-from threading import Thread
+from threading import Thread, Lock
 from functools import wraps
 import collections
 import time 
@@ -489,9 +489,9 @@ class AnyPyProcess():
     def _worker (self, task, task_queue):
         """ Handles processing of the tasks.  
         """
- 
-        task.process_number = self.counter 
-        self.counter += 1
+        with Lock():
+            task.process_number = self.counter 
+            self.counter += 1
  
         if task.output:
             if not 'ERROR' in task.output and task.processtime > 0:
@@ -500,42 +500,45 @@ class AnyPyProcess():
                 task_queue.put(task)
                 return
             
-
-        starttime = time.clock()
-        if not os.path.exists(task.folder):
-            task.output = {'ERROR':' Could not find folder: {}'.format(task.folder)} 
-            task.logfile = None
-        else:
-            with NamedTemporaryFile(mode='a+',
-                                    prefix =self.logfile_prefix + '_' ,
-                                    suffix='.log',
-                                    dir = task.folder,
-                                    delete = False) as logfile:
-                logfile.write('########### MACRO #############\n')
-                logfile.write("\n".join(task.macro))
-                logfile.write('\n\n######### OUTPUT LOG ##########')
-                logfile.flush()
-                
-                _execute_anybodycon( macro = task.macro, 
-                                     logfile = logfile, 
-                                     anybodycon_path = self.anybodycon_path,
-                                     timeout = self.timeout )            
+        try:
+            starttime = time.clock()
+            if not os.path.exists(task.folder):
+                task.output = {'ERROR':' Could not find folder: {}'.format(task.folder)} 
+                task.logfile = None
+            else:
+                with NamedTemporaryFile(mode='a+',
+                                        prefix =self.logfile_prefix + '_' ,
+                                        suffix='.log',
+                                        dir = task.folder,
+                                        delete = False) as logfile:
+                    logfile.write('########### MACRO #############\n')
+                    logfile.write("\n".join(task.macro))
+                    logfile.write('\n\n######### OUTPUT LOG ##########')
+                    logfile.flush()
+                    
+                    _execute_anybodycon( macro = task.macro, 
+                                         logfile = logfile, 
+                                         anybodycon_path = self.anybodycon_path,
+                                         timeout = self.timeout )            
+        
+                    task.output = _parse_anybodycon_output(logfile.read() )
+                    task.logfile = logfile.name
     
-                task.output = _parse_anybodycon_output(logfile.read() )
-                task.logfile = logfile.name
-
-        # Remove any ERRORs which should be ignored
-        if 'ERROR' in task.output:
-            def check_error(error_string):
-                return all( [(err not in error_string) for err in self.ignore_errors])
-            task.output['ERROR'][:] = [err for err in task.output['ERROR'] if check_error(err)]
-
-            if not task.output['ERROR']:
-                del task.output['ERROR']
-        
-        task.processtime = time.clock() - starttime
-        
-        task_queue.put(task)
+            # Remove any ERRORs which should be ignored
+            if 'ERROR' in task.output:
+                def check_error(error_string):
+                    return all( [(err not in error_string) for err in self.ignore_errors])
+                task.output['ERROR'][:] = [err for err in task.output['ERROR'] if check_error(err)]
+    
+                if not task.output['ERROR']:
+                    del task.output['ERROR']
+            
+            task.processtime = time.clock() - starttime
+            
+        except Exception as e:
+            task['ERROR'].append(str(e))
+        finally:
+            task_queue.put(task)
          
        
 
@@ -601,7 +604,12 @@ class AnyPyProcess():
         except KeyboardInterrupt:
             #if len(processed_tasks) < number_tasks:
             print('\nUser interupted')
-            _kill_running_processes()    
+            _kill_running_processes()
+            # Add a small delay here. It allows the user to press ctrl-c twice to 
+            # excape this try-catch. This is usefull when running this code in an 
+            # outer loop. 
+            time.sleep(2)
+            
         
         totaltime = time.clock()-starttime
         
