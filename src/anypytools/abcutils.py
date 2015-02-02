@@ -63,6 +63,14 @@ def _kill_running_processes():
 atexit.register(_kill_running_processes)
 
 
+def silentremove(filename):
+    try:
+        os.remove(filename)
+    except OSError as e: # this would be "except OSError, e:" before Python 2.6
+        if e.errno != errno.ENOENT: # errno.ENOENT = no such file or directory
+            raise # re-raise exception if a different error occured
+
+
 def get_anybodycon_path():
     """  Return the path to default AnyBody console application 
     """
@@ -120,7 +128,8 @@ def getsubdirs(toppath, search_string = "."):
 
 def _execute_anybodycon( macro, logfile,
                         anybodycon_path = get_anybodycon_path(),
-                        timeout = 3600):
+                        timeout = 3600,
+                        keep_macrofile = False):
     """ Launches the AnyBodyConsole applicaiton with the specified macro
         saving the result to logfile
     """
@@ -145,28 +154,34 @@ def _execute_anybodycon( macro, logfile,
         subprocess_flags = 0x8000000 #win32con.CREATE_NO_WINDOW?
     else:
         subprocess_flags = 0
-            
-    proc = Popen(anybodycmd, stdout=logfile, 
-                            stderr=logfile, 
-                            creationflags=subprocess_flags)                      
-    _pids.add(proc.pid)
-    timeout_time =time.clock() + timeout
     
-    while proc.poll() is None:
-        if time.clock() > timeout_time:
-            proc.terminate()
-            proc.communicate()
-            logfile.seek(0,2)
-            logfile.write('ERROR: Timeout. Terminated by'
-                             ' AnyPyTools'.encode('UTF-8') )
-            break
-        time.sleep(0.3)
-    else:
-        if proc.pid in _pids:
-            _pids.remove(proc.pid)
+    try:         
+        proc = Popen(anybodycmd, stdout=logfile, 
+                                stderr=logfile, 
+                                creationflags=subprocess_flags)                      
+        _pids.add(proc.pid)
+        timeout_time =time.clock() + timeout
+        
+        while proc.poll() is None:
+            if time.clock() > timeout_time:
+                proc.terminate()
+                proc.communicate()
+                logfile.seek(0,2)
+                logfile.write('ERROR: Timeout. Terminated by'
+                                 ' AnyPyTools'.encode('UTF-8') )
+                break
+            time.sleep(0.1)
+        else:
+            try:
+                _pids.remove(proc.pid)
+            except ValueError:
+                pass
+        if not keep_macrofile:
+            silentremove(macrofile.name)
+    finally:
+        logfile.seek(0)
     
-    os.unlink(macrofile.name)
-    logfile.seek(0)
+    return
 
 
 class AnyPyProcessOutputList(list):
@@ -494,7 +509,7 @@ class AnyPyProcess():
             self.counter += 1
  
         if task.output:
-            if not 'ERROR' in task.output and task.processtime > 0:
+            if 'ERROR' not in task.output and task.processtime > 0:
                 if not os.path.isfile(task.logfile):
                     task.logfile = ""
                 task_queue.put(task)
@@ -519,25 +534,20 @@ class AnyPyProcess():
                     _execute_anybodycon( macro = task.macro, 
                                          logfile = logfile, 
                                          anybodycon_path = self.anybodycon_path,
-                                         timeout = self.timeout )            
-        
-                    task.output = _parse_anybodycon_output(logfile.read() )
+                                         timeout = self.timeout,
+                                         keep_macrofile=self.keep_logfiles)            
+                    
                     task.logfile = logfile.name
+                    logfile.seek(0)
+                    task.output = _parse_anybodycon_output(logfile.read(), self.ignore_errors )
     
-            # Remove any ERRORs which should be ignored
-            if 'ERROR' in task.output:
-                def check_error(error_string):
-                    return all( [(err not in error_string) for err in self.ignore_errors])
-                task.output['ERROR'][:] = [err for err in task.output['ERROR'] if check_error(err)]
-    
-                if not task.output['ERROR']:
-                    del task.output['ERROR']
-            
-            task.processtime = time.clock() - starttime
-            
+
         except Exception as e:
-            task['ERROR'].append(str(e))
+            if 'ERROR' not in task.output:
+                task.output['ERROR'] = []
+            task.output['ERROR'].append(str(e))
         finally:
+            task.processtime = time.clock() - starttime
             task_queue.put(task)
          
        
@@ -593,7 +603,7 @@ class AnyPyProcess():
                     elif not self.keep_logfiles:
                         if os.path.isfile(task.logfile):
                             try:
-                                os.unlink(task.logfile)
+                                silentremove(task.logfile)
                                 task.logfile = ""
                             except:
                                 print('Could not remove logfile: ' + task.logfile )
@@ -642,8 +652,10 @@ def _summery(task,duration=None):
     
     return entry
 
-def _parse_anybodycon_output(strvar):
-    out = collections.OrderedDict();
+def _parse_anybodycon_output(strvar, errors_to_ignore = [] ):
+    out = collections.OrderedDict(  );
+    out['ERROR'] = []
+    
     dump_path = None
     for line in strvar.splitlines():
         if '#### Macro command' in line and "Dump" in line:
@@ -659,15 +671,28 @@ def _parse_anybodycon_output(strvar):
                 dump_path = None
             try:
                 out[first.strip()] = np.array(literal_eval(last))
-            except SyntaxError:
-                pass
+            except SyntaxError as e:
+                out['ERROR'].append(str(e))
 
-        if ( line.startswith('ERROR') or
-             line.startswith('Error') or 
-             line.startswith('Model loading skipped')) : 
-            if 'ERROR' not in out:
-                out['ERROR'] = []
-            out['ERROR'].append(line)
+        line_has_errors = (line.startswith('ERROR') or line.startswith('Error') or 
+                           line.startswith('Model loading skipped'))             
+        if line_has_errors : 
+            for err_str in errors_to_ignore:
+                if err_str in line: break
+            else:
+                # This is run if we never break,
+                #i.e. err was not in the list of errors_to_ignore
+                out['ERROR'].append(line)
+    
+    # Move 'ERROR' entry to the last position in the ordered dict
+    out['ERROR'] = out.pop('ERROR')
+    
+    # Remove the ERROR key if it does not have any error entries        
+    if not out['ERROR']:
+        del out['ERROR']
+    
+
+        
     return out
         
 
