@@ -120,9 +120,11 @@ def get_anybodycon_path():
         import winreg
     except ImportError:
         import _winreg as winreg
-    
-    abpath = winreg.QueryValue(winreg.HKEY_CLASSES_ROOT,
-                    'AnyBody.AnyScript\shell\open\command')
+    try:
+        abpath = winreg.QueryValue(winreg.HKEY_CLASSES_ROOT,
+                        'AnyBody.AnyScript\shell\open\command')
+    except WindowsError:
+        raise WindowsError('Could not locate AnyBody in registry')       
     abpath = abpath.rsplit(' ',1)[0].strip('"')
     return os.path.join(os.path.dirname(abpath),'AnyBodyCon.exe')
 
