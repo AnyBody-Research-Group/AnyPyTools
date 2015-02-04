@@ -6,10 +6,7 @@ Created on Sun Sep  7 13:25:38 2014
 """
 
 from __future__ import division, absolute_import, print_function, unicode_literals
-try:
-    from .py3k import * # @UnusedWildImport
-except (ValueError, SystemError):
-    from py3k import *  # @UnusedWildImport
+from .py3k import * # @UnusedWildImport
 
 import os
 import numpy as np

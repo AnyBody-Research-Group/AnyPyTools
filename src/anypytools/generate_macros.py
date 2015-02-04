@@ -5,10 +5,7 @@ Created on Fri Oct 19 21:14:59 2012
 @author: Morten
 """
 from __future__ import division, absolute_import, print_function, unicode_literals
-try:
-    from .utils.py3k import * # @UnusedWildImport
-except (ValueError, SystemError):
-    from utils.py3k import * # @UnusedWildImport
+from .utils.py3k import * # @UnusedWildImport
 
 pprint = py3k_pprint
 

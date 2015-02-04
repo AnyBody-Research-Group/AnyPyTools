@@ -5,12 +5,7 @@ Created on Mon Sep  1 12:44:36 2014
 @author: Morten
 """
 from __future__ import division, absolute_import, print_function, unicode_literals
-try:
-    from ..utils.py3k import * # @UnusedWildImport
-    from ..utils import make_hash
-except (ValueError, SystemError):
-    from anypytools.utils.py3k import * # @UnusedWildImport
-    from anypytools.utils import make_hash
+from ..utils.py3k import * # @UnusedWildImport
 
 
 import pytest
