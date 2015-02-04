@@ -5,71 +5,113 @@ Created on Fri Oct 19 21:14:59 2012
 @author: Morten
 """
 from __future__ import division, absolute_import, print_function, unicode_literals
-try:
-    from .utils.py3k import * # @UnusedWildImport
-    from .utils import make_hash
-except (ValueError, SystemError):
-    from utils.py3k import * # @UnusedWildImport
-    from utils import make_hash
 
-import copy
+from .utils.py3k import * # @UnusedWildImport
+from .utils import make_hash
 
-
-
-import os
-from subprocess import Popen, CREATE_NEW_PROCESS_GROUP
-import numpy as np
-from tempfile import NamedTemporaryFile, TemporaryFile
-from threading import Thread, Lock
-from functools import wraps
-import collections
-import time 
-import signal
-import re
-import atexit
+import os, sys, time, errno, atexit, collections, re, types, ctypes, logging, imp, copy
+from subprocess import Popen
+from tempfile import NamedTemporaryFile
+from threading import Thread, RLock
 from ast import literal_eval
 try:
     import Queue as queue
 except ImportError:
     import queue
-import sys
-import types
-import ctypes
 
+import numpy as np
 
+imp.reload(logging)
+logging.basicConfig(filename = "anypytools.log", 
+                    format='%(asctime)s %(levelname)s:%(message)s',
+                    level=logging.DEBUG, datefmt='%I:%M:%S')
 
 try:
-    from IPython.display import clear_output, HTML, display, FileLinks
-    have_ipython = True
-except ImportError:
-    have_ipython = False
+    __IPYTHON__
+    from IPython.display import clear_output, HTML, display, FileLink
+except NameError:
+    pass
     
 
+#Module variables.
+_thread_lock = RLock()
+_KILLED_BY_ANYPYTOOLS = -10
 
-#print_lock = Lock()
+class SubProcessContainer(object):
+    """ Class to hold a record of process pids from Popen. 
+        
+        Properties:
+        ------------
+        stop_all: boolean
+            If set to True all process hold by the object will be automatically killed
+        
+        Methods:
+        -----------
+        add(pid):
+            Add process id to the record of process
+        
+        remove(pid):
+            Remove process id from the record
+            
+        """
+    def __init__(self):
+        self._pids = set()
+        self._stop_all = False
+    
+    def add(self,pid):
+        with _thread_lock:
+            self._pids.add( pid )
+        if self.stop_all:
+            self._kill_running_processes()            
+            
+    def remove(self, pid):
+        with _thread_lock:
+            try:
+                self._pids.remove(pid)
+            except KeyError:
+                pass
+    
+    @property
+    def stop_all(self):
+        return self._stop_all
+    
+    @stop_all.setter
+    def stop_all(self, value):
+        with _thread_lock:
+            if value: 
+                self._stop_all = True
+                self._kill_running_processes()
+            else:
+                self._stop_all = False
+                    
+    def _kill_running_processes(self):
+        """ Clean up and shut down any running processes
+        """
+        # Kill any rouge processes that are still running.
+        with _thread_lock:
+            killed = []
+            for pid in self._pids:
+                try:
+                    os.kill(pid, _KILLED_BY_ANYPYTOOLS)
+                    killed.append(str(pid))
+                except:
+                    pass
+            
+            self._pids.clear()
+#        if killed:
+#            _display( "Killed AnyBodyCon Processes: " + ", ".join(killed))
 
-_pids = set()
-def _kill_running_processes():
-    """ Clean up and shut down any running processes
-    """
-    # Kill any rouge processes that are still running.
-    for pid in _pids:
-        try:
-            os.kill(pid, signal.SIGTERM)
-            print('Kill AnyBodyCon Process. PID: ', pid)
-        except:
-            pass
-    _pids.clear()
-atexit.register(_kill_running_processes)
+_subprocess_container = SubProcessContainer()
+atexit.register(_subprocess_container._kill_running_processes)
 
 
-def silentremove(filename):
+def _silentremove(filename):
     try:
         os.remove(filename)
     except OSError as e: # this would be "except OSError, e:" before Python 2.6
         if e.errno != errno.ENOENT: # errno.ENOENT = no such file or directory
+            logging.debug('Error removing file: ' + filename)
             raise # re-raise exception if a different error occured
-
 
 def get_anybodycon_path():
     """  Return the path to default AnyBody console application 
@@ -84,7 +126,7 @@ def get_anybodycon_path():
     abpath = abpath.rsplit(' ',1)[0].strip('"')
     return os.path.join(os.path.dirname(abpath),'AnyBodyCon.exe')
 
-def get_ncpu():
+def _get_ncpu():
     """ Return the number of CPUs in the computer 
     """
     from multiprocessing import cpu_count
@@ -97,6 +139,11 @@ def _run_from_ipython():
      except NameError:
          return False
  
+def _display(line, *args, **kwargs):
+    if  _run_from_ipython():
+        display(HTML('<pre>'+line+'</pre>'))
+    else:
+        print(line, *args, **kwargs)
 
 
 def getsubdirs(toppath, search_string = "."):
@@ -108,7 +155,7 @@ def getsubdirs(toppath, search_string = "."):
     Returns:
         List of directories
     """
-    if search_string is None:
+    if not search_string:
         return [toppath]
     reg_prog = re.compile(search_string)    
     dirlist = []
@@ -116,7 +163,7 @@ def getsubdirs(toppath, search_string = "."):
         dirlist.append(toppath)
     for root, dirs, files in os.walk(toppath):
         for fname in files:
-            if reg_prog.search(os.path.join(root,fname)) is not None:
+            if reg_prog.search(os.path.join(root,fname)):
                 dirlist.append(root)
                 continue
     uniqueList = []
@@ -155,33 +202,39 @@ def _execute_anybodycon( macro, logfile,
     else:
         subprocess_flags = 0
     
-    try:         
+    try:
+        # Check global module flag to avoid starting processes after 
+        # the user cancelled the processes
         proc = Popen(anybodycmd, stdout=logfile, 
-                                stderr=logfile, 
-                                creationflags=subprocess_flags)                      
-        _pids.add(proc.pid)
-        timeout_time =time.clock() + timeout
+                                    stderr=logfile, 
+                                    creationflags=subprocess_flags)                      
+        _subprocess_container.add(proc.pid )
         
+        timeout_time =time.clock() + timeout
         while proc.poll() is None:
             if time.clock() > timeout_time:
                 proc.terminate()
                 proc.communicate()
                 logfile.seek(0,2)
-                logfile.write('ERROR: Timeout. Terminated by'
-                                 ' AnyPyTools'.encode('UTF-8') )
+                logfile.write('ERROR: Timeout after {:d} sec.'.format(timeout))
                 break
-            time.sleep(0.1)
-        else:
-            try:
-                _pids.remove(proc.pid)
-            except ValueError:
-                pass
+            time.sleep(0.05)
+
+        _subprocess_container.remove(proc.pid)
+            
+        if proc.returncode == _KILLED_BY_ANYPYTOOLS:
+            logfile.write('ERROR: anybodycon.exe was interrupted by AnyPyTools' )
+        elif proc.returncode:
+            logfile.write('ERROR: anybodycon.exe exited unexpectedly. Return code: '+
+                           str(proc.returncode))
+                    
         if not keep_macrofile:
-            silentremove(macrofile.name)
+            _silentremove(macrofile.name)
+   
     finally:
         logfile.seek(0)
     
-    return
+    return proc.returncode
 
 
 class AnyPyProcessOutputList(list):
@@ -189,12 +242,12 @@ class AnyPyProcessOutputList(list):
 
 
 
-class _Task():
+class _Task(object):
     """Class for storing processing jobs
 
     Attributes:
         folder: directory in which the macro is executed
-        macro: list of macro commands to executre
+        macro: list of macro commands to execute
         number: id number of the task
         name: name of the task, which is used for printing status informations
     """
@@ -203,7 +256,7 @@ class _Task():
         """ Init the Task class with the class attributes
         """
         self.folder = folder
-        if folder is None:
+        if not folder:
             self.folder = os.getcwd()
         self.macro = macro
         self.output = collections.OrderedDict()
@@ -211,20 +264,25 @@ class _Task():
         self.logfile = ""
         self.processtime = 0
         self.name = taskname
-        if taskname is None:
+        if not taskname:
             head, folder = os.path.split(folder)
             parentfolder = os.path.basename(head)
             self.name = parentfolder+'/'+folder + '_'+ str(number)
     
     @property
-    def error(self):
+    def has_error(self):
         return 'ERROR' in self.output
-                         
+    
+
+    def add_error(self, error_msg):
+        try:
+            self.output['ERROR'].append(error_msg)
+        except KeyError:
+            self.output['ERROR'] = [error_msg]
+                     
     def get_output(self, include_task_info):
         out = self.output
-#        if 'ERROR' not in out:
-#            out['ERROR'] = []
-        if include_task_info is True:           
+        if include_task_info:           
             out['task_macro_hash'] =  make_hash(self.macro)  
             out['task_id'] =  self.number
             out['task_work_dir'] =   self.folder 
@@ -270,7 +328,7 @@ class _Task():
         return all(k in output_elem for k in keys)
         
         
-class AnyPyProcess():
+class AnyPyProcess(object):
     """
     AnyPyProcess(num_processes = nCPU,\
                  anybodycon_path = 'installed version', \
@@ -317,7 +375,7 @@ class AnyPyProcess():
         studies and pertubation jobs.       
     """    
     def __init__(self, 
-                 num_processes = get_ncpu(), 
+                 num_processes = _get_ncpu(), 
                  anybodycon_path = get_anybodycon_path(),
                  timeout = 3600,
                  disp = True,
@@ -340,49 +398,8 @@ class AnyPyProcess():
         self.cached_arg_hash = None
         self.cached_tasklist = None
         self.cache_filename = cache_filename
-    
-#    def cache_results(arg1, arg2, arg3):
-#        def _cach_result(f):
-#            #print( "Inside wrap()")
-#            @wraps(f)
-#            def wrapper(self, *args, **kwargs):
-#                #print("Inside wrapped_f()" )
-#                #print("Decorator arguments:", arg1, arg2, arg3 )
-#                macro = args[0]
-#                if 'cache_mode' in kwargs:
-#                    pass
-#                    #print(kwargs['cache_mode'])
-#                print( make_hash(macro) ) 
-#                output = f(self,*args,**kwargs)
-#                return output
-#                #print("After f(*args)")
-#            return wrapper
-#        return _cach_result
+        logging.debug('\nAnyPyProcess initialized')
 
-    
-    
-#    def get_cached_tasklist(arg_hash):
-#        if os.path.isfile(self.cache_filename):
-#            #output = #load file
-#            #return output
-#            pass
-#        if self.cached_tasklist and arg_hash == self.arg_hash:
-#            pass            
-#            #return self.cached_tasklist
-#        else:
-#            self.arg_hash = arg_hash
-#            return None
-#            
-#            
-#    def set_cached_tasklist(output):
-#        if self.cache_filename:
-#            pass
-#            #Write to the file
-#        else:
-#            # Store data internally
-#            self.cached_tasklist = output
-#    
-    #@cache_results(1,2,3)
     def start_macro(self, macrolist=None, folderlist = None, search_subdirs = None,
                     **kwargs ):
         """ 
@@ -405,7 +422,7 @@ class AnyPyProcess():
         search_subdirs:
             Regular expression used to extend the folderlist with all the
             subdirectories that match the regular expression. 
-            Defaults to None: subdirectories are included.
+            Defaults to None: No subdirectories are included.
                         
             For example:
                         
@@ -422,21 +439,19 @@ class AnyPyProcess():
         # Check macrolist input argument
         if isinstance(macrolist, types.GeneratorType):
             macrolist = list(macrolist)
-        if isinstance(macrolist, list):
+        if isinstance(macrolist, list) and macrolist:
             if isinstance(macrolist[0], string_types):
                 macrolist = [macrolist]
         # Check folderlist input argument
-        if folderlist is None:
+        if not folderlist:
             folderlist = [os.getcwd()]
         if not isinstance(folderlist,list):
             raise TypeError('folderlist must be a list of folders')
         # Extend the folderlist if search_subdir is given
         if isinstance(search_subdirs,string_types) and isinstance(folderlist[0], string_types):
-            tmplist = []
-            for folder in folderlist:
-               tmplist.extend(getsubdirs(folder, search_string = search_subdirs) )
-            folderlist = tmplist
-            
+            folderlist = sum([getsubdirs(d, search_subdirs) for d in folderlist], [])
+        
+        # Check the input arguments and generate the tasklist              
         if not macrolist:
             if self.cached_tasklist:
                 tasklist = self.cached_tasklist
@@ -452,9 +467,11 @@ class AnyPyProcess():
             else:
                 self.cached_arg_hash = arg_hash
                 tasklist = list( _Task.from_macrofolderlist(macrolist, folderlist))   
-          
+        
+        # Start the scheduler
         process_time = self._schedule_processes(tasklist, self._worker)
         
+        # Cache the processed tasklist for restarting later 
         self.cached_tasklist = tasklist
 
         self._print_summery(tasklist,process_time)
@@ -473,30 +490,23 @@ class AnyPyProcess():
         
         
     def _print_summery(self, tasks ,duration):
-        if self.disp is False:
+        if not self.disp:
             return
-        print('')
-        unfinished_tasks = [t for t in tasks if t.processtime == 0]
-        failed_tasks = [t for t in tasks if t.error ]
+        unfinished_tasks = [t for t in tasks if t.processtime <= 0 ]
+        failed_tasks = [t for t in tasks if t.has_error and t.processtime > 0]
         
-        def _display(line):
-            if  _run_from_ipython():
-                display(HTML('<div STYLE="font-family: Courier; line-height:90%;">'+line+'</div>'))
-            else:
-                print(line)
             
         if len(failed_tasks):
-            print('Tasks with errors: {:d}'.format(len(failed_tasks)) )
-        for task in failed_tasks:
-            _display( _summery(task) ) 
+            _display('Tasks with errors: {:d}'.format(len(failed_tasks)) )
+            _display( "\n".join([_summery(t) for t in failed_tasks] ) ) 
         
         if len(unfinished_tasks):
-            print('Tasks that did not complete: {:d}'.format(len(unfinished_tasks)) )
+            _display('Tasks that did not complete: {:d}'.format(len(unfinished_tasks)) )
 #        for task in unfinished_tasks:
 #            _display( _summery(task) ) 
 
-        if duration is not None:
-            print( 'Total time: {:.1f} seconds'.format(duration))
+        if duration:
+            _display( 'Total time: {:.1f} seconds'.format(duration))
 
 
 
@@ -504,12 +514,12 @@ class AnyPyProcess():
     def _worker (self, task, task_queue):
         """ Handles processing of the tasks.  
         """
-        with Lock():
+        with _thread_lock:
             task.process_number = self.counter 
             self.counter += 1
  
         if task.output:
-            if 'ERROR' not in task.output and task.processtime > 0:
+            if not task.has_error and task.processtime > 0:
                 if not os.path.isfile(task.logfile):
                     task.logfile = ""
                 task_queue.put(task)
@@ -518,8 +528,8 @@ class AnyPyProcess():
         try:
             starttime = time.clock()
             if not os.path.exists(task.folder):
-                task.output = {'ERROR':' Could not find folder: {}'.format(task.folder)} 
-                task.logfile = None
+                task.add_error('Could not find folder: {}'.format(task.folder) )
+                task.logfile = ""
             else:
                 with NamedTemporaryFile(mode='a+',
                                         prefix =self.logfile_prefix + '_' ,
@@ -531,28 +541,37 @@ class AnyPyProcess():
                     logfile.write('\n\n######### OUTPUT LOG ##########')
                     logfile.flush()
                     
-                    _execute_anybodycon( macro = task.macro, 
+                    retcode = _execute_anybodycon( macro = task.macro, 
                                          logfile = logfile, 
                                          anybodycon_path = self.anybodycon_path,
                                          timeout = self.timeout,
                                          keep_macrofile=self.keep_logfiles)            
-                    
                     task.logfile = logfile.name
                     logfile.seek(0)
                     task.output = _parse_anybodycon_output(logfile.read(), self.ignore_errors )
-    
+                if retcode == _KILLED_BY_ANYPYTOOLS:
+                    task.processtime = 0
+                    _silentremove(logfile.name)
+                    task.logfile = ""
+                else:
+                    task.processtime = time.clock() - starttime
 
         except Exception as e:
-            if 'ERROR' not in task.output:
-                task.output['ERROR'] = []
-            task.output['ERROR'].append(str(e))
+            task.add_error(str( type(e)) + str(e))
+            logging.debug(str(e))
         finally:
-            task.processtime = time.clock() - starttime
+            if not self.keep_logfiles and not task.has_error:
+                _silentremove(logfile.name)
+                task.logfile = ""        
+            
             task_queue.put(task)
          
        
 
     def _schedule_processes(self, tasklist, _worker):
+        # Reset the global flag that allows 
+        global _stop_all_processes
+        _subprocess_container.stop_all = False
         # Make a shallow copy of the task list, so we don't mess with the callers
         # list. 
         tasklist = copy.copy(tasklist)
@@ -598,27 +617,20 @@ class AnyPyProcess():
                             threads.remove(thread)
                 while task_queue.qsize():
                     task = task_queue.get() 
-                    if task.error:
+                    if task.has_error:
                         n_errors += 1
-                    elif not self.keep_logfiles:
-                        if os.path.isfile(task.logfile):
-                            try:
-                                silentremove(task.logfile)
-                                task.logfile = ""
-                            except:
-                                print('Could not remove logfile: ' + task.logfile )
                     processed_tasks.append(task)
                     if self.disp:
                         pbar.animate( len(processed_tasks),  n_errors)
                 time.sleep(0.01)
         except KeyboardInterrupt:
             #if len(processed_tasks) < number_tasks:
-            print('\nUser interupted')
-            _kill_running_processes()
+            _display('Processing interrupted')
+            _subprocess_container.stop_all = True
             # Add a small delay here. It allows the user to press ctrl-c twice to 
-            # excape this try-catch. This is usefull when running this code in an 
-            # outer loop. 
-            time.sleep(2)
+            # escape this try-catch. This is usefull when if the code is run in 
+            # an outer loop which we want to excape as well.
+            time.sleep(1)
             
         
         totaltime = time.clock()-starttime
@@ -629,10 +641,10 @@ class AnyPyProcess():
 def _summery(task,duration=None):
 
     entry = ''
-    if task.processtime == 0:
-        entry += 'Not completed '
-    elif task.error:
+    if task.has_error: 
         entry += 'Failed '
+    elif task.processtime == 0:
+        entry += 'Not completed '
     else:
         entry += 'Completed '
         
@@ -660,13 +672,13 @@ def _parse_anybodycon_output(strvar, errors_to_ignore = [] ):
     for line in strvar.splitlines():
         if '#### Macro command' in line and "Dump" in line:
             me = re.search('Main[^ \"]*', line)
-            if me is not None :
+            if me:
                 dump_path = me.group(0)
         if line.endswith(';') and line.count('=') == 1:
             (first, last) = line.split('=')
             first = first.strip()
             last = last.strip(' ;').replace('{','[').replace('}',']')
-            if dump_path is not None:
+            if dump_path:
                 first = dump_path
                 dump_path = None
             try:
@@ -690,9 +702,7 @@ def _parse_anybodycon_output(strvar, errors_to_ignore = [] ):
     # Remove the ERROR key if it does not have any error entries        
     if not out['ERROR']:
         del out['ERROR']
-    
 
-        
     return out
         
 
