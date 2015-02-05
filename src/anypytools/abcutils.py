@@ -15,6 +15,7 @@ from subprocess import Popen
 from tempfile import NamedTemporaryFile
 from threading import Thread, RLock
 from ast import literal_eval
+import pprint
 try:
     import Queue as queue
 except ImportError:
@@ -29,13 +30,12 @@ logging.basicConfig(filename = "anypytools.log",
 
 try:
     __IPYTHON__
-    from IPython.display import clear_output, HTML, display, FileLink
+    from IPython.display import clear_output, HTML, display
 except NameError:
     pass
 
 
 from .utils import make_hash
-  
 
 #Module variables.
 _thread_lock = RLock()
@@ -244,7 +244,13 @@ def _execute_anybodycon( macro, logfile,
 
 
 class AnyPyProcessOutputList(list):
-    pass
+    def __repr__(self):
+        rep =  pprint.pformat([dict(l) for l in self])
+        if rep.count('\n') > 50:
+            rep = ( "\n".join(rep.split('\n')[:20]) 
+                    + "\n\n...\n\n" + 
+                    "\n".join(rep.split('\n')[-20:]) )
+        return rep
 
 
 
@@ -651,11 +657,21 @@ class AnyPyProcess(object):
 
     def cleanup_logfiles(self, tasklist):
         for task in tasklist:
-            if not self.keep_logfiles and not task.has_error and task.logfile:
-                _silentremove(task.logfile)
-            if task.processtime <= 0 and task.logfile:
-                _silentremove(task.logfile)
-        
+            try:
+                if not self.keep_logfiles and not task.has_error and task.logfile:
+                    _silentremove(task.logfile)
+                    task.logfile = ""
+                if task.processtime <= 0 and task.logfile:
+                    _silentremove(task.logfile)
+                    task.logfile = ""
+            except OSError as e:
+                logging.debug('Could not remove {} {}'.format(task.logfile, str(e)))
+            if not self.keep_logfiles:
+                try:
+                    macrofile = task.logfile.replace('.log', '.anymcr')
+                    _silentremove(macrofile)
+                except OSError as e:
+                    logging.debug('Could not removing {} {}'.format(macrofile, str(e)))
     
 def _summery(task,duration=None):
 
