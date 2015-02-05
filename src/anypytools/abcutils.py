@@ -477,8 +477,11 @@ class AnyPyProcess(object):
         # Start the scheduler
         process_time = self._schedule_processes(tasklist, self._worker)
         
+        self.cleanup_logfiles(tasklist)
+        
         # Cache the processed tasklist for restarting later 
         self.cached_tasklist = tasklist
+        
 
         self._print_summery(tasklist,process_time)
                
@@ -567,8 +570,11 @@ class AnyPyProcess(object):
             logging.debug(str(e))
         finally:
             if not self.keep_logfiles and not task.has_error:
-                _silentremove(logfile.name)
-                task.logfile = ""        
+                try:
+                    _silentremove(logfile.name)
+                    task.logfile = ""
+                except WindowsError as e:
+                    pass # Ignore if AnyBody has not released the log file. 
             
             task_queue.put(task)
          
@@ -642,7 +648,14 @@ class AnyPyProcess(object):
         totaltime = time.clock()-starttime
         
         return totaltime
-    
+
+    def cleanup_logfiles(self, tasklist):
+        for task in tasklist:
+            if not self.keep_logfiles and not task.has_error and task.logfile:
+                _silentremove(task.logfile)
+            if task.processtime <= 0 and task.logfile:
+                _silentremove(task.logfile)
+        
     
 def _summery(task,duration=None):
 
