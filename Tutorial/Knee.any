@@ -4,6 +4,7 @@ Main = {
 
   // The actual body model goes in this folder
   AnyFolder MyModel = {
+    AnyVar MyParameter = DesignVar(0);
 
     // Global Reference Frame
     AnyFixedRefFrame GlobalRef = {
@@ -201,12 +202,17 @@ AnyViaPointMuscle Quadriceps = {
         
   }; // MyModel
 
+  #ifndef N_STEP
+  #define N_STEP 100
+  #endif
+  
   // The study: Operations to be performed on the model
   AnyBodyStudy MyStudy = {
     AnyFolder &kneeref = .MyModel.Knee;
     AnyFolder &Model = .MyModel;
     Gravity = {0.0, -9.81, 0.0};
-    nStep = 100;
+    
+    nStep = N_STEP ;
     tEnd = 2.4;
     AnyVar MomentArm = Main.MyModel.Quadriceps.LmtDot/(Main.MyModel.Knee.Vel[0]+1.0e-10);
   };
