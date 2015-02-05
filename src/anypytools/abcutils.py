@@ -4,16 +4,18 @@ Created on Fri Oct 19 21:14:59 2012
 
 @author: Morten
 """
-from __future__ import division, absolute_import, print_function, unicode_literals
+from __future__ import (absolute_import, division,
+                        print_function, unicode_literals)
+from builtins import *
 
-from .utils.py3k import * # @UnusedWildImport
-from .utils import make_hash
+string_types =  (str, bytes)
 
 import os, sys, time, errno, atexit, collections, re, types, ctypes, logging, imp, copy
 from subprocess import Popen
 from tempfile import NamedTemporaryFile
 from threading import Thread, RLock
 from ast import literal_eval
+import pprint
 try:
     import Queue as queue
 except ImportError:
@@ -28,10 +30,12 @@ logging.basicConfig(filename = "anypytools.log",
 
 try:
     __IPYTHON__
-    from IPython.display import clear_output, HTML, display, FileLink
+    from IPython.display import clear_output, HTML, display
 except NameError:
     pass
-    
+
+
+from .utils import make_hash
 
 #Module variables.
 _thread_lock = RLock()
@@ -240,7 +244,13 @@ def _execute_anybodycon( macro, logfile,
 
 
 class AnyPyProcessOutputList(list):
-    pass
+    def __repr__(self):
+        rep =  pprint.pformat([dict(l) for l in self])
+        if rep.count('\n') > 50:
+            rep = ( "\n".join(rep.split('\n')[:20]) 
+                    + "\n\n...\n\n" + 
+                    "\n".join(rep.split('\n')[-20:]) )
+        return rep
 
 
 
@@ -259,7 +269,7 @@ class _Task(object):
         """
         self.folder = folder
         if not folder:
-            self.folder = os.getcwd()
+            self.folder =  os.getcwd() 
         self.macro = macro
         self.output = collections.OrderedDict()
         self.number = number
@@ -446,11 +456,11 @@ class AnyPyProcess(object):
                 macrolist = [macrolist]
         # Check folderlist input argument
         if not folderlist:
-            folderlist = [os.getcwd()]
+            folderlist = [ os.getcwd() ]
         if not isinstance(folderlist,list):
             raise TypeError('folderlist must be a list of folders')
         # Extend the folderlist if search_subdir is given
-        if isinstance(search_subdirs,string_types) and isinstance(folderlist[0], string_types):
+        if isinstance(search_subdirs,string_types) and isinstance(folderlist[0],string_types):
             folderlist = sum([getsubdirs(d, search_subdirs) for d in folderlist], [])
         
         # Check the input arguments and generate the tasklist              
@@ -473,8 +483,11 @@ class AnyPyProcess(object):
         # Start the scheduler
         process_time = self._schedule_processes(tasklist, self._worker)
         
+        self.cleanup_logfiles(tasklist)
+        
         # Cache the processed tasklist for restarting later 
         self.cached_tasklist = tasklist
+        
 
         self._print_summery(tasklist,process_time)
                
@@ -563,8 +576,11 @@ class AnyPyProcess(object):
             logging.debug(str(e))
         finally:
             if not self.keep_logfiles and not task.has_error:
-                _silentremove(logfile.name)
-                task.logfile = ""        
+                try:
+                    _silentremove(logfile.name)
+                    task.logfile = ""
+                except WindowsError as e:
+                    pass # Ignore if AnyBody has not released the log file. 
             
             task_queue.put(task)
          
@@ -638,7 +654,24 @@ class AnyPyProcess(object):
         totaltime = time.clock()-starttime
         
         return totaltime
-    
+
+    def cleanup_logfiles(self, tasklist):
+        for task in tasklist:
+            try:
+                if not self.keep_logfiles and not task.has_error and task.logfile:
+                    _silentremove(task.logfile)
+                    task.logfile = ""
+                if task.processtime <= 0 and task.logfile:
+                    _silentremove(task.logfile)
+                    task.logfile = ""
+            except OSError as e:
+                logging.debug('Could not remove {} {}'.format(task.logfile, str(e)))
+            if not self.keep_logfiles:
+                try:
+                    macrofile = task.logfile.replace('.log', '.anymcr')
+                    _silentremove(macrofile)
+                except OSError as e:
+                    logging.debug('Could not removing {} {}'.format(macrofile, str(e)))
     
 def _summery(task,duration=None):
 

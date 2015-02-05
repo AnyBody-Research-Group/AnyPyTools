@@ -4,13 +4,13 @@ Created on Mon Jan 16 11:40:42 2012
 
 @author: mel
 """
-from __future__ import division, absolute_import, print_function, unicode_literals
-from .utils.py3k import * # @UnusedWildImport
+from __future__ import (absolute_import, division,
+                        print_function, unicode_literals)
+from builtins import *
 
 
 
 import os.path as op
-import csv
 import numpy as np
 import os
 from scipy.interpolate import interp1d
@@ -20,7 +20,7 @@ from scipy.interpolate import interp1d
 def anydatah5_generator(folder=None, match = ''):    
     from . import h5py_wrapper
     if folder is None:
-        folder = os.getcwd()
+        folder = str( os.getcwd() )
     def func(item):
         return item.endswith('h5') and item.find(match)!= -1
     filelist = filter(func,  os.listdir(folder)) 
@@ -33,7 +33,7 @@ def anydatah5_generator(folder=None, match = ''):
     
 def anyoutputfile_generator(folder =None, match = "", DEBUG = False):
     if folder is None:
-        folder = os.getcwd()
+        folder = str( os.getcwd() )
 
 #    filelist = [_ for _ in os.listdir(folder) if _.endswith('.txt') or  _.endswith('.csv')]
     def func(item):

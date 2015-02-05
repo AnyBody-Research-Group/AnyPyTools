@@ -4,8 +4,10 @@ Created on Sun Jul 06 19:09:58 2014
 
 @author: Morten
 """
-from __future__ import division, absolute_import, print_function, unicode_literals
-from anypytools.utils.py3k import * # @UnusedWildImport
+from __future__ import (absolute_import, division,
+                        print_function, unicode_literals)
+from builtins import *
+
 import os
 import shutil
 import pytest

@@ -4,8 +4,9 @@ Created on Mon Sep  1 12:44:36 2014
 
 @author: Morten
 """
-from __future__ import division, absolute_import, print_function, unicode_literals
-from ..utils.py3k import * # @UnusedWildImport
+from __future__ import (absolute_import, division,
+                        print_function, unicode_literals)
+from builtins import *
 
 
 import pytest
@@ -161,7 +162,7 @@ class AnyTestFixture():
     
     
     def define2str(self,key,value=None):
-        if isinstance(value, string_types):
+        if isinstance(value, str):
             if value.startswith('"') and value.endswith('"'):
                 defstr = '-def %s=---"\\"%s\\""'% (key, value[1:-1])
             else:
