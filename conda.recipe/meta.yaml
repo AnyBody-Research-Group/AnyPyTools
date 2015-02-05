@@ -19,6 +19,7 @@ requirements:     # (optional)
     
   run:
     - pywin32 # [win]
+    - future
     - h5py
     - setuptools
     - python
@@ -27,10 +28,10 @@ requirements:     # (optional)
     
     
     
-test:
-  # Python imports
-  imports:
-    - anypytools
+#test:
+#  # Python imports
+#  imports:
+#    - anypytools
 
 app:
     entry: ${PREFIX}\Scripts\AnyPyToolsTutorial.bat

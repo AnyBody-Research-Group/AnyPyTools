@@ -4,10 +4,14 @@ Created on Fri Oct 19 21:14:59 2012
 
 @author: Morten
 """
-from __future__ import division, absolute_import, print_function, unicode_literals
-from .utils.py3k import * # @UnusedWildImport
+from __future__ import (absolute_import, division,
+                        print_function, unicode_literals)
+from builtins import *
 
-pprint = py3k_pprint
+string_types = (str, bytes)
+
+#pprint is used in the doc tests
+from .utils import pprint
 
 import sys
 from scipy.stats import distributions
@@ -346,7 +350,7 @@ class MacroGenerator(object):
               
         for key in sorted(define_kw):
             value = define_kw[key]
-            if isinstance(value,string_types):
+            if isinstance(value,str):
                 if value.startswith('"') and value.endswith('"'):
                     value = value[1:-1]
                     load_cmd.append(

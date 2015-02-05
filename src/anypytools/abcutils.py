@@ -4,10 +4,11 @@ Created on Fri Oct 19 21:14:59 2012
 
 @author: Morten
 """
-from __future__ import division, absolute_import, print_function, unicode_literals
+from __future__ import (absolute_import, division,
+                        print_function, unicode_literals)
+from builtins import *
 
-from .utils.py3k import * # @UnusedWildImport
-from .utils import make_hash
+string_types =  (str, bytes)
 
 import os, sys, time, errno, atexit, collections, re, types, ctypes, logging, imp, copy
 from subprocess import Popen
@@ -31,7 +32,10 @@ try:
     from IPython.display import clear_output, HTML, display, FileLink
 except NameError:
     pass
-    
+
+
+from .utils import make_hash
+  
 
 #Module variables.
 _thread_lock = RLock()
@@ -259,7 +263,7 @@ class _Task(object):
         """
         self.folder = folder
         if not folder:
-            self.folder = os.getcwd()
+            self.folder =  os.getcwd() 
         self.macro = macro
         self.output = collections.OrderedDict()
         self.number = number
@@ -446,11 +450,11 @@ class AnyPyProcess(object):
                 macrolist = [macrolist]
         # Check folderlist input argument
         if not folderlist:
-            folderlist = [os.getcwd()]
+            folderlist = [ os.getcwd() ]
         if not isinstance(folderlist,list):
             raise TypeError('folderlist must be a list of folders')
         # Extend the folderlist if search_subdir is given
-        if isinstance(search_subdirs,string_types) and isinstance(folderlist[0], string_types):
+        if isinstance(search_subdirs,string_types) and isinstance(folderlist[0],string_types):
             folderlist = sum([getsubdirs(d, search_subdirs) for d in folderlist], [])
         
         # Check the input arguments and generate the tasklist              

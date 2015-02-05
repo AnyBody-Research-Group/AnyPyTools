@@ -5,18 +5,46 @@ Created on Sun Sep  7 13:25:38 2014
 @author: Morten
 """
 
-from __future__ import division, absolute_import, print_function, unicode_literals
-from .py3k import * # @UnusedWildImport
+from __future__ import (absolute_import, division,
+                        print_function, unicode_literals)
+from builtins import *
+
 
 import os
 import numpy as np
 import copy
 from collections import OrderedDict
 from ast import literal_eval
-import collections
+
+
+
+
+# This handles pprint always returns string witout ' prefix 
+# important when running doctest in both python 2 og python 2
+import pprint as _pprint
+class MyPrettyPrinter(_pprint.PrettyPrinter):
+    def format(self, object, context, maxlevels, level):
+        try:
+            if isinstance(object, unicode):
+                rep = u"'"  + object + u"'"
+                return ( rep.encode('utf8'), True, False)
+        except NameError:
+            pass
+        return _pprint.PrettyPrinter.format(self, object, context, maxlevels, level)
+
+def py3k_pprint(s):
+    printer = MyPrettyPrinter(width = 110)
+    printer.pprint(s)
+
+pprint = py3k_pprint
+
+
+
+
+
 
 def define2str(key,value=None):
-    if isinstance(value, string_types):
+    if isinstance(value, str):
         if value.startswith('"') and value.endswith('"'):
             defstr = '-def %s=---"\\"%s\\""'% (key, value[1:-1].replace('\\','\\\\'))
         else:
@@ -39,7 +67,7 @@ def array2anyscript(arr):
     def tostr(v):
         if np.isreal(v):
             return '{:.12g}'.format(v)
-        elif isinstance(v, (string_types, np.str_)):
+        elif isinstance(v, (str, np.str_)):
             return '"{}"'.format(v)
 
     def createsubarr(arr):

@@ -4,8 +4,9 @@ Created on Mon Jan 16 11:40:42 2012
 
 @author: mel
 """
-from __future__ import division, absolute_import, print_function, unicode_literals
-from .utils.py3k import * # @UnusedWildImport
+from __future__ import (absolute_import, division,
+                        print_function, unicode_literals)
+from builtins import *
 
 import h5py
 

@@ -4,8 +4,9 @@ Created on Mon Jan 09 12:19:16 2012
 
 @author: melund
 """
-from __future__ import division, absolute_import, print_function, unicode_literals
-from .utils.py3k import * # @UnusedWildImport
+from __future__ import (absolute_import, division,
+                        print_function, unicode_literals)
+from builtins import *
 
 import numpy as np
 import os
