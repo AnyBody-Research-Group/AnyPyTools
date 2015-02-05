@@ -16,9 +16,11 @@ requirements:     # (optional)
   build:
     - python
     - setuptools
+    - future
     
   run:
     - pywin32 # [win]
+    - future
     - h5py
     - setuptools
     - python
