@@ -161,16 +161,18 @@ class TestAnyPyProcess():
                  'classoperation Main.ArmModelStudy.Output.MaxMuscleActivity "Dump"', 
                  'classoperation Main.ArmModel.GlobalRef.t "Dump"']]
         
-        from anypytools.utils.blaze_converter import convert_data
-
+        from anypytools.utils import blaze_converter
+        from into import into
+        from dynd import nd
+        
         app = AnyPyProcess(return_task_info=True)
 
         output = app.start_macro(macro)
-        out1 = convert_data(deepcopy(output), create_nested_structure = False)
+        out1 = into(nd.array, deepcopy(output))
         assert hasattr(out1, 'Main_ArmModelStudy_Output_MaxMuscleActivity')        
         assert hasattr(out1, 'Main_ArmModel_GlobalRef_t')
         
-        out2 = convert_data(deepcopy(output), create_nested_structure = True)							
+        out2 = into(nd.array, deepcopy(output), create_nested_structure = True)
         assert hasattr(out2, 'Main')        
         assert hasattr(out2.Main.ArmModel.GlobalRef, 't')        
         

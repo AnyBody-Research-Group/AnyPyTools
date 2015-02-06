@@ -10,18 +10,14 @@ from builtins import *
 
 string_types =  (str, bytes)
 
-import os, sys, time, errno, atexit, collections, re, types, ctypes, logging, imp, copy
+import os, sys, time, errno, atexit, collections, types, ctypes, logging, imp, copy
 from subprocess import Popen
 from tempfile import NamedTemporaryFile
 from threading import Thread, RLock
-from ast import literal_eval
-import pprint
 try:
     import Queue as queue
 except ImportError:
     import queue
-
-import numpy as np
 
 imp.reload(logging)
 logging.basicConfig(filename = "anypytools.log", 
@@ -35,7 +31,17 @@ except NameError:
     pass
 
 
-from .utils import make_hash
+from .utils import (make_hash, AnyPyProcessOutputList, parse_anybodycon_output,
+                    getsubdirs, get_anybodycon_path)
+
+try:
+    from .utils import blaze_converter
+except ImportError as e:
+    logging.info('Packages (libdynd, dynd-python, datashape, into ) must be installed'
+                 ' to use the blaze convertions ' + str(e))
+
+
+
 
 #Module variables.
 _thread_lock = RLock()
@@ -117,20 +123,6 @@ def _silentremove(filename):
             logging.debug('Error removing file: ' + filename)
             raise # re-raise exception if a different error occured
 
-def get_anybodycon_path():
-    """  Return the path to default AnyBody console application 
-    """
-    try: 
-        import winreg
-    except ImportError:
-        import _winreg as winreg
-    try:
-        abpath = winreg.QueryValue(winreg.HKEY_CLASSES_ROOT,
-                        'AnyBody.AnyScript\shell\open\command')
-    except WindowsError:
-        raise WindowsError('Could not locate AnyBody in registry')       
-    abpath = abpath.rsplit(' ',1)[0].strip('"')
-    return os.path.join(os.path.dirname(abpath),'AnyBodyCon.exe')
 
 def _get_ncpu():
     """ Return the number of CPUs in the computer 
@@ -151,32 +143,6 @@ def _display(line, *args, **kwargs):
     else:
         print(line, *args, **kwargs)
 
-
-def getsubdirs(toppath, search_string = "."):
-    """ Find all directories below a given top path. 
-    
-    Args: 
-        toppath: top directory when searching for sub directories
-        search_string: Limit to directories matching the this regular expression
-    Returns:
-        List of directories
-    """
-    if not search_string:
-        return [toppath]
-    reg_prog = re.compile(search_string)    
-    dirlist = []
-    if search_string == ".":
-        dirlist.append(toppath)
-    for root, dirs, files in os.walk(toppath):
-        for fname in files:
-            if reg_prog.search(os.path.join(root,fname)):
-                dirlist.append(root)
-                continue
-    uniqueList = []
-    for value in dirlist:
-        if value not in uniqueList:
-            uniqueList.append(value)    
-    return uniqueList
 
 
 def _execute_anybodycon( macro, logfile,
@@ -243,14 +209,6 @@ def _execute_anybodycon( macro, logfile,
     return proc.returncode
 
 
-class AnyPyProcessOutputList(list):
-    def __repr__(self):
-        rep =  pprint.pformat([dict(l) for l in self])
-        if rep.count('\n') > 50:
-            rep = ( "\n".join(rep.split('\n')[:20]) 
-                    + "\n\n...\n\n" + 
-                    "\n".join(rep.split('\n')[-20:]) )
-        return rep
 
 
 
@@ -563,7 +521,7 @@ class AnyPyProcess(object):
                                          keep_macrofile=self.keep_logfiles)            
                     task.logfile = logfile.name
                     logfile.seek(0)
-                    task.output = _parse_anybodycon_output(logfile.read(), self.ignore_errors )
+                    task.output = parse_anybodycon_output(logfile.read(), self.ignore_errors )
                 if retcode == _KILLED_BY_ANYPYTOOLS:
                     task.processtime = 0
                     _silentremove(logfile.name)
@@ -699,47 +657,7 @@ def _summery(task,duration=None):
     
     return entry
 
-def _parse_anybodycon_output(strvar, errors_to_ignore = [] ):
-    out = collections.OrderedDict(  );
-    out['ERROR'] = []
-    
-    dump_path = None
-    for line in strvar.splitlines():
-        if '#### Macro command' in line and "Dump" in line:
-            me = re.search('Main[^ \"]*', line)
-            if me:
-                dump_path = me.group(0)
-        if line.endswith(';') and line.count('=') == 1:
-            (first, last) = line.split('=')
-            first = first.strip()
-            last = last.strip(' ;').replace('{','[').replace('}',']')
-            if dump_path:
-                first = dump_path
-                dump_path = None
-            try:
-                out[first.strip()] = np.array(literal_eval(last))
-            except SyntaxError as e:
-                out['ERROR'].append(str(e))
 
-        line_has_errors = (line.startswith('ERROR') or line.startswith('Error') or 
-                           line.startswith('Model loading skipped'))             
-        if line_has_errors : 
-            for err_str in errors_to_ignore:
-                if err_str in line: break
-            else:
-                # This is run if we never break,
-                #i.e. err was not in the list of errors_to_ignore
-                out['ERROR'].append(line)
-    
-    # Move 'ERROR' entry to the last position in the ordered dict
-    out['ERROR'] = out.pop('ERROR')
-    
-    # Remove the ERROR key if it does not have any error entries        
-    if not out['ERROR']:
-        del out['ERROR']
-
-    return out
-        
 
 
 class ProgressBar:
