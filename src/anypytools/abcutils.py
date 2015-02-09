@@ -10,19 +10,13 @@ from builtins import *
 
 string_types =  (str, bytes)
 
-import os, sys, time, errno, atexit, collections, types, ctypes, logging, imp, copy
+import os, sys, time, errno, atexit, collections, types, ctypes, logging, copy
 from subprocess import Popen
 from tempfile import NamedTemporaryFile
 from threading import Thread, RLock
-try:
-    import Queue as queue
-except ImportError:
-    import queue
+from queue import Queue
 
-imp.reload(logging)
-logging.basicConfig(filename = "anypytools.log", 
-                    format='%(asctime)s %(levelname)s:%(message)s',
-                    level=logging.DEBUG, datefmt='%I:%M:%S')
+logger = logging.getLogger('abt.anypytools')
 
 try:
     __IPYTHON__
@@ -37,7 +31,7 @@ from .utils import (make_hash, AnyPyProcessOutputList, parse_anybodycon_output,
 try:
     from .utils import blaze_converter
 except ImportError as e:
-    logging.info('Packages (libdynd, dynd-python, datashape, into ) must be installed'
+    logger.info('Packages (libdynd, dynd-python, datashape, into ) must be installed'
                  ' to use the blaze convertions ' + str(e))
 
 
@@ -531,7 +525,7 @@ class AnyPyProcess(object):
 
         except Exception as e:
             task.add_error(str( type(e)) + str(e))
-            logging.debug(str(e))
+            logger.debug(str(e))
         finally:
             if not self.keep_logfiles and not task.has_error:
                 try:
@@ -561,7 +555,7 @@ class AnyPyProcess(object):
         use_threading = ( number_tasks > 1 and self.num_processes > 1 )
             
         starttime = time.clock()    
-        task_queue = queue.Queue()
+        task_queue = Queue()
         
         if self.disp:
             pbar = ProgressBar(number_tasks)
@@ -623,13 +617,13 @@ class AnyPyProcess(object):
                     _silentremove(task.logfile)
                     task.logfile = ""
             except OSError as e:
-                logging.debug('Could not remove {} {}'.format(task.logfile, str(e)))
+                logger.debug('Could not remove {} {}'.format(task.logfile, str(e)))
             if not self.keep_logfiles:
                 try:
                     macrofile = task.logfile.replace('.log', '.anymcr')
                     _silentremove(macrofile)
                 except OSError as e:
-                    logging.debug('Could not removing {} {}'.format(macrofile, str(e)))
+                    logger.debug('Could not removing {} {}'.format(macrofile, str(e)))
     
 def _summery(task,duration=None):
 

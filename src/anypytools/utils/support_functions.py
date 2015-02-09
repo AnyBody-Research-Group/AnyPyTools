@@ -17,6 +17,10 @@ from ast import literal_eval
 import pprint
 import collections
 import re
+import logging
+
+logger = logging.getLogger('abt.anypytools')
+
 
 
 # This handles pprint always returns string witout ' prefix 

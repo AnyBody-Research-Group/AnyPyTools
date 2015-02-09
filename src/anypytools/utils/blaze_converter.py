@@ -11,7 +11,7 @@ from builtins import *
 import numpy as np
 from copy import deepcopy
 import collections
-
+import logging
 
 from datashape import discover
 from datashape.coretypes import (Record, var,Option)
@@ -21,6 +21,7 @@ from dynd import nd
 
 
 from ..utils import AnyPyProcessOutputList
+logger = logging.getLogger('abt.anypytools')
 
 
 @convert.register(nd.array, AnyPyProcessOutputList, cost=1.0)

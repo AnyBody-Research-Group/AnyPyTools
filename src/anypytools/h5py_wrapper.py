@@ -8,7 +8,10 @@ from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
 from builtins import *
 
+import logging
+
 import h5py
+logger = logging.getLogger('abt.anypytools')
 
 def _follow_reftarget(elem):
     completename = elem.attrs['CompleteName']

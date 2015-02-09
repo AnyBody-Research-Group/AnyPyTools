@@ -8,6 +8,8 @@ from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
 from builtins import *
 
+import logging
+
 string_types = (str, bytes)
 
 #pprint is used in the doc tests
@@ -39,6 +41,7 @@ except (ValueError, SystemError):
     from utils import array2anyscript
     
 from types import GeneratorType
+logger = logging.getLogger('abt.anypytools')
 
 
 def _isgenerator(x):
