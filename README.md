@@ -28,6 +28,6 @@ The simplest case:
 > app.start_macro(macro)
 > ```
 
-To really use the library see this [tutorial](http://nbviewer.ipython.org/github/AnyBody-Research-Group/AnyPyTools/blob/master/Tutorial/00_AnyPyTools_tutorial.ipynb)
+Please see this [tutorial](http://nbviewer.ipython.org/github/AnyBody-Research-Group/AnyPyTools/blob/master/Tutorial/00_AnyPyTools_tutorial.ipynb) on how to use the library. 
 
 <img src="https://dl.dropboxusercontent.com/u/1683635/store/relax.png" alt="" align="left"  style="height: 100px;"/>
