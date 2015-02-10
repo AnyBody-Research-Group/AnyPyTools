@@ -29,3 +29,5 @@ The simplest case:
 > ```
 
 To really use the library see this [tutorial](http://nbviewer.ipython.org/github/AnyBody-Research-Group/AnyPyTools/blob/master/Tutorial/00_AnyPyTools_tutorial.ipynb)
+
+<img src="https://dl.dropboxusercontent.com/u/1683635/store/relax.png" alt="" align="left"  style="height: 100px;"/>
