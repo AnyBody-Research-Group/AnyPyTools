@@ -10,7 +10,7 @@ from builtins import *
 
 import logging
 
-string_types = (str, bytes)
+from past.builtins import basestring as string_types
 
 #pprint is used in the doc tests
 from .utils import pprint

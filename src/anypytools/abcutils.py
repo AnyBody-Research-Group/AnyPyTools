@@ -8,7 +8,7 @@ from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
 from builtins import *
 
-string_types =  (str, bytes)
+from past.builtins import basestring as string_types
 
 import os, sys, time, errno, atexit, collections, types, ctypes, logging, copy
 from subprocess import Popen
