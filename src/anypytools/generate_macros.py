@@ -353,7 +353,7 @@ class MacroGenerator(object):
               
         for key in sorted(define_kw):
             value = define_kw[key]
-            if isinstance(value,str):
+            if isinstance(value, string_types):
                 if value.startswith('"') and value.endswith('"'):
                     value = value[1:-1]
                     load_cmd.append(

@@ -21,6 +21,7 @@ import logging
 
 logger = logging.getLogger('abt.anypytools')
 
+string_types =  (str, bytes)
 
 
 # This handles pprint always returns string witout ' prefix 
@@ -70,7 +71,7 @@ def get_anybodycon_path():
 
 
 def define2str(key,value=None):
-    if isinstance(value, str):
+    if isinstance(value, string_types):
         if value.startswith('"') and value.endswith('"'):
             defstr = '-def %s=---"\\"%s\\""'% (key, value[1:-1].replace('\\','\\\\'))
         else:
