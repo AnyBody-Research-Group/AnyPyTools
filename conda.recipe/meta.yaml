@@ -24,15 +24,15 @@ requirements:     # (optional)
     - h5py
     - setuptools
     - python
+    - scipy
     
+    
+test:
+  requires:
+    - pytest
 
-    
-    
-    
-#test:
-#  # Python imports
-#  imports:
-#    - anypytools
+ commands:
+    - python -c "import anypytools; anypytools.test()"
 
 app:
     entry: ${PREFIX}\Scripts\AnyPyToolsTutorial.bat
