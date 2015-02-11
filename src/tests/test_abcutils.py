@@ -6,8 +6,8 @@ Created on Sun Jul 06 19:09:58 2014
 """
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
-from builtins import *
-
+                        
+                        
 import os
 import shutil
 import pytest
@@ -18,6 +18,7 @@ from copy import deepcopy
 from anypytools.abcutils import AnyPyProcess
 
 demo_model_path = os.path.join(os.path.dirname(__file__), 'Demo.Arm2D.any')
+
 
 def setup_simple_model(tmpdir):
     shutil.copyfile(demo_model_path, str( tmpdir.join('model.main.any') ) )
