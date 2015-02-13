@@ -31,8 +31,8 @@ test:
   requires:
     - pytest
 
- commands:
-    - python -c "import anypytools; anypytools.test()"
+#  commands:
+#    - python -c "import anypytools; anypytools.test()"
 
 app:
     entry: ${PREFIX}\Scripts\AnyPyToolsTutorial.bat
