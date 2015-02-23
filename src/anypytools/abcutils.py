@@ -110,10 +110,11 @@ atexit.register(_subprocess_container._kill_running_processes)
 
 
 def _silentremove(filename):
+    """ Removes a file ignoring cases where the file does not exits.  """
     try:
         os.remove(filename)
-    except OSError as e: # this would be "except OSError, e:" before Python 2.6
-        if e.errno != errno.ENOENT: # errno.ENOENT = no such file or directory
+    except OSError as e: 
+        if e.errno != errno.ENOENT: # errno.ENOENT : no such file or directory
             logging.debug('Error removing file: ' + filename)
             raise # re-raise exception if a different error occured
 
@@ -189,7 +190,7 @@ def _execute_anybodycon( macro, logfile,
         _subprocess_container.remove(proc.pid)
             
         if proc.returncode == _KILLED_BY_ANYPYTOOLS:
-            logfile.write('ERROR: anybodycon.exe was interrupted by AnyPyTools' )
+            logfile.write('Anybodycon.exe was interrupted by AnyPyTools' )
         elif proc.returncode:
             logfile.write('ERROR: anybodycon.exe exited unexpectedly. Return code: '+
                            str(proc.returncode))
@@ -515,13 +516,11 @@ class AnyPyProcess(object):
                                          keep_macrofile=self.keep_logfiles)            
                     task.logfile = logfile.name
                     logfile.seek(0)
-                    task.output = parse_anybodycon_output(logfile.read(), self.ignore_errors )
-                if retcode == _KILLED_BY_ANYPYTOOLS:
-                    task.processtime = 0
-                    _silentremove(logfile.name)
-                    task.logfile = ""
-                else:
-                    task.processtime = time.clock() - starttime
+                    if retcode == _KILLED_BY_ANYPYTOOLS:
+                        task.processtime = 0
+                    else:
+                        task.processtime = time.clock() - starttime
+                        task.output = parse_anybodycon_output(logfile.read(), self.ignore_errors )
 
         except Exception as e:
             task.add_error(str( type(e)) + str(e))
@@ -531,7 +530,7 @@ class AnyPyProcess(object):
                 try:
                     _silentremove(logfile.name)
                     task.logfile = ""
-                except WindowsError as e:
+                except OSError as e:
                     pass # Ignore if AnyBody has not released the log file. 
             
             task_queue.put(task)
