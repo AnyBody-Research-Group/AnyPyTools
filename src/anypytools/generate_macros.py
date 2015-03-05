@@ -311,11 +311,12 @@ class MacroGenerator(object):
         if not isinstance(variables,list):
             variables = [variables]
         for var in variables:
-            cmd = 'classoperation {0} "Dump"'.format(var)
-            if include_in_macro is not None:
-                self.add_macro( self._generator_specific_macro(cmd, include_in_macro))
-            else:
-                self.add_macro(cmd)
+            if isinstance(var, string_types):
+                cmd = 'classoperation {0} "Dump"'.format(var)
+                if include_in_macro is not None:
+                    self.add_macro( self._generator_specific_macro(cmd, include_in_macro))
+                else:
+                    self.add_macro(cmd)
     
     def add_load(self, mainfile, define_kw = {}, path_kw={}):
         """ Create a Load macro command.
