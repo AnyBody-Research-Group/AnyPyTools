@@ -122,7 +122,7 @@ def array2anyscript(arr):
     def tostr(v):
         if np.isreal(v):
             return '{:.12g}'.format(v)
-        elif isinstance(v, (str, np.str_)):
+        elif isinstance(v, (string_types, np.str_)):
             return '"{}"'.format(v)
 
     def createsubarr(arr):
@@ -136,8 +136,10 @@ def array2anyscript(arr):
             outstr = outstr.strip(',') + '},'
             return outstr
         else:
-            return outstr + tostr(arr)+','      
-    if isinstance(arr, np.ndarray) :
+            return outstr + tostr(arr)+','  
+    if isinstance(arr, np.ndarray) and not arr.shape:
+        return tostr(arr.tolist())
+    elif isinstance(arr, np.ndarray) :
         return createsubarr(arr).strip(',')
     elif isinstance( arr, float):
         return tostr(arr)

@@ -65,6 +65,8 @@ class TestMacroGenerator:
         mg.add_set_value(['val3','val4'], [3.0,4])
         mg.add_set_value('val5', np.array([1,2,3,4]) )
         mg.add_set_value('val6', np.array([[1,0],[0,1]]) )
+        mg.add_set_value('val7', np.array(3.2142))
+        mg.add_set_value('val8', np.array("hallo world"))
         
         macro = mg.generate_macros()
         assert macro[0][0] == 'classoperation val0 "Set Value" --value="23.1"'
@@ -74,7 +76,9 @@ class TestMacroGenerator:
         assert macro[0][4] == 'classoperation val4 "Set Value" --value="4"'
         assert macro[0][5] == 'classoperation val5 "Set Value" --value="{1,2,3,4}"'
         assert macro[0][6] == 'classoperation val6 "Set Value" --value="{{1,0},{0,1}}"'
-        
+        assert macro[0][7] == 'classoperation val7 "Set Value" --value="3.2142"'
+        assert macro[0][8] == 'classoperation val8 "Set Value" --value="hallo world"'
+
     def test_set_value_list_intput(self):
         mg = MacroGenerator(number_of_macros=3)
         mg.add_set_value('val0', [1,2,3])

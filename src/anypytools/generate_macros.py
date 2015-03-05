@@ -250,7 +250,7 @@ class MacroGenerator(object):
         if isinstance(val,list):
             val = np.array(val)
         if isinstance(val, np.ndarray):
-            val = array2anyscript(val)
+            val = array2anyscript(val).strip('"')
         if isinstance(val,float):
             val = '{:.12g}'.format(val)
         return 'classoperation {0} "Set Value" --value="{1}"'.format(var,val)
