@@ -15,7 +15,11 @@ import logging
 
 from datashape import discover
 from datashape.coretypes import (Record, var,Option)
-from into import convert
+try: 
+    from odo import convert 
+except ImportError:
+    from into import convert
+    
 from dynd import nd
 
 
