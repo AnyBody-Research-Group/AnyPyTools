@@ -348,7 +348,6 @@ class AnyPyProcess(object):
                  return_task_info = False,
                  keep_logfiles = False,
                  logfile_prefix = '',
-                 blaze_ouput = False,
                  cache_filename = None):
         self.anybodycon_path = anybodycon_path
         self.num_processes = num_processes
@@ -359,7 +358,6 @@ class AnyPyProcess(object):
         self.ignore_errors = ignore_errors
         self.keep_logfiles = keep_logfiles
         self.logfile_prefix = logfile_prefix
-        self.blaze_output = blaze_ouput
         self.cached_arg_hash = None
         self.cached_tasklist = None
         self.cache_filename = cache_filename
