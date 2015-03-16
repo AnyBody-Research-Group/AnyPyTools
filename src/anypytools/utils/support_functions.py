@@ -24,8 +24,8 @@ logger = logging.getLogger('abt.anypytools')
 string_types =  (str, bytes)
 
 
-# This handles pprint always returns string witout ' prefix 
-# important when running doctest in both python 2 og python 2
+# This hacks pprint to always return strings witout u' prefix 
+# important when running doctest in both python 2 og python 3
 import pprint as _pprint
 class MyPrettyPrinter(_pprint.PrettyPrinter):
     def format(self, object, context, maxlevels, level):
@@ -52,6 +52,29 @@ class AnyPyProcessOutputList(list):
                     + "\n\n...\n\n" + 
                     "\n".join(rep.split('\n')[-20:]) )
         return rep
+        
+    def to_dynd(self):
+        try:
+            from .blaze_converter import convert
+            return convert(self)
+        except ImporError:
+            raise ImportError('The packages libdynd, dynd-python, datashape, '
+                               'odo/into must be installed to convert data ' )
+                               
+    def shelve(self, filename, key='results'):
+        import shelve
+        db = shelve.open(filename)
+        db[key] = self
+        db.close()        
+        
+    @classmethod
+    def from_shelve(cls, filename, key='results'):
+        import shelve
+        db = shelve.open(filename)
+        out = db[key]
+        db.close()
+        return out
+        
 
 
 def get_anybodycon_path():
