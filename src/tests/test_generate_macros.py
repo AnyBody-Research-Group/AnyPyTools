@@ -192,8 +192,8 @@ class TestLHSMacroGenerator:
 
         assert macros[0][0] == 'classoperation Main.myvar1 "Set Value" --value="{1,3,4}"'
         assert macros[0][1] == 'classoperation Main.myvar2 "Set Value" --value="{1,3,4}"'
-        assert macros[1][0] == 'classoperation Main.myvar1 "Set Value" --value="{1.07895227633,3.41996355574,-0.0241255334168}"'
-        assert macros[1][1] == 'classoperation Main.myvar2 "Set Value" --value="{1.24119096808,2.1047636289,2.00615775617}"'
+        assert macros[1][0] == 'classoperation Main.myvar1 "Set Value" --value="{0.973478019766,2.64702266602,0.0441088571967}"'
+        assert macros[1][1] == 'classoperation Main.myvar2 "Set Value" --value="{1.12273573036,2.17228489089,4.15538179788}"'
 
 
 

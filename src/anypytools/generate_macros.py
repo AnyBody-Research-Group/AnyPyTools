@@ -906,7 +906,10 @@ class LatinHyperCubeMacroGenerator(MacroGenerator):
             values = (frozen_dist.ppf(self.lhd[i , lhs_index ])\
                         for i in range(self.number_of_macros-1) )
         
-        macro_generator = self._generator_set_value(var,  values,
+        if self.number_of_macros == 1:
+            macro_generator = self._generator_set_value(var,  [mean_value])
+        else:
+            macro_generator = self._generator_set_value(var,  values,
                                                     special_first_values = mean_value)
         self.add_macro(macro_generator)
 
@@ -918,11 +921,14 @@ class LatinHyperCubeMacroGenerator(MacroGenerator):
         except ImportError:
             raise ImportError('The pyDOE package must be install to use this class')
         
-        # Create the Latin hyper cube sample matrix. This is used by the
-        # individual macro generator functions when macros are created.
-        self.lhd = pyDOE.lhs(self.LHS_factors,  samples=self.number_of_macros,
-                             criterion = self.criterion,
-                             iterations = self.iterations)
+        # Only generate LHS values if user requested more than macros, since the 
+        # first macro is allways the mean value
+        if self.number_of_macros > 1:
+            # Create the Latin hyper cube sample matrix. This is used by the
+            # individual macro generator functions when macros are created.
+            self.lhd = pyDOE.lhs(self.LHS_factors,  samples=self.number_of_macros-1,
+                                 criterion = self.criterion,
+                                 iterations = self.iterations)
         
         return super(LatinHyperCubeMacroGenerator,self).generate_macros(batch_size)
         
