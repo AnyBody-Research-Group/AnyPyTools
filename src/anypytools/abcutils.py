@@ -446,10 +446,6 @@ class AnyPyProcess(object):
                            [task.get_output(include_task_info = self.return_task_info) 
                              for task in tasklist])
 
-        if self.blaze_output:
-            from .utils.blaze_converter import convert_data
-            return_data = convert_data(return_data) 
-
         
         return return_data
            
