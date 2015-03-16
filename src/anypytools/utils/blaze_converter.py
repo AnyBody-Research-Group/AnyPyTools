@@ -30,6 +30,15 @@ logger = logging.getLogger('abt.anypytools')
 
 @convert.register(nd.array, AnyPyProcessOutputList, cost=1.0)
 def convert(res, **kwargs):
+    # Hack to ensure values are always interpreted as floats
+    # This is necessary because the dump command in AnyBody 
+    # may cause whole number float to look like int. 
+    res = deepcopy(res)
+    for elem in res:
+        for key in elem:
+            if key.startswith('Main') and isinstance(elem[key], np.ndarray):
+                elem[key] = elem[key].astype('float')    
+    ###
     prepared_data, ds = convert_and_extract_dshape(res, **kwargs)
     return nd.array(prepared_data, dtype=str(ds))
 
