@@ -14,17 +14,16 @@ build:            # (optional)
 # the build and runtime requirements:
 requirements:     # (optional)
   build:
-    - python
     - setuptools
-    - future
+    - python >=2.7
     
   run:
     - pywin32 # [win]
     - future
     - h5py
     - setuptools
-    - python
     - scipy
+    - ipython-notebook >=3.0
     
     
 test:
