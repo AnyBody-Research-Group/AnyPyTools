@@ -37,7 +37,10 @@ def convert(res, **kwargs):
     for elem in res:
         for key in elem:
             if key.startswith('Main') and isinstance(elem[key], np.ndarray):
-                elem[key] = elem[key].astype('float')    
+                try:
+                    elem[key] = elem[key].astype('float')    
+                except ValueError:
+                    pass
     ###
     prepared_data, ds = convert_and_extract_dshape(res, **kwargs)
     return nd.array(prepared_data, dtype=str(ds))
