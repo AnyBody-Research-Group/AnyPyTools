@@ -13,7 +13,7 @@ __all__ = ['abcutils', 'datautils', 'generate_macros', 'h5py_wrapper', 'AnyPyPro
            'MacroGenerator', 'MonteCarloMacroGenerator', 'LatinHyperCubeMacroGenerator'
            'print_versions', 'test']
 
-__version__ = '0.7.4'
+__version__ = '0.7.5'
 
 
 def print_versions():
