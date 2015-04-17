@@ -53,11 +53,11 @@ class AnyPyProcessOutputList(list):
                     "\n".join(rep.split('\n')[-20:]) )
         return rep
         
-    def to_dynd(self):
+    def to_dynd(self, **kwargs):
         try:
             from .blaze_converter import convert
-            return convert(self)
-        except ImporError:
+            return convert(self,**kwargs)
+        except ImportError:
             raise ImportError('The packages libdynd, dynd-python, datashape, '
                                'odo/into must be installed to convert data ' )
                                
