@@ -24,7 +24,7 @@ requirements:     # (optional)
     - setuptools
     - scipy
     - ipython-notebook >=3.0
-    
+    - ipython-qtconsole >=3.0
     
 test:
   requires:
