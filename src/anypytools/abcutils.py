@@ -28,12 +28,6 @@ except NameError:
 from .utils import (make_hash, AnyPyProcessOutputList, parse_anybodycon_output,
                     getsubdirs, get_anybodycon_path)
 
-try:
-    from .utils import blaze_converter
-except ImportError as e:
-    logger.info('Packages (libdynd, dynd-python, datashape, into ) must be installed'
-                 ' to use the blaze convertions ' + str(e))
-
 
 
 
