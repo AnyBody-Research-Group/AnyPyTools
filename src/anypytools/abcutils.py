@@ -654,7 +654,9 @@ class ProgressBar:
         if _run_from_ipython():
             clear_output(wait=True)
             #clear_output()
-        print('\r', self, end="")
+        else:
+            print( '\r', end="")
+        print(self, end="")
         sys.stdout.flush()
 
     def update_iteration(self, elapsed_iter,number_failed, tasks=[]):
