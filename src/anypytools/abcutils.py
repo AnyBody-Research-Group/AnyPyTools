@@ -29,7 +29,7 @@ except NameError:
 
 from .utils import (make_hash, AnyPyProcessOutputList, parse_anybodycon_output,
                     getsubdirs, get_anybodycon_path)
-
+from . import macroutils
 
 
 
@@ -413,6 +413,8 @@ class AnyPyProcess(object):
         # Check macrolist input argument
         if isinstance(macrolist, types.GeneratorType):
             macrolist = list(macrolist)
+        if isinstance(macrolist,macroutils.Macros ):
+            macrolist = macrolist.tolist()
         if isinstance(macrolist, list) and macrolist:
             if isinstance(macrolist[0], string_types):
                 macrolist = [macrolist]
