@@ -15,7 +15,8 @@ build:            # (optional)
 requirements:     # (optional)
   build:
     - setuptools
-    - python >=2.7
+    - python
+    - future
     
   run:
     - pywin32 # [win]
