@@ -7,6 +7,7 @@ Created on Fri Oct 19 21:14:59 2012
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
 from builtins import *
+from future.utils import text_to_native_str
 
 from past.builtins import basestring as string_types
 
@@ -15,6 +16,7 @@ from subprocess import Popen
 from tempfile import NamedTemporaryFile
 from threading import Thread, RLock
 from queue import Queue
+import shelve
 
 logger = logging.getLogger('abt.anypytools')
 
@@ -341,8 +343,7 @@ class AnyPyProcess(object):
                  ignore_errors = [],
                  return_task_info = False,
                  keep_logfiles = False,
-                 logfile_prefix = '',
-                 cache_filename = None):
+                 logfile_prefix = ''):
         self.anybodycon_path = anybodycon_path
         self.num_processes = num_processes
         self.disp = disp
@@ -354,8 +355,24 @@ class AnyPyProcess(object):
         self.logfile_prefix = logfile_prefix
         self.cached_arg_hash = None
         self.cached_tasklist = None
-        self.cache_filename = cache_filename
         logging.debug('\nAnyPyProcess initialized')
+
+
+    def save_results(self, filename): 
+        if self.cached_tasklist:
+            db = shelve.open(text_to_native_str(filename))
+            db[text_to_native_str('processed_tasks')] = self.cached_tasklist
+            db.close()
+        else:
+            raise ValueError('Noting to save')
+    
+    def load_results(self, filename):
+        db = shelve.open(text_to_native_str(filename))
+        self.cached_tasklist = db[text_to_native_str('processed_tasks')]
+        db.close()
+        results = [task.get_output(True) for task in self.cached_tasklist ]
+        return AnyPyProcessOutputList(results)
+
 
     def start_macro(self, macrolist=None, folderlist = None, search_subdirs = None,
                     **kwargs ):
