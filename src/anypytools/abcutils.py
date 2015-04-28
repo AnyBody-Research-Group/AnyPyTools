@@ -414,7 +414,7 @@ class AnyPyProcess(object):
         if isinstance(macrolist, types.GeneratorType):
             macrolist = list(macrolist)
         if isinstance(macrolist,macroutils.Macros ):
-            macrolist = macrolist.tolist()
+            macrolist = macrolist.create_macros()
         if isinstance(macrolist, list) and macrolist:
             if isinstance(macrolist[0], string_types):
                 macrolist = [macrolist]
