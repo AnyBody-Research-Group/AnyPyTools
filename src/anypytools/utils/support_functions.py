@@ -30,7 +30,7 @@ string_types =  (str, bytes)
 # This hacks pprint to always return strings witout u' prefix 
 # important when running doctest in both python 2 og python 3
 import pprint as _pprint
-class MyPrettyPrinter(_pprint.PrettyPrinter):
+class Py3kPrettyPrinter(_pprint.PrettyPrinter):
     def format(self, object, context, maxlevels, level):
         try:
             if isinstance(object, unicode):
@@ -41,7 +41,7 @@ class MyPrettyPrinter(_pprint.PrettyPrinter):
         return _pprint.PrettyPrinter.format(self, object, context, maxlevels, level)
 
 def py3k_pprint(s):
-    printer = MyPrettyPrinter(width = 110)
+    printer = Py3kPrettyPrinter(width = 110)
     printer.pprint(s)
 
 pprint = py3k_pprint
