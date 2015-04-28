@@ -148,6 +148,50 @@ class TestAnyPyProcess():
             assert 'ERROR' not in result
             
         
+        
+    def test_output_access_ragged(self,init_simple_model):
+        macro = [['load "model.main.any" -def N_STEP="10"',
+                 'operation Main.ArmModelStudy.InverseDynamics',
+                 'classoperation Main.ArmModelStudy.Output.MaxMuscleActivity "Dump"', 
+                 'classoperation Main.ArmModel.GlobalRef.t "Dump"'], 
+                 ['load "model.main.any" -def N_STEP="20"',
+                 'operation Main.ArmModelStudy.InverseDynamics',
+                 'classoperation Main.ArmModelStudy.Output.MaxMuscleActivity "Dump"', 
+                 'classoperation Main.ArmModel.GlobalRef.t "Dump"']]
+        
+        app = AnyPyProcess(return_task_info=True)
+        output = app.start_macro(macro)
+        output['GlobalRef.t']
+        output['MaxMuscleActivity']
+        
+    def test_output_access(self,init_simple_model):
+        macro = [['load "model.main.any" -def N_STEP="10"',
+                 'operation Main.ArmModelStudy.InverseDynamics',
+                 'classoperation Main.ArmModelStudy.Output.MaxMuscleActivity "Dump"', 
+                 'classoperation Main.ArmModel.GlobalRef.t "Dump"'], 
+                 ['load "model.main.any" -def N_STEP="10"',
+                 'operation Main.ArmModelStudy.InverseDynamics',
+                 'classoperation Main.ArmModelStudy.Output.MaxMuscleActivity "Dump"', 
+                 'classoperation Main.ArmModel.GlobalRef.t "Dump"']]
+        
+        app = AnyPyProcess(return_task_info=True)
+        output = app.start_macro(macro)
+        output['GlobalRef.t']
+        output['MaxMuscleActivity']
+
+    def test_output_save(self,init_simple_model):
+        macro = [['load "model.main.any" -def N_STEP="10"',
+                 'operation Main.ArmModelStudy.InverseDynamics',
+                 'classoperation Main.ArmModelStudy.Output.MaxMuscleActivity "Dump"', 
+                 'classoperation Main.ArmModel.GlobalRef.t "Dump"']]
+        
+        app = AnyPyProcess(return_task_info=True)
+        app.start_macro(macro)
+        app.save_results('test.db')
+        
+        reloaded = app.load_results('test.db')
+        reloaded['Main.ArmModel.GlobalRef.t']
+        
     def test_output_convert_data(self,init_simple_model):
         macro = [['load "model.main.any"',
                  'operation Main.ArmModelStudy.InverseDynamics',

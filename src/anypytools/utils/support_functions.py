@@ -8,6 +8,7 @@ Created on Sun Sep  7 13:25:38 2014
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
 from builtins import *
+from past.builtins import basestring as string_types
 
 
 import os
@@ -18,6 +19,8 @@ import pprint
 import collections
 import re
 import logging
+import warnings
+
 
 logger = logging.getLogger('abt.anypytools')
 
@@ -52,7 +55,26 @@ class AnyPyProcessOutputList(list):
                     + "\n\n...\n\n" + 
                     "\n".join(rep.split('\n')[-20:]) )
         return rep
-        
+    
+    def __getitem__(self,index):
+        if isinstance(index, string_types):
+            # Find the entries where index matches the keys
+            matching = [s for s in self[0] if index in s]
+            if matching:
+                if len(matching) > 1: 
+                    warnings.warn("Key is not unique. Returning first match")
+                # Return the stacked data for the first match found 
+                try: 
+                    return np.row_stack( (elem[matching[0]] for elem in self))
+                except ValueError:
+                    # if the array is ragged try to assemble it as an array of objects
+                    return np.array([elem[matching[0]] for elem in self])
+            else:
+                raise KeyError('Could not find key in the data')
+            return np.row_stack( (elem[key] for elem in self))
+        else:
+            return super(AnyPyProcessOutputList, self).__getitem__(index)
+
     def to_dynd(self, **kwargs):
         try:
             from .blaze_converter import convert

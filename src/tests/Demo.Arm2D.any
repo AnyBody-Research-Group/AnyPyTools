@@ -326,7 +326,13 @@ AnyFolder ArmModel = {
 AnyBodyStudy ArmModelStudy = {
   AnyFolder& Model = Main.ArmModel;
   Gravity = {0,0,-9.81};
-
+  
+  #ifndef N_STEP
+  #define N_STEP 100
+  #endif
+  nStep = N_STEP ;
+  
+  
 };
 
 
