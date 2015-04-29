@@ -10,7 +10,7 @@ from __future__ import (absolute_import, division,
 from builtins import *
 from past.builtins import basestring as string_types
 
-
+import sys
 import os
 import numpy as np
 import copy
@@ -19,7 +19,6 @@ import pprint
 import collections
 import re
 import logging
-import warnings
 
 
 logger = logging.getLogger('abt.anypytools')
@@ -62,7 +61,8 @@ class AnyPyProcessOutputList(list):
             matching = [s for s in self[0] if index in s]
             if matching:
                 if len(matching) > 1: 
-                    warnings.warn("Key is not unique. Returning first match")
+                    print("WARNING: ", "Key is not unique. Returning first match: ",
+                          matching[0], file=sys.stderr)
                 # Return the stacked data for the first match found 
                 try: 
                     return np.row_stack( (elem[matching[0]] for elem in self))
