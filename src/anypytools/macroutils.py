@@ -41,6 +41,11 @@ from .utils import Py3kPrettyPrinter
 def _isgenerator(x):
     return isinstance(x, types.GeneratorType)
 
+def _batch(iterable, n = 1):
+   l = len(iterable)
+   for ndx in range(0, l, n):
+       yield iterable[ndx:min(ndx+n, l)]
+
 
 class MacroCommand(object):
     """ Class for custom macro commands and base class for other macro commands. 
@@ -598,8 +603,9 @@ class Macros(MutableSequence):
 
 
 
-
-    def create_macros(self, number_of_macros=None):
+    def create_macros(self, number_of_macros=None, batch_size = None):
+        if batch_size is not None:
+            return _batch(self.create_macros(number_of_macros), n = batch_size)
         
         if number_of_macros is None:
             number_of_macros = self.number_of_macros
@@ -618,11 +624,11 @@ class Macros(MutableSequence):
         return macro_list
 
 
-    def create_macros_MonteCarlo(self,
-                          number_of_macros=None,
-                          criterion=None,
-                          iterations=None):
-
+    def create_macros_MonteCarlo(self, number_of_macros=None, batch_size = None):
+        
+        if batch_size is not None:
+            return _batch(self.create_macros_MonteCarlo(number_of_macros), batch_size)
+                                                             
         if number_of_macros is None:
             number_of_macros = self.number_of_macros
 
@@ -658,12 +664,18 @@ class Macros(MutableSequence):
     def create_macros_LHS(self,
                           number_of_macros=None,
                           criterion=None,
-                          iterations=None):
+                          iterations=None,
+                          batch_size = None):
         try:
             import pyDOE
         except ImportError:
             raise ImportError(
                 'The pyDOE package must be install to use this class')
+
+        if batch_size is not None:
+            return _batch(self.create_macros_LHS(number_of_macros,
+                                                 criterion, 
+                                                 iterations), n = batch_size)
 
         if number_of_macros is None:
             number_of_macros = self.number_of_macros
