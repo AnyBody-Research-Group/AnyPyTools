@@ -358,17 +358,22 @@ class AnyPyProcess(object):
         logging.debug('\nAnyPyProcess initialized')
 
 
-    def save_results(self, filename): 
+    def save_results(self, filename, append = False): 
         if self.cached_tasklist:
-            db = shelve.open(text_to_native_str(filename))
-            db[text_to_native_str('processed_tasks')] = self.cached_tasklist
+            savekey = text_to_native_str('processed_tasks')            
+            db = shelve.open(text_to_native_str(filename), writeback=True)
+            if not append or savekey not in db:
+                db[savekey] = self.cached_tasklist
+            else:
+                db[savekey].extend(self.cached_tasklist)
             db.close()
         else:
             raise ValueError('Noting to save')
     
     def load_results(self, filename):
+        loadkey = text_to_native_str('processed_tasks')
         db = shelve.open(text_to_native_str(filename))
-        self.cached_tasklist = db[text_to_native_str('processed_tasks')]
+        self.cached_tasklist = db[loadkey]
         db.close()
         results = [task.get_output(True) for task in self.cached_tasklist ]
         return AnyPyProcessOutputList(results)
