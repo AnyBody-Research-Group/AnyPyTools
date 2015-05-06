@@ -16,6 +16,7 @@ import numpy as np
 from copy import deepcopy
 
 from anypytools.abcutils import AnyPyProcess
+from anypytools.abcutils import AnyPyProcessOutputList
 
 demo_model_path = os.path.join(os.path.dirname(__file__), 'Demo.Arm2D.any')
 
@@ -165,19 +166,16 @@ class TestAnyPyProcess():
         output['MaxMuscleActivity']
         
     def test_output_access(self,init_simple_model):
-        macro = [['load "model.main.any" -def N_STEP="10"',
+        macro = [['load "model.main.any" -def N_STEP="5"',
                  'operation Main.ArmModelStudy.InverseDynamics',
                  'classoperation Main.ArmModelStudy.Output.MaxMuscleActivity "Dump"', 
-                 'classoperation Main.ArmModel.GlobalRef.t "Dump"'], 
-                 ['load "model.main.any" -def N_STEP="10"',
-                 'operation Main.ArmModelStudy.InverseDynamics',
-                 'classoperation Main.ArmModelStudy.Output.MaxMuscleActivity "Dump"', 
-                 'classoperation Main.ArmModel.GlobalRef.t "Dump"']]
+                 'classoperation Main.ArmModel.GlobalRef.t "Dump"']]*5
         
         app = AnyPyProcess(return_task_info=True)
         output = app.start_macro(macro)
         output['GlobalRef.t']
-        output['MaxMuscleActivity']
+        assert( output['MaxMuscleActivity'].shape == output['Main.ArmModelStudy.Output.MaxMuscleActivity'].shape )
+        assert( isinstance( output[1:3], AnyPyProcessOutputList ))        
 
     def test_output_save(self,init_simple_model):
         macro = [['load "model.main.any" -def N_STEP="10"',
