@@ -13,7 +13,7 @@ import numpy as np
 from scipy.stats.distributions import norm
 
 from anypytools import AnyMacro
-import anypytools.macro_commads as mc 
+import anypytools.macro_commands as mc 
 
 #@pytest.yield_fixture()
 #def fixture():
@@ -100,19 +100,19 @@ def test_macros():
     mcr = AnyMacro(number_of_macros = 10)
     mcr.append(mc.Load('main.any'))
     
-    macros = mcr.create_macro()
+    macros = mcr.create_macros()
     
     assert macros[0][0] == 'load "main.any"'
     assert macros[1][0] == 'load "main.any"'
     assert len(macros) == 10
 
-def test_macro2():
-    mcr = AnyMacro([
-                    mc.Load('main.any'),
-                    mc.OperationRun('Main.MyStudy.Kinematics')
-                    ])
+# def test_macro2():
+    # mcr = AnyMacro([
+                    # mc.Load('main.any'),
+                    # mc.OperationRun('Main.MyStudy.Kinematics')
+                    # ])
     
-    assert str(mcr) == 'kd'
+    # assert str(mcr) == 'kd'
 
 if __name__ == '__main__':
     import pytest
