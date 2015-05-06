@@ -506,7 +506,6 @@ class AnyPyProcess(object):
                 return
             
         try:
-            starttime = time.clock()
             if not os.path.exists(task.folder):
                 task.add_error('Could not find folder: {}'.format(task.folder) )
                 task.logfile = ""
@@ -520,18 +519,21 @@ class AnyPyProcess(object):
                     logfile.write("\n".join(task.macro))
                     logfile.write('\n\n######### OUTPUT LOG ##########')
                     logfile.flush()
+                    task.logfile = logfile.name
                     
+                    starttime = time.clock()
                     retcode = _execute_anybodycon( macro = task.macro, 
                                          logfile = logfile, 
                                          anybodycon_path = self.anybodycon_path,
                                          timeout = self.timeout,
                                          keep_macrofile=self.keep_logfiles)            
-                    task.logfile = logfile.name
+                    endtime = time.clock()
+                    
                     logfile.seek(0)
                     if retcode == _KILLED_BY_ANYPYTOOLS:
                         task.processtime = 0
                     else:
-                        task.processtime = time.clock() - starttime
+                        task.processtime = endtime - starttime
                         task.output = parse_anybodycon_output(logfile.read(), self.ignore_errors )
 
         except Exception as e:
