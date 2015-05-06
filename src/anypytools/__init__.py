@@ -7,13 +7,14 @@ from .abcutils import AnyPyProcess
 from .generate_macros import (MacroGenerator, MonteCarloMacroGenerator,
                               LatinHyperCubeMacroGenerator)
 
-
+from .macroutils import AnyMacro
+from . import macro_commands
 
 __all__ = ['abcutils', 'datautils', 'generate_macros', 'h5py_wrapper', 'AnyPyProcess', 
            'MacroGenerator', 'MonteCarloMacroGenerator', 'LatinHyperCubeMacroGenerator'
-           'print_versions']
+           'AnyMacro', 'macro_commands', 'print_versions']
 
-__version__ = '0.7.9'
+__version__ = '0.7.10'
 
 
 def print_versions():

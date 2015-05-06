@@ -46,39 +46,66 @@ def py3k_pprint(s):
 pprint = py3k_pprint
 
 
-class AnyPyProcessOutputList(list):
-    def __repr__(self):
-        rep =  _pprint.pformat([dict(l) for l in self])
-        if rep.count('\n') > 50:
-            rep = ( "\n".join(rep.split('\n')[:20]) 
-                    + "\n\n...\n\n" + 
-                    "\n".join(rep.split('\n')[-20:]) )
-        return rep
-    
-    def __getitem__(self,index):
+class AnyPyProcessOutputList(collections.MutableSequence):
+
+    def __init__(self, *args):
+        self.list = list()
+        for elem in args:
+            self.extend(list(elem))
+
+        
+    def check(self, v):
+        if not isinstance(v, collections.OrderedDict):
+            raise TypeError( v)
+
+    def __len__(self): return len(self.list)
+
+    def __getitem__(self, index):
         if isinstance(index, string_types):
             # Find the entries where index matches the keys
-            matching = [s for s in self[0] if index in s]
+            matching = [s for s in self.list[0] if index in s]
             if matching:
                 if len(matching) > 1: 
                     print("WARNING: ", "Key is not unique. Returning first match: ",
                           matching[0], file=sys.stderr)
                 # Return the stacked data for the first match found 
                 try: 
-                    return np.row_stack( (elem[matching[0]] for elem in self))
+                    return np.row_stack( (elem[matching[0]] for elem in self.list))
                 except ValueError:
                     # if the array is ragged try to assemble it as an array of objects
-                    return np.array([elem[matching[0]] for elem in self])
+                    return np.array([elem[matching[0]] for elem in self.list])
             else:
                 raise KeyError('Could not find key in the data')
-            return np.row_stack( (elem[key] for elem in self))
+            return np.row_stack( (elem[key] for elem in self.list))
         else:
-            return super(AnyPyProcessOutputList, self).__getitem__(index)
+            return type(self)(self.list[index]) if isinstance(index, slice) else self.list[index]
+
+            
+    def __delitem__(self, i): del self.list[i]
+
+    def __setitem__(self, i, v):
+        self.check(v)
+        self.list[i] = v
+
+    def insert(self, i, v):
+        self.check(v)
+        self.list.insert(i, v)
+
+    def __str__(self):
+        return str(self.list)
+
+    def __repr__(self):
+       rep =  _pprint.pformat([dict(l) for l in self.list])
+       if rep.count('\n') > 50:
+           rep = ( "\n".join(rep.split('\n')[:20]) 
+                   + "\n\n...\n\n" + 
+                   "\n".join(rep.split('\n')[-20:]) )
+       return rep
 
     def to_dynd(self, **kwargs):
         try:
             from .blaze_converter import convert
-            return convert(self,**kwargs)
+            return convert(self.list,**kwargs)
         except ImportError:
             raise ImportError('The packages libdynd, dynd-python, datashape, '
                                'odo/into must be installed to convert data ' )
@@ -96,7 +123,7 @@ class AnyPyProcessOutputList(list):
         out = db[key]
         db.close()
         return out
-        
+      
 
 
 def get_anybodycon_path():

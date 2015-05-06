@@ -15,6 +15,7 @@ from copy import deepcopy
 
 import numpy as np
 
+
 from scipy.stats import distributions
 if sys.platform.startswith("win"):
     # This is a horrible hack to work around a bug in
@@ -36,6 +37,10 @@ logger = logging.getLogger('abt.anypytools')
 #pprint is used in the doc tests
 from .utils import define2str, path2str, array2anyscript, pprint
 from .utils import Py3kPrettyPrinter
+
+__all__ = ['MacroCommand', 'Load', 'SetValue', 'SetValue_random', 'Dump', 
+           'SaveDesign', 'LoadDesign', 'SaveValues', 'LoadValues', 'UpdateValues',
+           'OperationRun']
 
 
 def _isgenerator(x):
@@ -92,7 +97,7 @@ class Load(MacroCommand):
     >>> Load('c:/MyModel/model.main.any', defines, paths)
     load "c:/MyModel/model.main.any" -def EXCLUDE_ARMS="" -def N_STEP="20" -p DATA=---"c:/MyModel/Data"
     
-    >>> mcr = Macros( Load('model_{id}.main.any'), counter_token = '{id}')
+    >>> mcr = AnyMacro( Load('model_{id}.main.any'), counter_token = '{id}')
     >>> mcr.create_macros(3) 
     [[u'load "model_0.main.any"'],
      [u'load "model_1.main.any"'],
@@ -146,7 +151,7 @@ class SetValue(MacroCommand):
                
         Here is a elaborate example:
         
-        >>> mg = Macros( Load('MyModel.main.any'),
+        >>> mg = AnyMacro( Load('MyModel.main.any'),
                          SetValue('Main.Study.myvar1',[1,2]),
                          OperationRun('Main.Study.InverseDynamics') )
         >>> mg.number_of_macros = 2
@@ -240,7 +245,7 @@ class SetValue_random(SetValue):
     >>> norm_dist = norm( loc= [0,0,0],scale = [0.1,0.5,1] )
     >>> cmd = [ SetValue_random('Main.MyVar1', log_dist),
                  SetValue_random('Main.MyVar2', norm_dist) ]
-    >>> mg = Macros(cmd, number_of_macros = 3)
+    >>> mg = AnyMacro(cmd, number_of_macros = 3)
     >>> mg
     [['classoperation Main.MyVar1 "Set Value" --value="{0,0,0}"',
       'classoperation Main.MyVar2 "Set Value" --value="{1,3,4}"'],
@@ -330,7 +335,7 @@ class Dump(MacroCommand):
     
     Only include the dump command in the two first macro
     
-    >>> mg = Macros(number_of_macros = 5)
+    >>> mg = AnyMacro(number_of_macros = 5)
     >>> mg.append(Load('mymodel.main.any'))
     >>> mg.append(Dump('Main.Study.myvar1', include_in_macro = [0,1]))
     >>> mg
@@ -472,9 +477,9 @@ class OperationRun(MacroCommand):
     operation Main.MyStudy.Kinematics
     run
     
-    >>> mg = Macros(Load('my_model.main.any'),
+    >>> mg = AnyMacro(Load('my_model.main.any'),
                    OperationRun('Main.MyStudy.Kinematics'))
-    >>> mg.generate_macros()
+    >>> mg.create_macros()
     [[u'load "my_model.main.any"', u'operation Main.MyStudy.Kinematics', u'run']]              
     """        
     def __init__(self, operation):
@@ -484,8 +489,8 @@ class OperationRun(MacroCommand):
         return 'operation {}'.format(self.operation) + '\n' + 'run'
 
 
-class Macros(MutableSequence):
-    """ Macros(*macro_commands, number_of_macros = 1, counter_token = None, seed = None)  
+class AnyMacro(MutableSequence):
+    """ AnyMacro(*macro_commands, number_of_macros = 1, counter_token = None, seed = None)  
 
     Overview
     ----------
@@ -503,7 +508,7 @@ class Macros(MutableSequence):
         for every macro generated
     number_of_macros: int
         The default number of macros which are created. This can be overruled when
-        calling the Macros.create_macros() function. Defults to 1. 
+        calling the AnyMacro.create_macros() function. Defults to 1. 
     seed: int or array_like
         A constant seed value used which will be used every time macros are created.
         Must be convertable to 32 bit unsigned integers.
@@ -512,7 +517,7 @@ class Macros(MutableSequence):
     
     For example:
     
-    >>> mg = Macros(number_of_macros = 22)
+    >>> mg = AnyMacro(number_of_macros = 22)
     >>> mg.append( Load('c:/MyModel/model.main.any', defs = {}, paths = {} ) )
     >>> mg.append( SetValue('Main.myvar', 12.3)  )
     >>> mg.extend( [RunOperation('Main.Study.Kinematics'), 
@@ -530,7 +535,7 @@ class Macros(MutableSequence):
       'classoperation Main.Study.Output.MyVar "Dump"']]
 
             
-    >>> mg = Macros( number_of_macros = 3, counter_token='{COUNTER}' )
+    >>> mg = AnyMacro( number_of_macros = 3, counter_token='{COUNTER}' )
     >>> mg.append(Load('c:/MyModel/model_{COUNTER}_.main.any') )
     >>> pprint(mg.create_macros())
     [['load "c:/MyModel/model_0_.main.any"'],
@@ -541,7 +546,7 @@ class Macros(MutableSequence):
         
     Returns
     -------
-    A Macros object: 
+    A AnyMacro object: 
         A Macro object for constructing the macro.       
     """
 
