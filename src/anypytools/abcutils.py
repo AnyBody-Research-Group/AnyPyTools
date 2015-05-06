@@ -29,7 +29,7 @@ except NameError:
 
 from .utils import (make_hash, AnyPyProcessOutputList, parse_anybodycon_output,
                     getsubdirs, get_anybodycon_path)
-from .macroutils import AnyMacro
+from .macroutils import AnyMacro, MacroCommand
 
 
 
@@ -415,14 +415,24 @@ class AnyPyProcess(object):
             >>> start_macro(macro, folderlist, search_subdirs = "*.main.any")
             
         """ 
-        # Check macrolist input argument
+        # Handle different input types
         if isinstance(macrolist, types.GeneratorType):
             macrolist = list(macrolist)
-        if isinstance(macrolist, AnyMacro ):
+        if isinstance(macrolist, AnyMacro):
             macrolist = macrolist.create_macros()
         if isinstance(macrolist, list) and macrolist:
             if isinstance(macrolist[0], string_types):
                 macrolist = [macrolist]
+            if isinstance(macrolist[0], MacroCommand) :
+                macrolist = AnyMacro(macrolist).create_macros()
+        if isinstance(macrolist, string_types):
+            if macrolist.startswith('[') and macrolist.endswith(']'):
+                macrolist = macrolist.strip('[').rstrip(']')
+                macrolist = [macrolist.split(', ')]
+            else:
+                macrolist = [[macrolist]]
+                
+            
         # Check folderlist input argument
         if not folderlist:
             folderlist = [ os.getcwd() ]
@@ -448,6 +458,8 @@ class AnyPyProcess(object):
             else:
                 self.cached_arg_hash = arg_hash
                 tasklist = list( _Task.from_macrofolderlist(macrolist, folderlist))   
+        else:
+            raise ValueError('Nothing to process for ' + str(macrolist))
         
         # Start the scheduler
         process_time = self._schedule_processes(tasklist, self._worker)
