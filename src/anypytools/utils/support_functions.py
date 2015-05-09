@@ -19,7 +19,7 @@ import pprint
 import collections
 import re
 import logging
-
+import warnings
 
 logger = logging.getLogger('abt.anypytools')
 
@@ -66,14 +66,16 @@ class AnyPyProcessOutputList(collections.MutableSequence):
             matching = [s for s in self.list[0] if index in s]
             if matching:
                 if len(matching) > 1: 
-                    print("WARNING: ", "Key is not unique. Returning first match: ",
-                          matching[0], file=sys.stderr)
+                    print('WARNING: "{}" key is not unique. '
+                         'Returning first match: {}'.format(index, matching[0]),
+                         file=sys.stderr)
                 # Return the stacked data for the first match found 
-                try: 
-                    return np.row_stack( (elem[matching[0]] for elem in self.list))
-                except ValueError:
-                    # if the array is ragged try to assemble it as an array of objects
-                    return np.array([elem[matching[0]] for elem in self.list])
+                data = np.array([elem[matching[0]] for elem in self.list])
+                if data.dtype == np.dtype('O'):
+                    warnings.warn('\n\nSimulation time varies across macros. '
+                          'Numpy does not support ragged arrays, so data is '
+                          'concatenated as an array of array object.' )
+                return data
             else:
                 raise KeyError('Could not find key in the data')
             return np.row_stack( (elem[key] for elem in self.list))
