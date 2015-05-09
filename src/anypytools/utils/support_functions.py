@@ -95,12 +95,30 @@ class AnyPyProcessOutputList(collections.MutableSequence):
         return str(self.list)
 
     def __repr__(self):
-       rep =  _pprint.pformat([dict(l) for l in self.list])
-       if rep.count('\n') > 50:
-           rep = ( "\n".join(rep.split('\n')[:20]) 
-                   + "\n\n...\n\n" + 
-                   "\n".join(rep.split('\n')[-20:]) )
-       return rep
+        def create_repr():
+            repr_list = ['[']
+            for elem in self.list:
+                repr_list[-1] = repr_list[-1]+ '{'
+                for key,val in elem.items():
+                    repr_list.append('  '+key+':')
+                    for val_str in _pprint.pformat(val).split('\n'):
+                        repr_list.append('    '+val_str)
+                        if len(repr_list) > 1000:
+                            repr_list.append('....')
+                            return repr_list
+                    repr_list[-1] = repr_list[-1] + ','
+                repr_list[-1] = repr_list[-1].rstrip(',')
+                repr_list.append(' },')
+            repr_list[-1] = repr_list[-1].rstrip(',')
+            repr_list.append(']')
+            return repr_list
+             
+        np.set_printoptions(threshold = 30)
+        repr_str = '\n'.join(create_repr())
+        np.set_printoptions()
+        return repr_str
+        
+        np.set_printoptions()
 
     def to_dynd(self, **kwargs):
         try:
