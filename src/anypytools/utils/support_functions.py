@@ -60,27 +60,30 @@ class AnyPyProcessOutputList(collections.MutableSequence):
 
     def __len__(self): return len(self.list)
 
-    def __getitem__(self, index):
-        if isinstance(index, string_types):
-            # Find the entries where index matches the keys
-            matching = [s for s in self.list[0] if index in s]
-            if matching:
-                if len(matching) > 1: 
-                    print('WARNING: "{}" key is not unique. '
-                         'Returning first match: {}'.format(index, matching[0]),
-                         file=sys.stderr)
-                # Return the stacked data for the first match found 
-                data = np.array([elem[matching[0]] for elem in self.list])
-                if data.dtype == np.dtype('O'):
-                    warnings.warn('\n\nSimulation time varies across macros. '
-                          'Numpy does not support ragged arrays, so data is '
-                          'concatenated as an array of array object.' )
-                return data
-            else:
+    def __getitem__(self, i):
+        if isinstance(i, string_types):
+            # Find the entries where i matches the keys
+            matching = [varname for varname in self.list[0] if i in varname]
+            if not matching:
                 raise KeyError('Could not find key in the data')
-            return np.row_stack( (elem[key] for elem in self.list))
+            
+            if len(matching) > 1: 
+                print('WARNING: "{}" key is not unique. '
+                     'Returning first match: {}'.format(i, matching[0]),
+                     file=sys.stderr)
+            # Return the stacked data for the first match found 
+            data = np.array([elem[matching[0]] for elem in self.list])
+            if data.dtype == np.dtype('O'):
+                # Data will be stacked as an array of objects, if the
+                # time dimension is not consistant. Warn that some numpy
+                # featurs will not be avaiable.                     
+                warnings.warn('\n\nSimulation time varies across macros. '
+                      'Numpy does not support ragged arrays. Data is returned  '
+                      'as an array of array objects' )
+            return data
         else:
-            return type(self)(self.list[index]) if isinstance(index, slice) else self.list[index]
+            return type(self)(self.list[i]) if isinstance(i, slice) else self.list[i]
+
 
             
     def __delitem__(self, i): del self.list[i]
@@ -105,7 +108,7 @@ class AnyPyProcessOutputList(collections.MutableSequence):
                     repr_list.append('  '+key+':')
                     for val_str in _pprint.pformat(val).split('\n'):
                         repr_list.append('    '+val_str)
-                        if len(repr_list) > 1000:
+                        if len(repr_list) > 500:
                             repr_list.append('....')
                             return repr_list
                     repr_list[-1] = repr_list[-1] + ','
@@ -115,9 +118,11 @@ class AnyPyProcessOutputList(collections.MutableSequence):
             repr_list.append(']')
             return repr_list
              
-        np.set_printoptions(threshold = 30)
         repr_str = '\n'.join(create_repr())
-        np.set_printoptions()
+        if repr_str.endswith('...'):
+            np.set_printoptions(threshold = 30)
+            repr_str = '\n'.join(create_repr())
+            np.set_printoptions()
         return repr_str
         
         np.set_printoptions()
