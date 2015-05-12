@@ -10,6 +10,8 @@ from __future__ import (absolute_import, division,
 from builtins import *
 from past.builtins import basestring as string_types
 
+from _thread import get_ident as _get_ident
+
 import sys
 import os
 import numpy as np
@@ -23,7 +25,6 @@ import warnings
 
 logger = logging.getLogger('abt.anypytools')
 
-string_types =  (str, bytes)
 
 
 # This hacks pprint to always return strings witout u' prefix 
@@ -46,8 +47,26 @@ def py3k_pprint(s):
 pprint = py3k_pprint
 
 
-class AnyPyProcessOutputList(collections.MutableSequence):
+def get_first_key_match(key, names):
+    matching = [v for v in names if key in v]
+    if not matching:
+        raise KeyError('The key "{}" could not be found'.format(key))
+    
+    if len(matching) > 1: 
+        print('WARNING: "{}" key is not unique.'
+              ' Using the first match'.format(key), file=sys.stderr)
+        print('-> ' + matching[0], file=sys.stderr)
+        for match in matching[1:]: 
+            print(' * '+match, file=sys.stderr)
+            
+    return matching[0]
 
+class AnyPyProcessOutputList(collections.MutableSequence):
+    """ List like class to wrap the output of model simulations. 
+
+        The class behaves as a normal list but provide
+        extra function to easily access data.
+    """
     def __init__(self, *args):
         self.list = list()
         for elem in args:
@@ -63,16 +82,14 @@ class AnyPyProcessOutputList(collections.MutableSequence):
     def __getitem__(self, i):
         if isinstance(i, string_types):
             # Find the entries where i matches the keys
-            matching = [varname for varname in self.list[0] if i in varname]
-            if not matching:
-                raise KeyError('Could not find key in the data')
-            
-            if len(matching) > 1: 
-                print('WARNING: "{}" key is not unique. '
-                     'Returning first match: {}'.format(i, matching[0]),
-                     file=sys.stderr)
-            # Return the stacked data for the first match found 
-            data = np.array([elem[matching[0]] for elem in self.list])
+            key = get_first_key_match(i, self.list[0])
+            try:
+                data = np.array(
+                    [super(AnyPyProcessOutput, e).__getitem__(key) for e in self.list]
+                     )                
+            except KeyError:
+                raise KeyError(" The key '{}' is not present "
+                               "in all elements of the output.".format( key ) ) 
             if data.dtype == np.dtype('O'):
                 # Data will be stacked as an array of objects, if the
                 # time dimension is not consistant. Warn that some numpy
@@ -100,32 +117,33 @@ class AnyPyProcessOutputList(collections.MutableSequence):
         return str(self.list)
 
     def __repr__(self):
-        def create_repr():
-            repr_list = ['[']
+        def create_repr(maxlength = 500):
+            repr_list = []
             for elem in self.list:
-                repr_list[-1] = repr_list[-1]+ '{'
-                for key,val in elem.items():
-                    repr_list.append('  '+key+':')
-                    for val_str in _pprint.pformat(val).split('\n'):
-                        repr_list.append('    '+val_str)
-                        if len(repr_list) > 500:
-                            repr_list.append('....')
-                            return repr_list
+                if not isinstance(elem, AnyPyProcessOutput):
+                    repr_list.append( '  ' + _pprint.pformat(elem))
+                    continue
+                for line in elem._repr_gen(prefix = ' '):
+                    repr_list.append(line)
+                    if maxlength and len(repr_list) > maxlength:
+                        repr_list.append('  ...')
+                        return repr_list
+                if not repr_list[-1].endswith(','):
                     repr_list[-1] = repr_list[-1] + ','
-                repr_list[-1] = repr_list[-1].rstrip(',')
-                repr_list.append(' },')
             repr_list[-1] = repr_list[-1].rstrip(',')
-            repr_list.append(']')
+            
+            repr_list[0] = '[' + repr_list[0][1:]
+            repr_list[-1] = repr_list[-1] + ']'
             return repr_list
-             
-        repr_str = '\n'.join(create_repr())
+
+                
+        
+        repr_str = '\n'.join(create_repr(500))
         if repr_str.endswith('...'):
             np.set_printoptions(threshold = 30)
-            repr_str = '\n'.join(create_repr())
+            repr_str = '\n'.join(create_repr(1000))
             np.set_printoptions()
         return repr_str
-        
-        np.set_printoptions()
 
     def to_dynd(self, **kwargs):
         try:
@@ -242,9 +260,56 @@ def array2anyscript(arr):
         return tostr(arr)
     else:
         return str(arr)
+       
+class AnyPyProcessOutput(collections.OrderedDict):
+    """Subclassed OrderedDict which supports partial key access"""
+    def __getitem__(self,  key ):
+        try:
+            return super(AnyPyProcessOutput,self).__getitem__(key)
+        except KeyError:
+            first_key_match = get_first_key_match(key,
+                                              super(AnyPyProcessOutput,self).keys())
+            return super(AnyPyProcessOutput,self).__getitem__(first_key_match)
+           
+    def _repr_gen(self,prefix):
+        indent = prefix + '{'
+        for i, (key,val) in enumerate(self.items()):
+            if i == len(self.keys())-1:
+                end = '}'
+            else:
+                end = ','
+            key_str = "'"+key+"'" + ': '
+            val_str = _pprint.pformat(val)
+            if len(prefix) + len(key_str) + len(val_str) < 80:
+                yield indent + key_str + val_str + end
+            else:
+                yield indent + key_str
+                indent = prefix + '   '
+                for l in val_str.split('\n'):
+                   yield indent + l if l.endswith(',') else indent + l + end
+            indent = prefix + ' '
+           
+           
+    
+    def __repr__(self, _repr_running={}, prefix = '' ):
+        call_key = id(self), _get_ident()
+        if _repr_running is None:
+            _repr_running = {}
+        if call_key in _repr_running:
+            return '...'
+        _repr_running[call_key] = 1
+        try:
+            if not self:
+                return '%s()' % (self.__class__.__name__,)
+            return '\n'.join(self._repr_gen(prefix))
+        finally:
+            del _repr_running[call_key]
+
+
+
 
 def parse_anybodycon_output(strvar, errors_to_ignore = [] ):
-    out = collections.OrderedDict(  );
+    out = AnyPyProcessOutput(  );
     out['ERROR'] = []
     
     dump_path = None
