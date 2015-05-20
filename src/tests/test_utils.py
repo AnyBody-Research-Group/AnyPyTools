@@ -14,7 +14,8 @@ import pytest
 import numpy as np
 
 from anypytools.utils import (array2anyscript, get_anybodycon_path, 
-                              define2str, path2str)
+                              define2str, path2str, 
+                              AnyPyProcessOutput, AnyPyProcessOutputList)
 
 
 
@@ -49,6 +50,32 @@ def test_array2anyscript():
     
     str2 = array2anyscript( np.array(['hallo', 'world']) ) 
     assert str2 == '{"hallo","world"}'
+    
+    
+def test_AnyPyProcessOutput():
+    out = AnyPyProcessOutputList( [ AnyPyProcessOutput({'AAAA':1}), 
+                                    AnyPyProcessOutput({'AAAA':2}), 
+                                    AnyPyProcessOutput({'AAAA':3}), 
+                                    AnyPyProcessOutput({'AAAA':4}), 
+                                    AnyPyProcessOutput({'AAAA':5}), 
+                                    AnyPyProcessOutput({'AAAA':6, 'ERROR':0})
+                                    ])
+    
+    assert(len(out)==6) 
+    assert(isinstance(out[0], AnyPyProcessOutput ))
+    
+    # Test slice get
+    assert(len(out[1:3])==2)
+    assert(isinstance(out[0:2][0], AnyPyProcessOutput))
+    
+    # Test slice set
+    out[:] = [e for e in out if 'ERROR' not in e]
+    assert(len(out)==5)
+    
+    assert( isinstance(out['A'], np.ndarray) )
+    assert( out['A'].shape == (5,) )
+    
+    
     
     
 def test_get_anybodycon_path():

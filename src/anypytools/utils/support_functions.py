@@ -74,8 +74,11 @@ class AnyPyProcessOutputList(collections.MutableSequence):
 
         
     def check(self, v):
-        if not isinstance(v, collections.OrderedDict):
-            raise TypeError( v)
+        if not isinstance(v, collections.MutableSequence) :
+            v = [v]
+        for e in v:
+            if not isinstance(e, collections.OrderedDict):
+                raise(TypeError(e))
 
     def __len__(self): return len(self.list)
 
@@ -107,7 +110,10 @@ class AnyPyProcessOutputList(collections.MutableSequence):
 
     def __setitem__(self, i, v):
         self.check(v)
-        self.list[i] = v
+        if isinstance(i, slice):
+            self.list[i] = v
+        else:        
+            self.list[i] = v
 
     def insert(self, i, v):
         self.check(v)
