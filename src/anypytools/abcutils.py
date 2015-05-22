@@ -28,7 +28,7 @@ except NameError:
 
 
 from .utils import (make_hash, AnyPyProcessOutputList, parse_anybodycon_output,
-                    getsubdirs, get_anybodycon_path)
+                    getsubdirs, get_anybodycon_path, mixedmethod, AnyPyProcessOutput)
 from .macroutils import AnyMacro, MacroCommand
 
 
@@ -220,7 +220,7 @@ class _Task(object):
         if not folder:
             self.folder =  os.getcwd() 
         self.macro = macro
-        self.output = collections.OrderedDict()
+        self.output = AnyPyProcessOutput()
         self.number = number
         self.logfile = ""
         self.processtime = 0
@@ -370,12 +370,20 @@ class AnyPyProcess(object):
         else:
             raise ValueError('Noting to save')
     
-    def load_results(self, filename):
+    @mixedmethod
+    def load_results(self,cls, filename):
         loadkey = text_to_native_str('processed_tasks')
         db = shelve.open(text_to_native_str(filename))
-        self.cached_tasklist = db[loadkey]
+        loaded_data = db[loadkey]
         db.close()
-        results = [task.get_output(True) for task in self.cached_tasklist ]
+        # Hack to help Enrico convert data to the new structured
+        if not isinstance(loaded_data[0].output, AnyPyProcessOutput):
+            for task in loaded_data:
+                task.output = AnyPyProcessOutput(task.output)
+        # Check if the functions is called as an instance method.
+        if self is not None:
+            self.cached_tasklist = loaded_data
+        results = [task.get_output(True) for task in loaded_data ]
         return AnyPyProcessOutputList(results)
 
 
