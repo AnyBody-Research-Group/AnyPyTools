@@ -177,7 +177,7 @@ class TestAnyPyProcess():
         assert( output['MaxMuscleActivity'].shape == output['Main.ArmModelStudy.Output.MaxMuscleActivity'].shape )
         assert( isinstance( output[1:3], AnyPyProcessOutputList ))        
 
-    def test_output_save(self,init_simple_model):
+    def test_output_save_load(self,init_simple_model):
         macro = [['load "model.main.any" -def N_STEP="10"',
                  'operation Main.ArmModelStudy.InverseDynamics',
                  'classoperation Main.ArmModelStudy.Output.MaxMuscleActivity "Dump"', 
@@ -188,6 +188,9 @@ class TestAnyPyProcess():
         app.save_results('test.db')
         
         reloaded = app.load_results('test.db')
+        reloaded['Main.ArmModel.GlobalRef.t']
+        
+        reloaded = AnyPyProcess.load_results('test.db')
         reloaded['Main.ArmModel.GlobalRef.t']
         
     def test_output_convert_data(self,init_simple_model):
