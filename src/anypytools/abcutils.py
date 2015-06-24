@@ -291,8 +291,8 @@ class _Task(object):
         
 class AnyPyProcess(object):
     """
-    AnyPyProcess(num_processes = nCPU,\
-                 anybodycon_path = 'installed version', \
+    AnyPyProcess(num_processes = nCPU,
+                 anybodycon_path = 'installed version',
                  timeout = 3600, disp = True, keep_logfiles = False)
     
     Commen class for setting up batch process jobs of AnyBody models. 
@@ -337,14 +337,18 @@ class AnyPyProcess(object):
     """    
     def __init__(self, 
                  num_processes = _get_ncpu(), 
-                 anybodycon_path = get_anybodycon_path(),
+                 anybodycon_path = 'Default',
                  timeout = 3600,
                  disp = True,
                  ignore_errors = [],
                  return_task_info = False,
                  keep_logfiles = False,
                  logfile_prefix = ''):
-        self.anybodycon_path = anybodycon_path
+                     
+        if os.path.isdir(anybodycon_path):
+            self.anybodycon_path = anybodycon_path
+        else:
+            self.anybodycon_path = get_anybodycon_path()
         self.num_processes = num_processes
         self.disp = disp
         self.timeout = timeout
