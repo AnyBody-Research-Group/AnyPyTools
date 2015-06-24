@@ -163,15 +163,14 @@ class AnyPyProcessOutputList(collections.MutableSequence):
                     if maxlength and len(repr_list) > maxlength:
                         repr_list.append('  ...')
                         return repr_list
-                if not repr_list[-1].endswith(','):
+                if repr_list and not repr_list[-1].endswith(','):
                     repr_list[-1] = repr_list[-1] + ','
-            repr_list[-1] = repr_list[-1].rstrip(',')
             
+            repr_list[-1] = repr_list[-1].rstrip(',')
+                
             repr_list[0] = '[' + repr_list[0][1:]
             repr_list[-1] = repr_list[-1] + ']'
             return repr_list
-
-                
         
         repr_str = '\n'.join(create_repr(500))
         if repr_str.endswith('...'):
@@ -307,8 +306,13 @@ class AnyPyProcessOutput(collections.OrderedDict):
             return super(AnyPyProcessOutput,self).__getitem__(first_key_match)
            
     def _repr_gen(self,prefix):
+        items = self.items()
+        if not items:
+            yield prefix + '{}'
+            return
+        
         indent = prefix + '{'
-        for i, (key,val) in enumerate(self.items()):
+        for i, (key,val) in enumerate(items):
             if i == len(self.keys())-1:
                 end = '}'
             else:
@@ -334,7 +338,7 @@ class AnyPyProcessOutput(collections.OrderedDict):
             return '...'
         _repr_running[call_key] = 1
         try:
-            if not self:
+            if self is None:
                 return '%s()' % (self.__class__.__name__,)
             return '\n'.join(self._repr_gen(prefix))
         finally:
