@@ -43,7 +43,7 @@ class SubProcessContainer(object):
         Properties:
         ------------
         stop_all: boolean
-            If set to True all process hold by the object will be automatically killed
+            If set to True all process held by the object will be automatically killed
         
         Methods:
         -----------
@@ -392,7 +392,7 @@ class AnyPyProcess(object):
         """ 
         app.start_marco(macrolist, folderlist = None, search_subdirs =None )        
         
-        Starts a batch processing job. Runs an list of AnyBody Macro commands in 
+        Starts a batch processing job. Runs a list of AnyBody Macro commands in 
         the current directory, or in the folders specified by folderlist. If 
         search_subdirs is a regular expression the folderlist will be expanded
         to include all subdirectories that match the regular expression
@@ -403,7 +403,7 @@ class AnyPyProcess(object):
         macrolist:
             List or generator containing lists of anyscript macro commands
         folderlist:
-            list of folders in which to excute the macro commands. If None the
+            List of folders in which to excute the macro commands. If None the
             current working directory is used. This may also be a list of
             tuples to specify a name to appear in the output
         search_subdirs:
