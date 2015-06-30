@@ -1,0 +1,228 @@
+// Exercise template for the advanced joint modeling course
+
+#ifndef MY_DEFINE
+#define MY_DEFINE "HALLO_WORLD"
+#endif
+
+
+Main = {
+
+    AnyVar MyParameter = DesignVar(0);
+
+    AnyStringVar MyString = MY_DEFINE;
+
+  // The actual body model goes in this folder
+  AnyFolder MyModel = {
+    
+    // Global Reference Frame
+    AnyFixedRefFrame GlobalRef = {
+
+      // Todo: Add points for grounding of the model here
+
+    };  // Global reference frame
+    
+    AnySeg Femur = {
+      Mass = 5;
+      Jii = {1,0.04,1}*0.05;
+      AnyRefNode Hip = {
+        sRel = {0, 0.2, 0};
+      };
+      AnyRefNode Knee = {
+        sRel = {0, -0.3, 0};
+        ARel = RotMat(pi,y);
+      };
+      AnyRefNode QuadOri = {
+        sRel = {0.05, 0, 0};
+      };
+      AnyRefNode CondyleOri = {
+        sRel = {0, -0.27, 0};
+        ARel = RotMat(-20*pi/180,z);
+        AnyDrawRefFrame drw = {
+          ScaleXYZ = {1,1,1}*0.1;
+          RGB = {1,0,0};
+        };
+        AnyRefNode Focus1 = {
+          sRel = {0,0.03,0};
+        };
+        AnyRefNode Focus2 = {
+          sRel = {0,-0.03,0};
+        };
+        AnyDrawNodes drwn = {
+          RGB = {1,0,0};
+          ScaleXYZ = {1,1,1}*0.01;
+        };
+      };
+      AnyDrawSeg drw = {
+        Opacity = 0.5;
+      };
+      Axes0 = RotMat(pi/2,z);
+    };
+    AnySeg Tibia = {
+      r0 = {0.3, -0.25, 0};
+      Mass = 3;
+      Jii = {1,0.03,1}*0.03;
+      AnyRefNode Knee = {
+        sRel = {0, 0.18, 0};
+        ARel = RotMat(pi,y);
+      };
+      AnyRefNode Ankle = {
+        sRel = {0, -0.25, 0};
+      };
+//      AnyRefNode Patella1 = {
+//        sRel = .Knee.sRel + {0.07, 0.05, 0};
+//      };
+      AnyRefNode Patella2 = {
+        sRel = .Knee.sRel + {0.02, -0.06, 0};
+      };
+      AnyDrawSeg drw = {
+        Opacity = 0.5;
+      };
+    };
+    AnySeg Patella = {
+      r0 = {0.33, 0.0, 0};
+      Mass = 0.02;
+      Jii = {1,0.5,1}*0.00001;
+      AnyRefNode Knee = {
+        sRel = {-0.06, 0, 0};
+      };
+      AnyRefNode Lig = {
+        sRel = {0, -0.03, 0};
+      };
+      AnyRefNode Quad = {
+        sRel = {0, 0.025, 0};
+      };
+      AnyRefNode Surf1 = {
+        sRel = {-0.02, 0.02, 0};
+      };
+      AnyRefNode Surf2 = {
+        sRel = {-0.02, -0.02, 0};
+      };
+      AnyDrawSeg drw = {};
+    };
+    AnyRevoluteJoint Hip = {
+      AnyRefFrame &Ground = .GlobalRef;
+      AnyRefFrame &Femur = .Femur.Hip;
+    };
+//    AnyRevoluteJoint FemurPatella = {
+//      AnyRefFrame &Femur = .Femur.Knee;
+//      AnyRefFrame &Patella = .Patella.Knee;
+//    };
+    AnyKinEqSimpleDriver PatellaLigament = {
+      AnyKinPLine lin = {
+        AnyRefFrame &origin = ..Patella.Lig;
+        AnyRefFrame &insertion = ..Tibia.Patella2;
+        AnyDrawPLine drw = {
+          Thickness = 0.01;
+          RGB = {1,0,0};
+        };
+      };
+      DriverPos = {0.06};
+      DriverVel = {0};
+    };
+    
+    AnyKinPLine EllipsDist1 = {
+      AnyRefFrame &f1 = Main.MyModel.Femur.CondyleOri.Focus1;
+      AnyRefFrame &f2 = Main.MyModel.Patella.Surf1;
+      AnyRefFrame &f3 = Main.MyModel.Femur.CondyleOri.Focus2;
+      AnyDrawPLine drw = {
+        Thickness = 0.005;
+        RGB = {0,0,1};
+      };
+    };
+    AnyKinPLine EllipsDist2 = {
+      AnyRefFrame &f1 = Main.MyModel.Femur.CondyleOri.Focus1;
+      AnyRefFrame &f2 = Main.MyModel.Patella.Surf2;
+      AnyRefFrame &f3 = Main.MyModel.Femur.CondyleOri.Focus2;
+      AnyDrawPLine drw = {
+        Thickness = 0.005;
+        RGB = {0,0,1};
+      };
+    };
+    
+    // Constrain the patella to the xy-plane of the knee node.
+    AnyKinEq PatellaPlaner = {
+      AnyKinLinear lin1 = {
+        AnyRefFrame &knee = Main.MyModel.Femur.Knee;
+        AnyRefFrame &point = Main.MyModel.Patella.Knee;
+        Ref = 0;
+      };
+      AnyKinLinear lin2 = {
+        AnyRefFrame &knee = Main.MyModel.Femur.Knee;
+        AnyRefFrame &point = Main.MyModel.Patella.Lig;
+        Ref = 0;
+      };
+      AnyKinLinear lin3 = {
+        AnyRefFrame &knee = Main.MyModel.Femur.Knee;
+        AnyRefFrame &point = Main.MyModel.Patella.Quad;
+        Ref = 0;
+      };
+      MeasureOrganizer = {2,5,8};
+    };      
+    
+    AnyKinEqSimpleDriver PatellaFemur = {
+      AnyKinMeasure &L1 = Main.MyModel.EllipsDist1;
+      AnyKinMeasure &L2 = Main.MyModel.EllipsDist2;
+      DriverVel = {0,0};
+      DriverPos = {0.13, 0.13};
+    };
+    
+    AnyKinEqSimpleDriver HipAngle = {
+      AnyKinMeasure &jnt = .Hip;
+      DriverPos = {pi/2};
+      DriverVel = {0};
+    };
+    AnyRevoluteJoint Knee = {
+      AnyRefFrame &Femur = .Femur.Knee;
+      AnyRefFrame &Tibia = .Tibia.Knee;
+    };
+//    AnyKinEqFourierDriver KneeAngle = {
+//      AnyKinMeasure &jnt = .Knee;
+//      DriverPos = {0};
+//      DriverVel = {pi/2};
+//      Reaction.Type ={Off};
+//    };
+//    AnyKinEqFourierDriver KneeAngle = {
+//      AnyKinMeasure &jnt = .Knee;
+//      Type = Sin;
+//      Freq = 0.5;
+//      A = {{0,90}}*pi/180;
+//      B = {{0,0}}*pi/180;
+//      Reaction.Type ={Off};
+//    };
+    AnyKinEqInterPolDriver KneeAngle = {
+      Type = Bspline ;
+      BsplineOrder  =5;
+      T = 2*{0, 0.2, 0.4, 0.6, 0.8, 1.0,1.2};
+      Data = {{90.1,90, 30, 0, 30, 90,90.1}}*pi/180;
+      AnyKinMeasure &jnt = .Knee;
+      Reaction.Type ={Off};
+    };
+
+AnyViaPointMuscle Quadriceps = {
+      AnyMuscleModel Model = {
+        F0 = 1000;
+      };
+      AnyRefFrame &origin = .Femur.QuadOri;
+      AnyRefFrame &insertion = .Patella.Quad;
+      AnyDrawMuscle drw = {};
+    };
+
+        
+  }; // MyModel
+
+  #ifndef N_STEP
+  #define N_STEP 100
+  #endif
+  
+  // The study: Operations to be performed on the model
+  AnyBodyStudy MyStudy = {
+    AnyFolder &kneeref = .MyModel.Knee;
+    AnyFolder &Model = .MyModel;
+    Gravity = {0.0, -9.81, 0.0};
+    
+    nStep = N_STEP ;
+    tEnd = 2.4;
+    AnyVar MomentArm = Main.MyModel.Quadriceps.LmtDot/(Main.MyModel.Knee.Vel[0]+1.0e-10);
+  };
+
+};  // Main
