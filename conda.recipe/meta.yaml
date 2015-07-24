@@ -2,7 +2,7 @@ package:
   name: anypytools     # lower case name of package, may contain '-' but no spaces
   version: {{ environ['GIT_DESCRIBE_TAG'] }}
 source:
-  git_url: ../
+  git_url: https://github.com/AnyBody-Research-Group/AnyPyTools.git
 
 build:            # (optional)
   number: {{ environ.get('GIT_DESCRIBE_NUMBER', 0) }}
@@ -19,6 +19,7 @@ requirements:     # (optional)
     - future
     
   run:
+    - python
     - pywin32 # [win]
     - future
     - h5py
