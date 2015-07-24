@@ -37,7 +37,7 @@ test:
 #    - python -c "import anypytools; anypytools.test()"
 
 app:
-    entry: ${PREFIX}\Scripts\AnyPyToolsTutorial.bat
+    entry: ipython notebook ${PREFIX}/AnyPyToolsTutorial/00_AnyPyTools_tutorial.ipynb"
     summary: AnyPyTools Tutorial
     icon: apt_icon.png
 #    type: web
