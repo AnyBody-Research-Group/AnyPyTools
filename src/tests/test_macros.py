@@ -22,14 +22,14 @@ import anypytools.macro_commands as mc
 
     
 def test_load():
-    cmd = mc.Load('main.any', defs =  {'AnyString': '"Test\\string"'} )
-    assert cmd.get_macro(0) == 'load "main.any" -def AnyString=---"\\"Test\\\\string\\""'
+    cmd = mc.Load('main.any', defs =  {'TEST_STR': '"Test\\string"'} )
+    assert cmd.get_macro(0) == 'load "main.any" -def TEST_STR=---"\\"Test\\\\string\\""'
 
-    cmd = mc.Load('main.any', defs =  {'AnyScript': 'Main.MyStudy'} )
-    assert cmd.get_macro(0) == 'load "main.any" -def AnyScript="Main.MyStudy"' 
+    cmd = mc.Load('main.any', defs =  {'TEST_VAR': 'Main.MyStudy'} )
+    assert cmd.get_macro(0) == 'load "main.any" -def TEST_VAR="Main.MyStudy"' 
 
-    cmd = mc.Load('main.any', paths = {'testpath': 'c:\\path\\to\\something' })
-    assert cmd.get_macro(0) == 'load "main.any" -p testpath=---"c:\\\\path\\\\to\\\\something"' 
+    cmd = mc.Load('main.any', paths = {'TEST_PATH': 'c:\\path\\to\\something' })
+    assert cmd.get_macro(0) == 'load "main.any" -p TEST_PATH=---"c:\\\\path\\\\to\\\\something"' 
     
 def test_setvalue():
     c = mc.SetValue('val', 23.1)
