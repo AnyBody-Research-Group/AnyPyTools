@@ -20,6 +20,7 @@ import ctypes
 import shelve
 import atexit
 import logging
+import collections
 
 from subprocess import Popen
 from tempfile import NamedTemporaryFile
