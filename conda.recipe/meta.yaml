@@ -1,6 +1,6 @@
 package:
+  version: {{ environ.get('GIT_DESCRIBE_TAG', '') }}
   name: anypytools     # lower case name of package, may contain '-' but no spaces
-  version: {{ environ['GIT_DESCRIBE_TAG'] }}
 source:
    path: ../
 #  git_url: https://github.com/AnyBody-Research-Group/AnyPyTools.git
