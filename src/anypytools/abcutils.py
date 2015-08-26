@@ -8,15 +8,23 @@ from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
 from builtins import *
 from future.utils import text_to_native_str
-
 from past.builtins import basestring as string_types
 
-import os, sys, time, errno, atexit, collections, types, ctypes, logging, copy
+import os
+import sys
+import time
+import copy
+import types
+import errno
+import ctypes
+import shelve
+import atexit
+import logging
+
 from subprocess import Popen
 from tempfile import NamedTemporaryFile
 from threading import Thread, RLock
 from queue import Queue
-import shelve
 
 logger = logging.getLogger('abt.anypytools')
 
@@ -337,7 +345,7 @@ class AnyPyProcess(object):
     """    
     def __init__(self, 
                  num_processes = _get_ncpu(), 
-                 anybodycon_path = 'Default',
+                 anybodycon_path = None,
                  timeout = 3600,
                  disp = True,
                  ignore_errors = [],
@@ -345,10 +353,12 @@ class AnyPyProcess(object):
                  keep_logfiles = False,
                  logfile_prefix = ''):
                      
-        if os.path.isdir(anybodycon_path):
-            self.anybodycon_path = anybodycon_path
-        else:
+        if anybodycon_path is None:
             self.anybodycon_path = get_anybodycon_path()
+        elif os.path.exists(anybodycon_path):
+            self.anybodycon_path = anybodycon_path
+        else: 
+            raise FileNotFoundError("Can't find "+ anybodycon_path)
         self.num_processes = num_processes
         self.disp = disp
         self.timeout = timeout
@@ -387,7 +397,7 @@ class AnyPyProcess(object):
         # Check if the functions is called as an instance method.
         if self is not None:
             self.cached_tasklist = loaded_data
-        results = [task.get_output(True) for task in loaded_data ]
+        results = [task.get_output(True) for task in loaded_data]
         return AnyPyProcessOutputList(results)
 
 
