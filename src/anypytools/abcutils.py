@@ -148,7 +148,8 @@ def _display(line, *args, **kwargs):
 def _execute_anybodycon( macro, logfile,
                         anybodycon_path = get_anybodycon_path(),
                         timeout = 3600,
-                        keep_macrofile = False):
+                        keep_macrofile = False,
+                        env = None):
     """ Launches the AnyBodyConsole applicaiton with the specified macro
         saving the result to logfile
     """
@@ -179,7 +180,8 @@ def _execute_anybodycon( macro, logfile,
         # the user cancelled the processes
         proc = Popen(anybodycmd, stdout=logfile, 
                                     stderr=logfile, 
-                                    creationflags=subprocess_flags)                      
+                                    creationflags=subprocess_flags,
+                                    env = env)                      
         _subprocess_container.add(proc.pid )
         
         timeout_time =time.clock() + timeout
@@ -352,7 +354,8 @@ class AnyPyProcess(object):
                  ignore_errors = [],
                  return_task_info = False,
                  keep_logfiles = False,
-                 logfile_prefix = ''):
+                 logfile_prefix = '',
+                 env = None):
                      
         if anybodycon_path is None:
             self.anybodycon_path = get_anybodycon_path()
@@ -370,6 +373,7 @@ class AnyPyProcess(object):
         self.logfile_prefix = logfile_prefix
         self.cached_arg_hash = None
         self.cached_tasklist = None
+        self.env = env
         logging.debug('\nAnyPyProcess initialized')
 
 
@@ -561,7 +565,8 @@ class AnyPyProcess(object):
                                          logfile = logfile, 
                                          anybodycon_path = self.anybodycon_path,
                                          timeout = self.timeout,
-                                         keep_macrofile=self.keep_logfiles)            
+                                         keep_macrofile=self.keep_logfiles,
+                                         env = self.env)            
                     endtime = time.clock()
                     
                     logfile.seek(0)
