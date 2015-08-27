@@ -355,7 +355,7 @@ class AnyPyProcess(object):
                  return_task_info = False,
                  keep_logfiles = False,
                  logfile_prefix = '',
-                 env = None):
+                 python_env = None):
                      
         if anybodycon_path is None:
             self.anybodycon_path = get_anybodycon_path()
@@ -373,6 +373,13 @@ class AnyPyProcess(object):
         self.logfile_prefix = logfile_prefix
         self.cached_arg_hash = None
         self.cached_tasklist = None
+        if python_env is not None:
+            if not os.path.isdir(python_env):
+                raise FileNotFoundError('Python environment does'
+                                        ' not exist:' + python_env)
+            env = dict(os.environ)
+            env['PYTHONHOME'] = python_env
+            env['PATH'] = env['PYTHONHOME'] + ';' + env['PATH']
         self.env = env
         logging.debug('\nAnyPyProcess initialized')
 
