@@ -380,7 +380,9 @@ class AnyPyProcess(object):
             env = dict(os.environ)
             env['PYTHONHOME'] = python_env
             env['PATH'] = env['PYTHONHOME'] + ';' + env['PATH']
-        self.env = env
+            self.env = env
+        else:
+            self.env = None
         logging.debug('\nAnyPyProcess initialized')
 
 
