@@ -456,8 +456,10 @@ class AnyPyProcess(object):
                 macrolist = [macrolist.split(', ')]
             else:
                 macrolist = [[macrolist]]
-        #else:
-        #    raise ValueError('Wrong input argument for macrolist')
+        elif isinstance(macrolist, (type(None), AnyPyProcessOutputList)):
+            pass
+        else:
+            raise ValueError('Wrong input argument for macrolist', type(macrolist ))
         # Check folderlist input argument
         if not folderlist:
             folderlist = [os.getcwd()]
@@ -469,7 +471,7 @@ class AnyPyProcess(object):
             folderlist = sum([getsubdirs(d, search_subdirs)
                               for d in folderlist], [])
         # Check the input arguments and generate the tasklist
-        if not macrolist:
+        if macrolist is None:
             if self.cached_tasklist:
                 tasklist = self.cached_tasklist
             else:
