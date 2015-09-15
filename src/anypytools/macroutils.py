@@ -494,9 +494,7 @@ class AnyMacro(MutableSequence):
 
     Overview
     ----------
-    Use the class to build an AnyScript macro. The class have methods for all
-    anyscript opertions, and makes it easier to construct a macro with the 
-    correct syntax. 
+    Use the class to contruct multiple anyscript macros from a single macro.
     
     Parameters:
     ------------
