@@ -325,6 +325,10 @@ class AnyPyProcess(object):
         Return the task status information when running macros
     disp:
         Set to False to suppress output
+    warnings_to_include:
+        List of strings that are matched to warnings in the model
+        output. If a warning with that string is found the warning
+        is returned in the output. 
 
     Returns
     -------
