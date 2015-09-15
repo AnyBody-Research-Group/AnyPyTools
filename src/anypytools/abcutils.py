@@ -337,7 +337,8 @@ class AnyPyProcess(object):
                  anybodycon_path=None,
                  timeout=3600,
                  disp=True,
-                 ignore_errors=[],
+                 ignore_errors=None,
+                 warnings_to_include=None,
                  return_task_info=False,
                  keep_logfiles=False,
                  logfile_prefix='',
@@ -355,6 +356,7 @@ class AnyPyProcess(object):
         self.counter = 0
         self.return_task_info = return_task_info
         self.ignore_errors = ignore_errors
+        self.warnings_to_include = warnings_to_include
         self.keep_logfiles = keep_logfiles
         self.logfile_prefix = logfile_prefix
         self.cached_arg_hash = None
@@ -440,17 +442,22 @@ class AnyPyProcess(object):
             macrolist = list(macrolist)
         if isinstance(macrolist, AnyMacro):
             macrolist = macrolist.create_macros()
-        if isinstance(macrolist, list) and macrolist:
+        elif isinstance(macrolist, list) and macrolist:
             if isinstance(macrolist[0], string_types):
                 macrolist = [macrolist]
             if isinstance(macrolist[0], MacroCommand):
                 macrolist = AnyMacro(macrolist).create_macros()
-        if isinstance(macrolist, string_types):
+            if isinstance(macrolist[0], list) and len(macrolist[0]):
+                if isinstance(macrolist[0][0], MacroCommand):
+                    macrolist = [AnyMacro(_).create_macros()[0] for _ in macrolist]
+        elif isinstance(macrolist, string_types):
             if macrolist.startswith('[') and macrolist.endswith(']'):
                 macrolist = macrolist.strip('[').rstrip(']')
                 macrolist = [macrolist.split(', ')]
             else:
                 macrolist = [[macrolist]]
+        #else:
+        #    raise ValueError('Wrong input argument for macrolist')
         # Check folderlist input argument
         if not folderlist:
             folderlist = [os.getcwd()]
@@ -547,8 +554,10 @@ class AnyPyProcess(object):
                         task.processtime = 0
                         return
                     task.processtime = endtime - starttime
-                    task.output = parse_anybodycon_output(logfile.read(),
-                                                          self.ignore_errors)
+                    task.output = parse_anybodycon_output(
+                                      logfile.read(),
+                                      self.ignore_errors,
+                                      self.warnings_to_include)
         except Exception as e:
             task.add_error(str(type(e)) + str(e))
             logger.debug(str(e))

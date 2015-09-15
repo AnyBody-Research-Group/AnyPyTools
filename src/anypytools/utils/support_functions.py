@@ -347,9 +347,16 @@ class AnyPyProcessOutput(collections.OrderedDict):
 
 
 
-def parse_anybodycon_output(strvar, errors_to_ignore = [] ):
+def parse_anybodycon_output(strvar, errors_to_ignore=None, 
+                            warnings_to_include = None):
+    if errors_to_ignore is None: 
+        errors_to_ignore = []
+    if warnings_to_include is None: 
+        warnings_to_include = []
+
     out = AnyPyProcessOutput(  );
     out['ERROR'] = []
+    out['WARNING'] = []
     
     dump_path = None
     for line in strvar.splitlines():
@@ -371,21 +378,28 @@ def parse_anybodycon_output(strvar, errors_to_ignore = [] ):
 
         line_has_errors = (line.startswith('ERROR') or line.startswith('Error') or 
                            line.startswith('Model loading skipped'))             
-        if line_has_errors : 
+        if line_has_errors: 
             for err_str in errors_to_ignore:
                 if err_str in line: break
             else:
                 # This is run if we never break,
                 #i.e. err was not in the list of errors_to_ignore
                 out['ERROR'].append(line)
-    
-    # Move 'ERROR' entry to the last position in the ordered dict
+        line_has_warning = line.startswith('WARNING')             
+        if line_has_warning:               
+            for warn_str in warnings_to_include:
+                if warn_str in line:
+                    out['WARNING'].append(line)
+                    break
+    # Move 'ERROR' and 'WARNING' entry to the last position in the ordered dict
+    out['WARNING'] = out.pop('WARNING')         
     out['ERROR'] = out.pop('ERROR')
     
-    # Remove the ERROR key if it does not have any error entries        
+    # Remove the ERROR/WARNING key if it does not have any entries        
     if not out['ERROR']:
         del out['ERROR']
-
+    if not out['WARNING']:
+        del out['WARNING']
     return out
     
     

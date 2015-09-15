@@ -215,6 +215,18 @@ AnyViaPointMuscle Quadriceps = {
     nStep = N_STEP ;
     tEnd = 2.4;
     AnyVar MomentArm = Main.MyModel.Quadriceps.LmtDot/(Main.MyModel.Knee.Vel[0]+1.0e-10);
+    
+    AnyMessage WarningTest = 
+    {
+      TriggerPreProcess = On;
+      //TriggerConst = Off;
+      //TriggerRuntime = Off;
+      Type = MSG_Warning;
+      Message = "This is a test warning";
+    };
+
+    
+    
   };
 
 };  // Main
