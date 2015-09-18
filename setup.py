@@ -16,7 +16,9 @@ setup(
                 'anypytools.datautils', 'anypytools.genereate_macros', 
                 'anypytools.utils.py3k', 'anypytools.utils.pytest_plugin',
                 'anypytools.utils.support_functions',
-                'anypytools.utils.blaze_converter'],
+                'anypytools.utils.blaze_converter',
+                'anypytools.anyscript_pygments.anyscript_lexer',
+                'anypytools.anyscript_pygments.anyscript_style'],
     scripts=['src/scripts/pp2any.py'],
     packages=['anypytools'],
     package_dir={'': 'src'},
@@ -25,7 +27,13 @@ setup(
     entry_points = {
         'pytest11': [
             'anypytools = anypytools.utils.pytest_plugin',
-        ]
+        ],
+        'pygments.lexers': 
+            ['anyscript = anypytools.anyscript_pygments.anyscript_lexer:AnyScriptLexer',
+            '/.any = anypytools.anyscript_pygments.anyscript_lexer:AnyScriptLexer'],
+        'pygments.styles': 
+            ['anyscript = anypytools.anyscript_pygments.anyscript_style:AnyScriptStyle',
+             '/.any = anypytools.anyscript_pygments.anyscript_style:AnyScriptStyle' ]
     },
     author='Morten Lund',
     author_email='melund@gmail.com',
