@@ -22,7 +22,7 @@ setup(
     scripts=['src/scripts/pp2any.py'],
     packages=['anypytools'],
     package_dir={'': 'src'},
-    package_data={'anypytools': ['test_models/Demo.Arm2D.any']},
+    package_data={'anypytools': ['test_models/Demo.Arm2D.any', 'pygments_plugin/*.txt']},    
     # the following makes a plugin available to pytest
     entry_points = {
         'pytest11': [
