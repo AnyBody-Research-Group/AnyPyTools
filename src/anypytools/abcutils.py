@@ -446,14 +446,15 @@ class AnyPyProcess(object):
             macrolist = list(macrolist)
         if isinstance(macrolist, AnyMacro):
             macrolist = macrolist.create_macros()
-        elif isinstance(macrolist, list) and macrolist:
+        elif isinstance(macrolist, list) and len(macrolist):
             if isinstance(macrolist[0], string_types):
                 macrolist = [macrolist]
             if isinstance(macrolist[0], MacroCommand):
-                macrolist = AnyMacro(macrolist).create_macros()
+                macrolist = [macrolist]
             if isinstance(macrolist[0], list) and len(macrolist[0]):
                 if isinstance(macrolist[0][0], MacroCommand):
-                    macrolist = [AnyMacro(_).create_macros()[0] for _ in macrolist]
+                    macrolist = [[mc.get_macro() for mc in elem]
+                                 for elem in macrolist]
         elif isinstance(macrolist, string_types):
             if macrolist.startswith('[') and macrolist.endswith(']'):
                 macrolist = macrolist.strip('[').rstrip(']')
@@ -463,7 +464,7 @@ class AnyPyProcess(object):
         elif isinstance(macrolist, (type(None), AnyPyProcessOutputList)):
             pass
         else:
-            raise ValueError('Wrong input argument for macrolist', type(macrolist ))
+            raise ValueError('Wrong input argument for macrolist')
         # Check folderlist input argument
         if not folderlist:
             folderlist = [os.getcwd()]
