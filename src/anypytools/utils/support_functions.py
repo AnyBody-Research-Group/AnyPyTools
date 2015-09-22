@@ -166,7 +166,8 @@ class AnyPyProcessOutputList(collections.MutableSequence):
                 if repr_list and not repr_list[-1].endswith(','):
                     repr_list[-1] = repr_list[-1] + ','
             
-            repr_list[-1] = repr_list[-1].rstrip(',')
+            if len(repr_list):
+                repr_list[-1] = repr_list[-1].rstrip(',')
                 
             repr_list[0] = '[' + repr_list[0][1:]
             repr_list[-1] = repr_list[-1] + ']'
