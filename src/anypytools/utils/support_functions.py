@@ -179,6 +179,13 @@ class AnyPyProcessOutputList(collections.MutableSequence):
             np.set_printoptions()
         return repr_str
 
+    def filter(self, func):
+        """ Constructs a AnyPyProcessOutputList object from those elements
+        where function returns true. 
+        """
+        return AnyPyProcessOutputList(filter(func, self))
+    
+    
     def to_dynd(self, **kwargs):
         try:
             from .blaze_converter import convert
