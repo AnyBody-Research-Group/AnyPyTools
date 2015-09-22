@@ -453,7 +453,7 @@ class AnyPyProcess(object):
                 macrolist = [macrolist]
             if isinstance(macrolist[0], list) and len(macrolist[0]):
                 if isinstance(macrolist[0][0], MacroCommand):
-                    macrolist = [[mc.get_macro() for mc in elem]
+                    macrolist = [[mc.get_macro(index=0) for mc in elem]
                                  for elem in macrolist]
         elif isinstance(macrolist, string_types):
             if macrolist.startswith('[') and macrolist.endswith(']'):
