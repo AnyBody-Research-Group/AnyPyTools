@@ -168,9 +168,10 @@ class AnyPyProcessOutputList(collections.MutableSequence):
             
             if len(repr_list):
                 repr_list[-1] = repr_list[-1].rstrip(',')
-                
-            repr_list[0] = '[' + repr_list[0][1:]
-            repr_list[-1] = repr_list[-1] + ']'
+                repr_list[0] = '[' + repr_list[0][1:]
+                repr_list[-1] = repr_list[-1] + ']'
+            else:
+                repr_list.append('[]')
             return repr_list
         
         repr_str = '\n'.join(create_repr(500))
