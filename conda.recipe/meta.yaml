@@ -3,9 +3,8 @@ package:
   name: anypytools     # lower case name of package, may contain '-' but no spaces
 source:
    path: ../
-#  git_url: https://github.com/AnyBody-Research-Group/AnyPyTools.git
 
-build:            # (optional)
+build:          
   number: {{ environ.get('GIT_DESCRIBE_NUMBER', 0) }}
   # Added to allow the pytest entry points in setup.py to work
   # This is also the reason for setuptools beeing a runtime dependency. 
@@ -26,8 +25,8 @@ requirements:     # (optional)
     - h5py
     - setuptools
     - scipy
-    - ipython-notebook >=3.0
-    - ipython-qtconsole >=3.0
+    - ipython-notebook >=4.0
+    - ipywidgets
     
 test:
   requires:

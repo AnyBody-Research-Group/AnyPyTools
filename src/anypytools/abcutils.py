@@ -229,7 +229,7 @@ class _Task(object):
         if not taskname:
             head, folder = os.path.split(folder)
             parentfolder = os.path.basename(head)
-            self.name = parentfolder + '/' + folder + '_' + str(number)
+            self.name = parentfolder + '/' + folder
 
     @property
     def has_error(self):
@@ -285,6 +285,28 @@ class _Task(object):
                 'task_processtime', 'task_macro', 'task_logfile')
         return all(k in output_elem for k in keys)
 
+    def summery(self):
+        entry = ''
+        if self.has_error:
+            self += 'Failed '
+        elif self.processtime == 0:
+            entry += 'Not completed '
+        else:
+            entry += 'Completed '
+        entry += '{2:4.1g} sec :{0} n = {1!s} : '.format(self.name,
+                                                   self.number,
+                                                   self.processtime)
+        if self.logfile:
+            if _run_from_ipython():
+                print_template = ('(<a href="file:///{0}" target="_blank">{1}</a>'
+                                  '<a href="file:///{2}" target="_blank">dir</a>)')
+                entry += print_template.format(self.logfile,
+                                               os.path.basename(self.logfile),
+                                               os.path.dirname(self.logfile))
+            else:
+                entry += '( {0} )'.format(os.path.basename(self.logfile))
+        return entry
+
 
 class AnyPyProcess(object):
     """
@@ -328,7 +350,7 @@ class AnyPyProcess(object):
     warnings_to_include:
         List of strings that are matched to warnings in the model
         output. If a warning with that string is found the warning
-        is returned in the output. 
+        is returned in the output.
 
     Returns
     -------
@@ -501,19 +523,20 @@ class AnyPyProcess(object):
         self.cleanup_logfiles(tasklist)
         # Cache the processed tasklist for restarting later
         self.cached_tasklist = tasklist
-        self._print_summery(tasklist, process_time)
+        if self.disp:
+            self._print_summery(tasklist, process_time)
         task_output = [task.get_output(include_task_info=self.return_task_info)
                        for task in tasklist]
         return AnyPyProcessOutputList(task_output)
 
+
     def _print_summery(self, tasks, duration):
-        if not self.disp:
-            return
         unfinished_tasks = [t for t in tasks if t.processtime <= 0]
         failed_tasks = [t for t in tasks if t.has_error and t.processtime > 0]
         if len(failed_tasks):
             _display('Tasks with errors: {:d}'.format(len(failed_tasks)))
-            _display('\n'.join([_summery(t) for t in failed_tasks]))
+            if not _run_from_ipython():
+                _display('\n'.join([t.summery() for t in failed_tasks]))
         if len(unfinished_tasks):
             _display('Tasks that did not complete: '
                      '{:d}'.format(len(unfinished_tasks)))
@@ -591,9 +614,8 @@ class AnyPyProcess(object):
         use_threading = (number_tasks > 1 and self.num_processes > 1)
         starttime = time.clock()
         task_queue = Queue()
-        if self.disp:
-            pbar = ProgressBar(number_tasks)
-            pbar.animate(0)
+        pbar = ProgressBar(number_tasks, self.disp)
+        pbar.animate(0)
         processed_tasks = []
         n_errors = 0
         threads = []
@@ -623,9 +645,11 @@ class AnyPyProcess(object):
                     task = task_queue.get()
                     if task.has_error:
                         n_errors += 1
+                        if self.disp and _run_from_ipython():
+                            _display(task.summery())
                     processed_tasks.append(task)
-                    if self.disp:
-                        pbar.animate(len(processed_tasks), n_errors)
+                    pbar.animate(len(processed_tasks), n_errors)
+
                 time.sleep(0.01)
         except KeyboardInterrupt:
             _display('Processing interrupted')
@@ -659,45 +683,35 @@ class AnyPyProcess(object):
                                  '{} {}'.format(macrofile, str(e)))
 
 
-def _summery(task, duration=None):
-    entry = ''
-    if task.has_error:
-        entry += 'Failed '
-    elif task.processtime == 0:
-        entry += 'Not completed '
-    else:
-        entry += 'Completed '
-    entry += '{2!s}sec :{0} n={1!s} : '.format(task.name,
-                                               task.number,
-                                               task.processtime)
-    if task.logfile:
-        if _run_from_ipython():
-            print_template = ('(<a href="file:///{0}" target="_blank">{1}</a>'
-                              '<a href="file:///{2}" target="_blank">dir</a>)')
-            entry += print_template.format(task.logfile,
-                                           os.path.basename(task.logfile),
-                                           os.path.dirname(task.logfile))
-        else:
-            entry += '( {0} )'.format(os.path.basename(task.logfile))
-    return entry
-
 
 class ProgressBar:
-    def __init__(self, iterations):
+    def __init__(self, iterations, disp = True):
+        self.disp = disp
+        if not disp:
+            return
         self.iterations = iterations
         self.prog_bar = '[]'
         self.fill_char = '*'
         self.width = 40
-        # self.__update_amount(0)
-
-    def animate(self, iter, failed=0):
-        self.update_iteration(iter, failed)
         if _run_from_ipython():
-            clear_output(wait=True)
+            import ipywidgets
+            self.bar_widget =  ipywidgets.IntProgress(
+                                    min=0, max = iterations, value=0)
+            display(self.bar_widget)
+
+
+    def animate(self, val, failed=0):
+        if not self.disp:
+            return
+        if _run_from_ipython():
+            self.bar_widget.value = val
+            self.bar_widget.description = '%d of %s complete' % (val,
+                                                  self.iterations)
         else:
+            self.update_iteration(val, failed)
             print('\r', end="")
-        print(self, end="")
-        sys.stdout.flush()
+            print(self.prog_bar, end="")
+            sys.stdout.flush()
 
     def update_iteration(self, elapsed_iter, number_failed, tasks=[]):
         self.__update_amount((elapsed_iter / float(self.iterations)) * 100.0)
@@ -720,9 +734,6 @@ class ProgressBar:
         pct_string = '%d%%' % percent_done
         self.prog_bar = self.prog_bar[0:pct_place] + \
             (pct_string + self.prog_bar[pct_place + len(pct_string):])
-
-    def __str__(self):
-        return str(self.prog_bar)
 
 
 if __name__ == '__main__':
