@@ -35,6 +35,7 @@ from .macroutils import AnyMacro, MacroCommand
 try:
     __IPYTHON__
     from IPython.display import clear_output, HTML, display
+    import ipywidgets
 except NameError:
     pass
 
@@ -139,7 +140,7 @@ def _run_from_ipython():
 
 def _display(line, *args, **kwargs):
     if _run_from_ipython():
-        display(HTML('<pre>'+line+'</pre>'))
+        display(HTML(line))
     else:
         print(line, *args, **kwargs)
 
@@ -285,27 +286,65 @@ class _Task(object):
                 'task_processtime', 'task_macro', 'task_logfile')
         return all(k in output_elem for k in keys)
 
-    def summery(self):
-        entry = ''
-        if self.has_error:
-            self += 'Failed '
-        elif self.processtime == 0:
-            entry += 'Not completed '
+
+class Summery(object):
+    """ class to display the summery of task """
+    def __init__(self, have_ipython=False, disp=True):
+        self._disp = disp
+        if have_ipython and self._disp:
+            self.ipywidget = ipywidgets.HTML()
+            self.ipywidget.initialized = False
         else:
-            entry += 'Completed '
-        entry += '{2:4.1g} sec :{0} n = {1!s} : '.format(self.name,
-                                                   self.number,
-                                                   self.processtime)
-        if self.logfile:
+            self.ipywidget = None
+
+    def task_summery(self, task):
+        if self.ipywidget:
+            if task.has_error:
+                self._display(self.format_summery(task))
+
+    def _display(self, s):
+        if self.ipywidget is not None:
+            if not self.ipywidget.initialized:
+                display(self.ipywidget)
+                self.ipywidget.initialized = True
+            self.ipywidget.value += s + '<br>'
+        else:
+            print(s)
+
+    def format_summery(self, task):
+        entry = ''
+        if task.has_error:
+            entry += 'Failed :'
+        elif task.processtime == 0:
+            entry += 'Not completed :'
+        else:
+            entry += 'Completed :'
+        entry += ' {2:4.1g} sec : {0} : {1!s} : '.format(task.name,
+                                                         task.number,
+                                                         task.processtime)
+        if task.logfile:
             if _run_from_ipython():
-                print_template = ('(<a href="file:///{0}" target="_blank">{1}</a>'
-                                  '<a href="file:///{2}" target="_blank">dir</a>)')
-                entry += print_template.format(self.logfile,
-                                               os.path.basename(self.logfile),
-                                               os.path.dirname(self.logfile))
+                tmpl = '<a href="file:///{0}" target="_blank">{1}</a>'
+                entry += tmpl.format(task.logfile,
+                                     os.path.basename(task.logfile))
             else:
-                entry += '( {0} )'.format(os.path.basename(self.logfile))
+                entry += '{0}'.format(os.path.basename(task.logfile))
         return entry
+
+
+    def final_summery(self, total_process_time, tasklist):
+        unfinished_tasks = [t for t in tasklist if t.processtime <= 0]
+        failed_tasks = [t for t in tasklist
+                        if t.has_error and t.processtime > 0]
+        if len(failed_tasks):
+            self._display('Tasks with errors: {:d}'.format(len(failed_tasks)))
+            if self._disp and self.ipywidget is None:
+                self._display('\n'.join([self.format_summery(t)
+                                         for t in failed_tasks]))
+        if len(unfinished_tasks):
+            self._display('Tasks that did not complete: '
+                          '{:d}'.format(len(unfinished_tasks)))
+        self._display('Total time: {:.1f} seconds'.format(total_process_time))
 
 
 class AnyPyProcess(object):
@@ -518,30 +557,32 @@ class AnyPyProcess(object):
         else:
             raise ValueError('Nothing to process for ' + str(macrolist))
 
+        self.summery = Summery(have_ipython=_run_from_ipython(),
+                               disp=self.disp)
+
         # Start the scheduler
         process_time = self._schedule_processes(tasklist, self._worker)
         self.cleanup_logfiles(tasklist)
         # Cache the processed tasklist for restarting later
         self.cached_tasklist = tasklist
-        if self.disp:
-            self._print_summery(tasklist, process_time)
+        self.summery.final_summery(process_time, tasklist)
         task_output = [task.get_output(include_task_info=self.return_task_info)
                        for task in tasklist]
         return AnyPyProcessOutputList(task_output)
 
 
-    def _print_summery(self, tasks, duration):
-        unfinished_tasks = [t for t in tasks if t.processtime <= 0]
-        failed_tasks = [t for t in tasks if t.has_error and t.processtime > 0]
-        if len(failed_tasks):
-            _display('Tasks with errors: {:d}'.format(len(failed_tasks)))
-            if not _run_from_ipython():
-                _display('\n'.join([t.summery() for t in failed_tasks]))
-        if len(unfinished_tasks):
-            _display('Tasks that did not complete: '
-                     '{:d}'.format(len(unfinished_tasks)))
-        if duration:
-            _display('Total time: {:.1f} seconds'.format(duration))
+#    def _print_summery(self, tasks, duration):
+#        unfinished_tasks = [t for t in tasks if t.processtime <= 0]
+#        failed_tasks = [t for t in tasks if t.has_error and t.processtime > 0]
+#        if len(failed_tasks):
+#            _display('Tasks with errors: {:d}'.format(len(failed_tasks)))
+#            if not _run_from_ipython():
+#                _display('\n'.join([t.summery() for t in failed_tasks]))
+#        if len(unfinished_tasks):
+#            _display('Tasks that did not complete: '
+#                     '{:d}'.format(len(unfinished_tasks)))
+#        if duration:
+#            _display('Total time: {:.1f} seconds'.format(duration))
 
     def _worker(self, task, task_queue):
         """ Handles processing of the tasks.
@@ -645,8 +686,7 @@ class AnyPyProcess(object):
                     task = task_queue.get()
                     if task.has_error:
                         n_errors += 1
-                        if self.disp and _run_from_ipython():
-                            _display(task.summery())
+                    self.summery.task_summery(task)
                     processed_tasks.append(task)
                     pbar.animate(len(processed_tasks), n_errors)
 
@@ -683,22 +723,17 @@ class AnyPyProcess(object):
                                  '{} {}'.format(macrofile, str(e)))
 
 
-
 class ProgressBar:
-    def __init__(self, iterations, disp = True):
+    def __init__(self, iterations, disp=True):
         self.disp = disp
-        if not disp:
-            return
         self.iterations = iterations
         self.prog_bar = '[]'
         self.fill_char = '*'
         self.width = 40
-        if _run_from_ipython():
-            import ipywidgets
-            self.bar_widget =  ipywidgets.IntProgress(
-                                    min=0, max = iterations, value=0)
+        if _run_from_ipython() and self.disp:
+            self.bar_widget = ipywidgets.IntProgress(
+                                min=0, max=iterations, value=0)
             display(self.bar_widget)
-
 
     def animate(self, val, failed=0):
         if not self.disp:
@@ -706,7 +741,7 @@ class ProgressBar:
         if _run_from_ipython():
             self.bar_widget.value = val
             self.bar_widget.description = '%d of %s complete' % (val,
-                                                  self.iterations)
+                                                self.iterations)
         else:
             self.update_iteration(val, failed)
             print('\r', end="")
