@@ -77,21 +77,23 @@ class mixedmethod(object):
 
 
 def get_first_key_match(key, names):
+    if key in names:
+        return key
     matching = [v for v in names if key in v]
     if not matching:
         raise KeyError('The key "{}" could not be found'.format(key))
-    
-    if len(matching) > 1: 
+
+    if len(matching) > 1:
         print('WARNING: "{}" key is not unique.'
               ' Using the first match'.format(key), file=sys.stderr)
         print('-> ' + matching[0], file=sys.stderr)
-        for match in matching[1:]: 
+        for match in matching[1:]:
             print(' * '+match, file=sys.stderr)
-            
+
     return matching[0]
 
 class AnyPyProcessOutputList(collections.MutableSequence):
-    """ List like class to wrap the output of model simulations. 
+    """ List like class to wrap the output of model simulations.
 
         The class behaves as a normal list but provide
         extra function to easily access data.
