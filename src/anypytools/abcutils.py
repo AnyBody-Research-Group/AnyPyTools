@@ -319,9 +319,9 @@ class Summery(object):
             entry += 'Not completed :'
         else:
             entry += 'Completed :'
-        entry += ' {2:4.1g} sec : {0} : {1!s} : '.format(task.name,
-                                                         task.number,
-                                                         task.processtime)
+        entry += '{1!s} : {2:4.1} sec : {0} : '.format(task.name,
+                                                       task.number,
+                                                       task.processtime)
         if task.logfile:
             if _run_from_ipython():
                 tmpl = '<a href="file:///{0}" target="_blank">{1}</a>'
