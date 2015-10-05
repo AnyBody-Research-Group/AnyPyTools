@@ -24,9 +24,9 @@ requirements:     # (optional)
     - future
     - h5py
     - setuptools
-    - scipy
-    - ipython-notebook >=4.0
-    - ipywidgets
+    - scipy >=0.15
+    - jupyter
+    - ipython
     
 test:
   requires:
