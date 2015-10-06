@@ -4,33 +4,34 @@ Created on Sun Sep  7 13:25:38 2014
 
 @author: Morten
 """
-
+# Python 2/3 compatibility imports
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
 from builtins import *
 from past.builtins import basestring as string_types
 
-from _thread import get_ident as _get_ident
-
-import sys
+# Standard lib imports
 import os
-import numpy as np
-import copy
-from ast import literal_eval
-import pprint
-import collections
 import re
+import sys
+import copy
+import pprint as _pprint
 import logging
 import warnings
 import functools
+import collections
+from ast import literal_eval
+from _thread import get_ident as _get_ident
+
+#external imports
+import numpy as np
+
 
 logger = logging.getLogger('abt.anypytools')
 
 
-
-# This hacks pprint to always return strings witout u' prefix 
+# This hacks pprint to always return strings witout u' prefix
 # important when running doctest in both python 2 og python 3
-import pprint as _pprint
 class Py3kPrettyPrinter(_pprint.PrettyPrinter):
     def format(self, object, context, maxlevels, level):
         try:
@@ -51,7 +52,7 @@ pprint = py3k_pprint
 
 class mixedmethod(object):
     """This decorator mutates a function defined in a class into a 'mixed' class and instance method.
-    
+
     Usage:
         class Spam:
             @mixedmethod
@@ -69,10 +70,6 @@ class mixedmethod(object):
         self.func = func
     def __get__(self, instance, cls):
         return functools.partial(self.func, instance, cls)
-
-
-
-
 
 
 
@@ -103,7 +100,7 @@ class AnyPyProcessOutputList(collections.MutableSequence):
         for elem in args:
             self.extend(list(elem))
 
-        
+
     def check(self, v):
         if not isinstance(v, collections.MutableSequence) :
             v = [v]
@@ -120,14 +117,14 @@ class AnyPyProcessOutputList(collections.MutableSequence):
             try:
                 data = np.array(
                     [super(AnyPyProcessOutput, e).__getitem__(key) for e in self.list]
-                     )                
+                     )
             except KeyError:
                 raise KeyError(" The key '{}' is not present "
-                               "in all elements of the output.".format( key ) ) 
+                               "in all elements of the output.".format( key ) )
             if data.dtype == np.dtype('O'):
                 # Data will be stacked as an array of objects, if the
                 # time dimension is not consistant. Warn that some numpy
-                # featurs will not be avaiable.                     
+                # featurs will not be avaiable.
                 warnings.warn('\n\nSimulation time varies across macros. '
                       'Numpy does not support ragged arrays. Data is returned  '
                       'as an array of array objects' )
@@ -136,14 +133,14 @@ class AnyPyProcessOutputList(collections.MutableSequence):
             return type(self)(self.list[i]) if isinstance(i, slice) else self.list[i]
 
 
-            
+
     def __delitem__(self, i): del self.list[i]
 
     def __setitem__(self, i, v):
         self.check(v)
         if isinstance(i, slice):
             self.list[i] = v
-        else:        
+        else:
             self.list[i] = v
 
     def insert(self, i, v):
@@ -167,7 +164,7 @@ class AnyPyProcessOutputList(collections.MutableSequence):
                         return repr_list
                 if repr_list and not repr_list[-1].endswith(','):
                     repr_list[-1] = repr_list[-1] + ','
-            
+
             if len(repr_list):
                 repr_list[-1] = repr_list[-1].rstrip(',')
                 repr_list[0] = '[' + repr_list[0][1:]
@@ -175,7 +172,7 @@ class AnyPyProcessOutputList(collections.MutableSequence):
             else:
                 repr_list.append('[]')
             return repr_list
-        
+
         repr_str = '\n'.join(create_repr(500))
         if repr_str.endswith('...'):
             np.set_printoptions(threshold = 30)
@@ -185,25 +182,25 @@ class AnyPyProcessOutputList(collections.MutableSequence):
 
     def filter(self, func):
         """ Constructs a AnyPyProcessOutputList object from those elements
-        where function returns true. 
+        where function returns true.
         """
         return AnyPyProcessOutputList(filter(func, self))
-    
-    
+
+
     def to_dynd(self, **kwargs):
         try:
-            from .blaze_converter import convert
+            from .utils.blaze_converter import convert
             return convert(self.list,**kwargs)
         except ImportError:
             raise ImportError('The packages libdynd, dynd-python, datashape, '
                                'odo/into must be installed to convert data ' )
-                               
+
     def shelve(self, filename, key='results'):
         import shelve
         db = shelve.open(filename)
         db[key] = self
-        db.close()        
-        
+        db.close()
+
     @classmethod
     def from_shelve(cls, filename, key='results'):
         import shelve
@@ -211,13 +208,13 @@ class AnyPyProcessOutputList(collections.MutableSequence):
         out = db[key]
         db.close()
         return out
-      
+
 
 
 def get_anybodycon_path():
-    """  Return the path to default AnyBody console application 
+    """  Return the path to default AnyBody console application
     """
-    try: 
+    try:
         import winreg
     except ImportError:
         import _winreg as winreg
@@ -225,7 +222,7 @@ def get_anybodycon_path():
         abpath = winreg.QueryValue(winreg.HKEY_CLASSES_ROOT,
                         'AnyBody.AnyScript\shell\open\command')
     except WindowsError:
-        raise WindowsError('Could not locate AnyBody in registry')       
+        raise WindowsError('Could not locate AnyBody in registry')
     abpath = abpath.rsplit(' ',1)[0].strip('"')
     return os.path.join(os.path.dirname(abpath),'AnyBodyCon.exe')
 
@@ -239,19 +236,19 @@ def define2str(key,value=None):
     elif value is None:
         defstr = '-def %s=""'% (key)
     elif isinstance(value,float) :
-        defstr =  '-def %s="%g"'% (key, value) 
+        defstr =  '-def %s="%g"'% (key, value)
     else:
-        defstr = '-def %s="%d"'% (key, value) 
-    return defstr 
-    
+        defstr = '-def %s="%d"'% (key, value)
+    return defstr
+
 def path2str(key,path='.'):
-    return '-p %s=---"%s"'% (key, path.replace('\\','\\\\')) 
+    return '-p %s=---"%s"'% (key, path.replace('\\','\\\\'))
 
 
 def getsubdirs(toppath, search_string = "."):
-    """ Find all directories below a given top path. 
-    
-    Args: 
+    """ Find all directories below a given top path.
+
+    Args:
         toppath: top directory when searching for sub directories
         search_string: Limit to directories matching the this regular expression
     Returns:
@@ -259,7 +256,7 @@ def getsubdirs(toppath, search_string = "."):
     """
     if not search_string:
         return [toppath]
-    reg_prog = re.compile(search_string)    
+    reg_prog = re.compile(search_string)
     dirlist = []
     if search_string == ".":
         dirlist.append(toppath)
@@ -271,13 +268,13 @@ def getsubdirs(toppath, search_string = "."):
     uniqueList = []
     for value in dirlist:
         if value not in uniqueList:
-            uniqueList.append(value)    
+            uniqueList.append(value)
     return uniqueList
 
 
 
 def array2anyscript(arr):
-    """ Format a numpy array as an anyscript variable 
+    """ Format a numpy array as an anyscript variable
     """
     def tostr(v):
         if np.isreal(v):
@@ -296,7 +293,7 @@ def array2anyscript(arr):
             outstr = outstr.strip(',') + '},'
             return outstr
         else:
-            return outstr + tostr(arr)+','  
+            return outstr + tostr(arr)+','
     if isinstance(arr, np.ndarray) and not arr.shape:
         return tostr(arr.tolist())
     elif isinstance(arr, np.ndarray) :
@@ -305,7 +302,7 @@ def array2anyscript(arr):
         return tostr(arr)
     else:
         return str(arr)
-       
+
 class AnyPyProcessOutput(collections.OrderedDict):
     """Subclassed OrderedDict which supports partial key access"""
     def __getitem__(self,  key ):
@@ -315,13 +312,13 @@ class AnyPyProcessOutput(collections.OrderedDict):
             first_key_match = get_first_key_match(key,
                                               super(AnyPyProcessOutput,self).keys())
             return super(AnyPyProcessOutput,self).__getitem__(first_key_match)
-           
+
     def _repr_gen(self,prefix):
         items = self.items()
         if not items:
             yield prefix + '{}'
             return
-        
+
         indent = prefix + '{'
         for i, (key,val) in enumerate(items):
             if i == len(self.keys())-1:
@@ -338,9 +335,9 @@ class AnyPyProcessOutput(collections.OrderedDict):
                 for l in val_str.split('\n'):
                    yield indent + l if l.endswith(',') else indent + l + end
             indent = prefix + ' '
-           
-           
-    
+
+
+
     def __repr__(self, _repr_running={}, prefix = '' ):
         call_key = id(self), _get_ident()
         if _repr_running is None:
@@ -358,17 +355,17 @@ class AnyPyProcessOutput(collections.OrderedDict):
 
 
 
-def parse_anybodycon_output(strvar, errors_to_ignore=None, 
+def parse_anybodycon_output(strvar, errors_to_ignore=None,
                             warnings_to_include = None):
-    if errors_to_ignore is None: 
+    if errors_to_ignore is None:
         errors_to_ignore = []
-    if warnings_to_include is None: 
+    if warnings_to_include is None:
         warnings_to_include = []
 
     out = AnyPyProcessOutput(  );
     out['ERROR'] = []
     out['WARNING'] = []
-    
+
     dump_path = None
     for line in strvar.splitlines():
         if '#### Macro command' in line and "Dump" in line:
@@ -387,53 +384,50 @@ def parse_anybodycon_output(strvar, errors_to_ignore=None,
             except SyntaxError as e:
                 out['ERROR'].append(str(e))
 
-        line_has_errors = (line.startswith('ERROR') or line.startswith('Error') or 
-                           line.startswith('Model loading skipped'))             
-        if line_has_errors: 
+        line_has_errors = (line.startswith('ERROR') or line.startswith('Error') or
+                           line.startswith('Model loading skipped'))
+        if line_has_errors:
             for err_str in errors_to_ignore:
                 if err_str in line: break
             else:
                 # This is run if we never break,
                 #i.e. err was not in the list of errors_to_ignore
                 out['ERROR'].append(line)
-        line_has_warning = line.startswith('WARNING')             
-        if line_has_warning:               
+        line_has_warning = line.startswith('WARNING')
+        if line_has_warning:
             for warn_str in warnings_to_include:
                 if warn_str in line:
                     out['WARNING'].append(line)
                     break
     # Move 'ERROR' and 'WARNING' entry to the last position in the ordered dict
-    out['WARNING'] = out.pop('WARNING')         
+    out['WARNING'] = out.pop('WARNING')
     out['ERROR'] = out.pop('ERROR')
-    
-    # Remove the ERROR/WARNING key if it does not have any entries        
+
+    # Remove the ERROR/WARNING key if it does not have any entries
     if not out['ERROR']:
         del out['ERROR']
     if not out['WARNING']:
         del out['WARNING']
     return out
-    
-    
+
+
 
 def get_ncpu():
-    """ Return the number of CPUs in the computer 
+    """ Return the number of CPUs in the computer
     """
     from multiprocessing import cpu_count
     return cpu_count()
 
 def _run_from_ipython():
-    """ Return True if run from IPython 
+    """ Return True if run from IPython
     """
     try:
          __IPYTHON__
          return True
     except NameError:
         return False
-        
 
-        
- 
-        
+
 def make_hash(o):
 
   """
@@ -445,7 +439,7 @@ def make_hash(o):
 
   if isinstance(o, (set, tuple, list)):
 
-    return hash( tuple([make_hash(e) for e in o]) )  
+    return hash( tuple([make_hash(e) for e in o]) )
 
   elif not isinstance(o, dict):
 

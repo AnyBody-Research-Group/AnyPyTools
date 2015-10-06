@@ -20,6 +20,7 @@ import ctypes
 import shelve
 import atexit
 import logging
+import warnings
 import collections
 
 from subprocess import Popen
@@ -27,14 +28,14 @@ from tempfile import NamedTemporaryFile
 from threading import Thread, RLock
 from queue import Queue
 
-from .utils import (make_hash, AnyPyProcessOutputList, parse_anybodycon_output,
+from .tools import (make_hash, AnyPyProcessOutputList, parse_anybodycon_output,
                     getsubdirs, get_anybodycon_path, mixedmethod,
                     AnyPyProcessOutput)
 from .macroutils import AnyMacro, MacroCommand
 
 try:
     __IPYTHON__
-    from IPython.display import clear_output, HTML, display
+    from IPython.display import HTML, display
     import ipywidgets
 except NameError:
     pass
@@ -289,9 +290,9 @@ class _Task(object):
 
 class Summery(object):
     """ class to display the summery of task """
-    def __init__(self, have_ipython=False, disp=True):
-        self._disp = disp
-        if have_ipython and self._disp:
+    def __init__(self, have_ipython=False, silent=False):
+        self._silent = silent
+        if have_ipython and not self._silent:
             self.ipywidget = ipywidgets.HTML()
             self.ipywidget.initialized = False
         else:
@@ -303,6 +304,8 @@ class Summery(object):
                 self._display(self.format_summery(task))
 
     def _display(self, s):
+        if self._silent:
+            return
         if self.ipywidget is not None:
             if not self.ipywidget.initialized:
                 display(self.ipywidget)
@@ -338,7 +341,7 @@ class Summery(object):
                         if t.has_error and t.processtime > 0]
         if len(failed_tasks):
             self._display('Tasks with errors: {:d}'.format(len(failed_tasks)))
-            if self._disp and self.ipywidget is None:
+            if self.ipywidget is None:
                 self._display('\n'.join([self.format_summery(t)
                                          for t in failed_tasks]))
         if len(unfinished_tasks):
@@ -351,7 +354,7 @@ class AnyPyProcess(object):
     """
     AnyPyProcess(num_processes = nCPU,
                  anybodycon_path = 'installed version',
-                 timeout = 3600, disp = True, keep_logfiles = False)
+                 timeout = 3600, silent = False, keep_logfiles = False)
 
     Commen class for setting up batch process jobs of AnyBody models.
 
@@ -376,16 +379,19 @@ class AnyPyProcess(object):
         This defaults to the number of CPU in the computer.
     anybodycon_path:
         Overwrite the default anybodycon.exe file to
-        use in batch processing
+        use in batch processing. Defaults to what is found in the windows
+        registry
     timeout:
         maximum time a model can run until it is terminated.
         Defaults to 1 hour
     ignore_errors:
-        List of AnyBody Errors to ignore when running the models
+        List of AnyBody Errors to ignore when running the models.
     return_task_info: bool
         Return the task status information when running macros
     disp:
-        Set to False to suppress output
+        Set to False to suppress output (deprecated)
+    silent:
+        Set to True to suppres any output (progress bar and error messages)
     warnings_to_include:
         List of strings that are matched to warnings in the model
         output. If a warning with that string is found the warning
@@ -401,13 +407,14 @@ class AnyPyProcess(object):
                  num_processes=_get_ncpu(),
                  anybodycon_path=None,
                  timeout=3600,
-                 disp=True,
+                 silent=False,
                  ignore_errors=None,
                  warnings_to_include=None,
                  return_task_info=False,
                  keep_logfiles=False,
                  logfile_prefix='',
-                 python_env=None):
+                 python_env=None,
+                 **kwargs):
 
         if anybodycon_path is None:
             self.anybodycon_path = get_anybodycon_path()
@@ -416,7 +423,15 @@ class AnyPyProcess(object):
         else:
             raise FileNotFoundError("Can't find " + anybodycon_path)
         self.num_processes = num_processes
-        self.disp = disp
+        self.silent = silent
+        if 'disp' in kwargs:
+            warnings.warn("Using 'disp' is deprecated. Use "
+                          "AnyPyProcess(silent=True) instead.",
+                          DeprecationWarning)
+            if kwargs.pop('disp') is False:
+                self.silent = True
+            else:
+                self.silent = True
         self.timeout = timeout
         self.counter = 0
         self.return_task_info = return_task_info
@@ -558,7 +573,7 @@ class AnyPyProcess(object):
             raise ValueError('Nothing to process for ' + str(macrolist))
 
         self.summery = Summery(have_ipython=_run_from_ipython(),
-                               disp=self.disp)
+                               silent=self.silent)
 
         # Start the scheduler
         process_time = self._schedule_processes(tasklist, self._worker)
@@ -655,7 +670,7 @@ class AnyPyProcess(object):
         use_threading = (number_tasks > 1 and self.num_processes > 1)
         starttime = time.clock()
         task_queue = Queue()
-        pbar = ProgressBar(number_tasks, self.disp)
+        pbar = ProgressBar(number_tasks, self.silent)
         pbar.animate(0)
         processed_tasks = []
         n_errors = 0
@@ -724,19 +739,19 @@ class AnyPyProcess(object):
 
 
 class ProgressBar:
-    def __init__(self, iterations, disp=True):
-        self.disp = disp
+    def __init__(self, iterations, silent=False):
+        self.silent = silent
         self.iterations = iterations
         self.prog_bar = '[]'
         self.fill_char = '*'
         self.width = 40
-        if _run_from_ipython() and self.disp:
+        if _run_from_ipython() and not self.silent:
             self.bar_widget = ipywidgets.IntProgress(
                                 min=0, max=iterations, value=0)
             display(self.bar_widget)
 
     def animate(self, val, failed=0):
-        if not self.disp:
+        if self.silent:
             return
         if _run_from_ipython():
             self.bar_widget.value = val

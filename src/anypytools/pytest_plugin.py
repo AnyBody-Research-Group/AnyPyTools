@@ -8,13 +8,14 @@ from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
 from builtins import *
 
-
+import os
 import pytest
 import shutil
-import os
-from anypytools.abcutils import AnyPyProcess,get_anybodycon_path
-from anypytools.generate_macros import MacroGenerator
 import subprocess 
+
+from .abcutils import AnyPyProcess
+from .tools import get_anybodycon_path
+from .generate_macros import MacroGenerator
 
 
 def get_ammr_version(ammr_path):

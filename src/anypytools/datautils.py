@@ -9,30 +9,31 @@ from __future__ import (absolute_import, division,
 from builtins import *
 
 
-
-import os.path as op
-import logging
-import numpy as np
 import os
+import logging
+import os.path as op
+
+import numpy as np
 from scipy.interpolate import interp1d
+
 logger = logging.getLogger('abt.anypytools')
 
 
 
-def anydatah5_generator(folder=None, match = ''):    
+def anydatah5_generator(folder=None, match = ''):
     from . import h5py_wrapper
     if folder is None:
         folder = str( os.getcwd() )
     def func(item):
         return item.endswith('h5') and item.find(match)!= -1
-    filelist = filter(func,  os.listdir(folder)) 
+    filelist = filter(func,  os.listdir(folder))
     for filename in filelist:
         try:
             with h5py_wrapper.File(op.join(folder,filename)) as h5file:
                 yield (h5file, filename)
         except IOError:
             pass
-    
+
 def anyoutputfile_generator(folder =None, match = "", DEBUG = False):
     if folder is None:
         folder = str( os.getcwd() )
@@ -40,18 +41,18 @@ def anyoutputfile_generator(folder =None, match = "", DEBUG = False):
 #    filelist = [_ for _ in os.listdir(folder) if _.endswith('.txt') or  _.endswith('.csv')]
     def func(item):
         return (item.endswith('.txt') or item.endswith('.csv')) and  item.find(match)!= -1
-    filelist = filter(func,  os.listdir(folder)) 
-    
+    filelist = filter(func,  os.listdir(folder))
 
-    
+
+
     for filename in filelist:
         filepath = op.join(folder,filename)
         data, header, const = open_anyoutputfile(filepath,DEBUG)
         if data is None:
             continue
-            
+
         yield (data, header, const, os.path.basename(filepath))
-        
+
 def open_anyoutputfile(filepath,DEBUG = False):
     def is_scinum(str):
         try:
@@ -61,8 +62,8 @@ def open_anyoutputfile(filepath,DEBUG = False):
             return False
 
     with open(filepath,'r') as anyoutputfile:
-        constants = {}       
-        reader = iter(anyoutputfile.readline, b'')       
+        constants = {}
+        reader = iter(anyoutputfile.readline, b'')
         #Check when the header section ends
         fpos1 = 0
         fpos0 = 0
@@ -83,7 +84,7 @@ def open_anyoutputfile(filepath,DEBUG = False):
             header = next(reader).strip('\n').split(',')
         else:
             header = None
-          
+
         data = []
         for row in reader:
             try:
@@ -91,8 +92,8 @@ def open_anyoutputfile(filepath,DEBUG = False):
             except ValueError:
                 break
         data = np.array(data)
-    return (data, header, constants)   
-        
+    return (data, header, constants)
+
 
 
 def _parse_anyoutputfile_constants(strvar):
@@ -114,7 +115,7 @@ def _parse_anyoutputfile_constants(strvar):
         else:
             last = last.replace('{','[').replace('}',']')
             try:
-                value = np.array(eval("'''"+last+"'''") ) 
+                value = np.array(eval("'''"+last+"'''") )
                 value = np.array(eval(last))
             except:
                 pass
@@ -128,23 +129,23 @@ def interp_percent(data, indices):
     indices = np.array(indices)
     x = np.linspace(0,100,len(indices))
     xnew = np.arange(0,100)
-    y = data[indices]   
+    y = data[indices]
     ipolfun = interp1d(x,y)
     return ipolfun(xnew)
-    
+
 def any_eval(string):
     string = string.split('//',1)[0]
     string  = string.split("=",1)[-1].split(";",1)[0].strip()
-    
+
     string = string.replace('{','[')
     string = string.replace('}',']')
     return eval(string)
-    
-    
+
+
 
 if __name__ == '__main__':
 #    for data,header,filename in csv_trial_data('C:\Users\mel\SMIModelOutput', DEBUG= True):
 #        print header
-        
-    outvars = ['/Output/Validation/EMG'] 
-        
+
+    outvars = ['/Output/Validation/EMG']
+
