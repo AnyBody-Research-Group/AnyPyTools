@@ -13,9 +13,9 @@ setup(
     version='0.8.1',
     install_requires=['future'],
     py_modules=['anypytools.abcutils', 'anypytools.h5py_wrapper',
-                'anypytools.datautils', 'anypytools.genereate_macros', 
-                'anypytools.utils.py3k', 'anypytools.utils.pytest_plugin',
-                'anypytools.utils.support_functions',
+                'anypytools.datautils', 'anypytools.genereate_macros',
+                'anypytools.pytest_plugin',
+                'anypytools.tools',
                 'anypytools.utils.blaze_converter',
                 'anypytools.pygments_plugin.anyscript_lexer',
                 'anypytools.pygments_plugin.anyscript_style'],
@@ -26,7 +26,7 @@ setup(
     # the following makes a plugin available to pytest
     entry_points = {
         'pytest11': [
-            'anypytools = anypytools.utils.pytest_plugin',
+            'anypytools = anypytools.pytest_plugin',
         ],
         'pygments.lexers': 
             ['anyscript = anypytools.pygments_plugin.anyscript_lexer:AnyScriptLexer',
