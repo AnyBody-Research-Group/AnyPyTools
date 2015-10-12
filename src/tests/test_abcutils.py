@@ -11,9 +11,7 @@ from __future__ import (absolute_import, division,
 import os
 import shutil
 import pytest
-import numpy as np
 
-from copy import deepcopy
 
 from anypytools.abcutils import AnyPyProcess
 from anypytools.abcutils import AnyPyProcessOutputList
@@ -53,14 +51,14 @@ def default_macro():
 
 class TestAnyPyProcess():
     def test_logfile_persistance(self, init_simple_model, default_macro) :
-        app = AnyPyProcess(disp = False, keep_logfiles=True,
+        app = AnyPyProcess(silent=True, keep_logfiles=True,
                            return_task_info=True)
         output = app.start_macro(default_macro)
         assert os.path.isfile(output[0]['task_logfile'])
 
 
     def test_macro_with_erros(self,init_simple_model, default_macro):
-        app = AnyPyProcess(disp = False, return_task_info=True,
+        app = AnyPyProcess(silent=True, return_task_info=True,
                            ignore_errors = ['Unresolved object'])
         macro = [ ['load "model.main.any"'
                   ,'operation Main.ArmModelStudy.InverseDynamics'
@@ -81,7 +79,7 @@ class TestAnyPyProcess():
         assert 'ERROR' in output[2]
 
     def test_start_macro(self,init_simple_model, default_macro):
-        app = AnyPyProcess(disp = False)
+        app = AnyPyProcess(silent=True)
 
         default_macro[0].extend(['classoperation Main.ArmModelStudy.Output.MaxMuscleActivity "Dump"',
                          'classoperation Main.ArmModel.GlobalRef.t "Dump"'])
@@ -94,7 +92,7 @@ class TestAnyPyProcess():
         assert 'ERROR' not in output[0]
 
     def test_start_macro_with_task_info(self,init_simple_model, default_macro):
-        app = AnyPyProcess(disp = False, return_task_info=True)
+        app = AnyPyProcess(silent=True, return_task_info=True)
 
         default_macro[0].extend(['classoperation Main.ArmModelStudy.Output.MaxMuscleActivity "Dump"',
                          'classoperation Main.ArmModel.GlobalRef.t "Dump"'])
@@ -115,7 +113,7 @@ class TestAnyPyProcess():
         number_of_models = 5
         setup_models_in_subdirs(tmpdir, number_of_models)
 
-        app = AnyPyProcess(disp = False )
+        app = AnyPyProcess(silent=True )
         with tmpdir.as_cwd():
             output = app.start_macro(default_macro,search_subdirs='main.any')
 
@@ -131,7 +129,7 @@ class TestAnyPyProcess():
             for i in range(n_macros):
                 yield default_macro[0]
 
-        app = AnyPyProcess(disp = False)
+        app = AnyPyProcess(silent=True)
         macros_gen = generate_macros()
         output = app.start_macro(macros_gen )
 
