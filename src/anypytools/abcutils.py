@@ -322,7 +322,7 @@ class Summery(object):
             entry += 'Not completed :'
         else:
             entry += 'Completed :'
-        entry += '{1!s} : {2:4.1} sec : {0} : '.format(task.name,
+        entry += '{1!s} : {2:5.0f} sec : {0} : '.format(task.name,
                                                        task.number,
                                                        task.processtime)
         if task.logfile:
