@@ -438,8 +438,10 @@ class AnyPyProcess(object):
         self.ignore_errors = ignore_errors
         self.warnings_to_include = warnings_to_include
         self.keep_logfiles = keep_logfiles
-        if lologfile_prefix is not None:
+        if logfile_prefix is not None:
             self.logfile_prefix = logfile_prefix + '_'
+        else:
+            self.logfile_prefix = logfile_prefix
         self.cached_arg_hash = None
         self.cached_tasklist = None
         if python_env is not None:
@@ -577,7 +579,7 @@ class AnyPyProcess(object):
                                silent=self.silent)
 
         if self.logfile_prefix is None:
-            self.logfile_prefix = self.cached_arg_hash[:4] + '_'       
+            self.logfile_prefix = str(self.cached_arg_hash)[:4] + '_'       
             
         # Start the scheduler
         process_time = self._schedule_processes(tasklist, self._worker)
