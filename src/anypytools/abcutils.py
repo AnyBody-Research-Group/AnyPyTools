@@ -431,14 +431,15 @@ class AnyPyProcess(object):
             if kwargs.pop('disp') is False:
                 self.silent = True
             else:
-                self.silent = True
+                self.silent = False
         self.timeout = timeout
         self.counter = 0
         self.return_task_info = return_task_info
         self.ignore_errors = ignore_errors
         self.warnings_to_include = warnings_to_include
         self.keep_logfiles = keep_logfiles
-        self.logfile_prefix = logfile_prefix
+        if lologfile_prefix is not None:
+            self.logfile_prefix = logfile_prefix + '_'
         self.cached_arg_hash = None
         self.cached_tasklist = None
         if python_env is not None:
