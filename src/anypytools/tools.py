@@ -393,7 +393,7 @@ def parse_anybodycon_output(strvar, errors_to_ignore=None,
                 # This is run if we never break,
                 #i.e. err was not in the list of errors_to_ignore
                 out['ERROR'].append(line)
-        line_has_warning = line.startswith('WARNING')
+        line_has_warning = line.startswith(('WARNING','Failed'))
         if line_has_warning:
             for warn_str in warnings_to_include:
                 if warn_str in line:
