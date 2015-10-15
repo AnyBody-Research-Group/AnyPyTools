@@ -412,7 +412,7 @@ class AnyPyProcess(object):
                  warnings_to_include=None,
                  return_task_info=False,
                  keep_logfiles=False,
-                 logfile_prefix='',
+                 logfile_prefix=None,
                  python_env=None,
                  **kwargs):
 
@@ -576,6 +576,9 @@ class AnyPyProcess(object):
         self.summery = Summery(have_ipython=_run_from_ipython(),
                                silent=self.silent)
 
+        if self.logfile_prefix is None:
+            self.logfile_prefix = self.cached_arg_hash[:4] + '_'       
+            
         # Start the scheduler
         process_time = self._schedule_processes(tasklist, self._worker)
         self.cleanup_logfiles(tasklist)
@@ -617,11 +620,9 @@ class AnyPyProcess(object):
                 task.add_error('Could not find folder: {}'.format(task.folder))
                 task.logfile = ""
             else:
-                with NamedTemporaryFile(mode='a+',
-                                        prefix=self.logfile_prefix + '_',
-                                        suffix='.log',
-                                        dir=task.folder,
-                                        delete=False) as logfile:
+                tmp_kwargs = dict(mode='a+', prefix=self.logfile_prefix,
+                                  suffix='.log', dir=task.folder, delete=False)
+                with NamedTemporaryFile(**tmp_kwargs) as logfile:
                     logfile.write('########### MACRO #############\n')
                     logfile.write("\n".join(task.macro))
                     logfile.write('\n\n######### OUTPUT LOG ##########')
