@@ -10,7 +10,7 @@ from .generate_macros import (MacroGenerator, MonteCarloMacroGenerator,
 from .macroutils import AnyMacro
 from . import macro_commands
 
-__all__ = ['abcutils', 'datautils', 'generate_macros', 'h5py_wrapper', 'AnyPyProcess',
+__all__ = ['datautils', 'h5py_wrapper', 'AnyPyProcess',
            'MacroGenerator', 'MonteCarloMacroGenerator', 'LatinHyperCubeMacroGenerator'
            'AnyMacro', 'macro_commands', 'print_versions']
 
@@ -18,7 +18,7 @@ __version__ = '0.8.1'
 
 
 def print_versions():
-    """Print all the versions of software that Blaze relies on."""
+    """ Print all the versions of software that AnyPyTools relies on."""
     import sys, platform
     import numpy as np
     print("-=" * 38)

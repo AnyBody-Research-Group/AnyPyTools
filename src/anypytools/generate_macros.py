@@ -45,14 +45,12 @@ def _isgenerator(x):
 class MacroGenerator(object):
     """ Base class for generating AnyScript macros
 
-    Overview
-    ----------
     Use the class to build an AnyScript macro. The class have methods for all
     anyscript opertions, and makes it easier to construct a macro with the
     correct syntax.
 
-    For example:
-
+    Examples
+    --------
     >>> mg = MacroGenerator()
     >>> mg.add_load('c:/MyModel/model.main.any')
     >>> mg.add_set_value('Main.Study.myvar', 12.3)
@@ -71,11 +69,11 @@ class MacroGenerator(object):
     ----------
     number_of_macros: int
         The number of macros to generate.
-    counter_token: string
+    counter_token: str
         A token in the macro commands that will be replace with a counter. If
         the token is '{ID}' then all occurences of '{ID}' in the macros will be
         replaced with a counter.
-    reset_counter_for_each_batch: Bool
+    reset_counter_for_each_batch: bool
         Specifies if the macro counter is reset if macros are generated in batch
         mode.
 
@@ -103,16 +101,16 @@ class MacroGenerator(object):
             A anyscript macro command or a list of anyscript commands
 
 
-        Examples:
-        ---------
-            add a single macro command:
+        Examples
+        --------
+        add a single macro command:
 
-            >>> mg = MacroGenerator()
-            >>> mg.add_macro('load "model1.any"')
+        >>> mg = MacroGenerator()
+        >>> mg.add_macro('load "model1.any"')
 
-            add several macro commands:
+        add several macro commands:
 
-            >>> mg.add_macro(['operation Main.RunApplication', 'run', 'exit'])
+        >>> mg.add_macro(['operation Main.RunApplication', 'run', 'exit'])
 
 
         """
@@ -127,45 +125,45 @@ class MacroGenerator(object):
 
         Parameters
         ----------
-        variable:
+        variable
             An AnyScript variable or a list of AnyScript variables.
-        value:
+        value
             A Values assign to the AnyScript variable or a list of values.
 
-        Examples:
-        ---------
-            Set a single value:
+        Examples
+        --------
+        Set a single value:
 
-            >>> mg = MacroGenerator()
-            >>> mg.add_load('c:/MyModel/model.main.any')
-            >>> mg.add_set_value('Main.Study.myvar1', 23.1)
-            >>> mg.add_set_value('Main.Study.myvar2', np.array([2,3,4]))
-            >>> mg.add_run_operation('Main.Study.Kinematics')
-            >>> pprint( mg.generate_macros() )
-            [['load "c:/MyModel/model.main.any"',
-              'classoperation Main.Study.myvar1 "Set Value" --value="23.1"',
-              'classoperation Main.Study.myvar2 "Set Value" --value="{2,3,4}"',
-              'operation Main.Study.Kinematics',
-              'run']]
+        >>> mg = MacroGenerator()
+        >>> mg.add_load('c:/MyModel/model.main.any')
+        >>> mg.add_set_value('Main.Study.myvar1', 23.1)
+        >>> mg.add_set_value('Main.Study.myvar2', np.array([2,3,4]))
+        >>> mg.add_run_operation('Main.Study.Kinematics')
+        >>> pprint( mg.generate_macros() )
+        [['load "c:/MyModel/model.main.any"',
+          'classoperation Main.Study.myvar1 "Set Value" --value="23.1"',
+          'classoperation Main.Study.myvar2 "Set Value" --value="{2,3,4}"',
+          'operation Main.Study.Kinematics',
+          'run']]
 
-            Set variable across different macros
+        Set variable across different macros
 
-            >>> mg = MacroGenerator(number_of_macros = 3)
-            >>> mg.add_load('c:/MyModel/model.main.any')
-            >>> mg.add_set_value('Main.Study.myvar1',[1,2,3])
-            >>> pprint( mg.generate_macros() )
-            [['load "c:/MyModel/model.main.any"', 'classoperation Main.Study.myvar1 "Set Value" --value="1"'],
-             ['load "c:/MyModel/model.main.any"', 'classoperation Main.Study.myvar1 "Set Value" --value="2"'],
-             ['load "c:/MyModel/model.main.any"', 'classoperation Main.Study.myvar1 "Set Value" --value="3"']]
+        >>> mg = MacroGenerator(number_of_macros = 3)
+        >>> mg.add_load('c:/MyModel/model.main.any')
+        >>> mg.add_set_value('Main.Study.myvar1',[1,2,3])
+        >>> pprint( mg.generate_macros() )
+        [['load "c:/MyModel/model.main.any"', 'classoperation Main.Study.myvar1 "Set Value" --value="1"'],
+         ['load "c:/MyModel/model.main.any"', 'classoperation Main.Study.myvar1 "Set Value" --value="2"'],
+         ['load "c:/MyModel/model.main.any"', 'classoperation Main.Study.myvar1 "Set Value" --value="3"']]
 
-            The method can also add several macro commands if both variable and
-            value are list of the same length
+        The method can also add several macro commands if both variable and
+        value are list of the same length
 
-            >>> mg = MacroGenerator()
-            >>> mg.add_set_value(['Main.Study.myvar1','Main.Study.myvar1'],[4, 23])
-            >>> pprint( mg.generate_macros())
-            [['classoperation Main.Study.myvar1 "Set Value" --value="4"',
-              'classoperation Main.Study.myvar1 "Set Value" --value="23"']]
+        >>> mg = MacroGenerator()
+        >>> mg.add_set_value(['Main.Study.myvar1','Main.Study.myvar1'],[4, 23])
+        >>> pprint( mg.generate_macros())
+        [['classoperation Main.Study.myvar1 "Set Value" --value="4"',
+          'classoperation Main.Study.myvar1 "Set Value" --value="23"']]
 
         """
 
@@ -206,21 +204,21 @@ class MacroGenerator(object):
 
         Examples:
         ---------
-            Set a single value:
+        Set a single value:
 
-            >>> mg = MacroGenerator(number_of_macros = 10)
-            >>> mg.add_set_value_range('Main.Study.myvar1', start= 10, stop=100)
-            >>> pprint( mg.generate_macros() )
-            [['classoperation Main.Study.myvar1 "Set Value" --value="10"'],
-             ['classoperation Main.Study.myvar1 "Set Value" --value="20"'],
-             ['classoperation Main.Study.myvar1 "Set Value" --value="30"'],
-             ['classoperation Main.Study.myvar1 "Set Value" --value="40"'],
-             ['classoperation Main.Study.myvar1 "Set Value" --value="50"'],
-             ['classoperation Main.Study.myvar1 "Set Value" --value="60"'],
-             ['classoperation Main.Study.myvar1 "Set Value" --value="70"'],
-             ['classoperation Main.Study.myvar1 "Set Value" --value="80"'],
-             ['classoperation Main.Study.myvar1 "Set Value" --value="90"'],
-             ['classoperation Main.Study.myvar1 "Set Value" --value="100"']]
+        >>> mg = MacroGenerator(number_of_macros = 10)
+        >>> mg.add_set_value_range('Main.Study.myvar1', start= 10, stop=100)
+        >>> pprint( mg.generate_macros() )
+        [['classoperation Main.Study.myvar1 "Set Value" --value="10"'],
+         ['classoperation Main.Study.myvar1 "Set Value" --value="20"'],
+         ['classoperation Main.Study.myvar1 "Set Value" --value="30"'],
+         ['classoperation Main.Study.myvar1 "Set Value" --value="40"'],
+         ['classoperation Main.Study.myvar1 "Set Value" --value="50"'],
+         ['classoperation Main.Study.myvar1 "Set Value" --value="60"'],
+         ['classoperation Main.Study.myvar1 "Set Value" --value="70"'],
+         ['classoperation Main.Study.myvar1 "Set Value" --value="80"'],
+         ['classoperation Main.Study.myvar1 "Set Value" --value="90"'],
+         ['classoperation Main.Study.myvar1 "Set Value" --value="100"']]
 
         """
         no = self.number_of_macros
@@ -271,7 +269,7 @@ class MacroGenerator(object):
     def add_dump(self, variables, include_in_macro = None):
         """ Create Dump macro command.
 
-        Parameters:
+        Parameters
         ----------
         variables: string or list of strings
             The anyscript values to create a 'Dump' macro command for
@@ -281,9 +279,8 @@ class MacroGenerator(object):
             If None, the command is included in all macros.
 
 
-        Examples:
-        ---------
-
+        Examples
+        --------
         >>> mg = MacroGenerator()
         >>> mg.add_dump('Main.Study.myvar1')
         >>> pprint( mg.generate_macros())
@@ -316,7 +313,7 @@ class MacroGenerator(object):
     def add_load(self, mainfile, define_kw = {}, path_kw={}):
         """ Create a Load macro command.
 
-        Parameters:
+        Parameters
         ----------
         mainfile: string
             Path of the main file of the model
@@ -328,8 +325,8 @@ class MacroGenerator(object):
             A string in the macro commands which will be replace with a counter
             for every macro generated
 
-        Examples:
-        ---------
+        Examples
+        --------
         >>> mg = MacroGenerator()
         >>> paths = {'DATA':'c:/MyModel/Data'}
         >>> defines = {'EXCLUDE_ARMS':None, 'N_STEP':20}
@@ -372,15 +369,15 @@ class MacroGenerator(object):
     def add_save_design(self, operation, filename):
         """ Create a Save Design macro command.
 
-        Parameters:
+        Parameters
         ----------
         operation: string
             The AnyScript operation
         filename: string
             The file in which to save the design
 
-        Examples:
-        ---------
+        Examples
+        --------
         >>> mg = MacroGenerator()
         >>> mg.add_save_design('Main.MyStudy.Kinematics', 'c:/design.txt')
         >>> pprint( mg.generate_macros())
@@ -391,15 +388,15 @@ class MacroGenerator(object):
     def add_load_design(self, operation, filename):
         """ Create a Load Design macro command.
 
-        Parameters:
+        Parameters
         ----------
         operation: string
             The AnyScript operation
         filename: string
             The file from which to load the design
 
-        Examples:
-        ---------
+        Examples
+        --------
         >>> mg = MacroGenerator()
         >>> mg.add_load_design('Main.MyStudy.Kinematics', 'c:/design.txt')
         >>> pprint( mg.generate_macros())
@@ -411,13 +408,13 @@ class MacroGenerator(object):
     def add_save_values(self, filename):
         """ Create a Save Values macro command.
 
-        Parameters:
+        Parameters
         ----------
         filename: string
             The anyset file to save the values to.
 
-        Examples:
-        ---------
+        Examples
+        --------
         >>> mg = MacroGenerator()
         >>> mg.add_save_values('c:/values.anyset')
         >>> pprint( mg.generate_macros())
@@ -428,13 +425,13 @@ class MacroGenerator(object):
     def add_load_values(self, filename):
         """ Create a Load Values macro command.
 
-        Parameters:
+        Parameters
         ----------
         filename: string
             The anyset file from which to load the values.
 
-        Examples:
-        ---------
+        Examples
+        --------
         >>> mg = MacroGenerator()
         >>> mg.add_load_values('c:/values.anyset')
         >>> pprint( mg.generate_macros())
@@ -445,8 +442,8 @@ class MacroGenerator(object):
     def add_update_values(self):
         """ Create a Update Values macro command.
 
-        Examples:
-        ---------
+        Examples
+        --------
         >>> mg = MacroGenerator()
         >>> mg.add_update_values()
         >>> pprint( mg.generate_macros())
@@ -457,8 +454,8 @@ class MacroGenerator(object):
     def add_run_operation(self, operation):
         """ Create a macro command to select and run an operation
 
-        Examples:
-        ---------
+        Examples
+        --------
         >>> mg = MacroGenerator()
         >>> mg.add_run_operation('Main.MyStudy.Kinematics')
         >>> pprint( mg.generate_macros())
@@ -488,8 +485,8 @@ class MacroGenerator(object):
         """ Generate the macros. Either as list (batch_size = None) or in batches
         as generator object (memory efficient when generating many macros)
 
-        Examples:
-        ---------
+        Examples
+        --------
         >>> mg = MacroGenerator(number_of_macros = 4)
         >>> mg.add_load("c:/Model.main.any")
         >>> mg.add_run_operation('Main.study.Kinematics')
@@ -501,7 +498,7 @@ class MacroGenerator(object):
          ['load "c:/Model.main.any"', 'operation Main.study.Kinematics', 'run']]
 
 
-        Generate macros in batches:
+        Generate macros in batches
         >>> mg = MacroGenerator(number_of_macros = 6)
         >>> mg.add_load('c:/Model.main.any')
         >>> macro_gen =  mg.generate_macros(batch_size = 2)
@@ -548,8 +545,6 @@ class MacroGenerator(object):
 class MonteCarloMacroGenerator(MacroGenerator):
     """ Generates AnyScript macros for monte carlos studies.
 
-    Overview
-    ----------
     Class for building AnyScript macros for Monte Carlo parameter studies.
     This class extends the MacroGenerator class with methods, which can randomly
     vary parameters across the generated macros.
@@ -583,9 +578,8 @@ class MonteCarloMacroGenerator(MacroGenerator):
         A MonteCarloMacroGenerator object for constructing the macros
 
 
-    Examples:
-    ---------
-
+    Examples
+    --------
     >>> seed(1)
     >>> mg = MonteCarloMacroGenerator(number_of_macros=4)
     >>> mg.add_load('c:/MyModel/model.main.any')
@@ -641,8 +635,8 @@ class MonteCarloMacroGenerator(MacroGenerator):
         scale: The range of the random variable [ means-scale/2 , means+scale/2]
 
 
-        Examples:
-        ---------
+        Examples
+        --------
             Set variable across different macros
 
         >>> seed(1)
@@ -672,8 +666,8 @@ class MonteCarloMacroGenerator(MacroGenerator):
         stdvs: The standar deviation of the random variable
 
 
-        Examples:
-        ---------
+        Examples
+        --------
             Set variable across different macros
 
         >>> seed(1)
@@ -701,8 +695,8 @@ class MonteCarloMacroGenerator(MacroGenerator):
         frozen_dist: <scipy.stats.distributions.rv_frozen>
             A frozen distribution from scipy.stats.distributions
 
-        Examples:
-        ---------
+        Examples
+        --------
         >>> seed(1)
         >>> from scipy.stats.distributions import logistic
         >>> log_dist = logistic( loc= [1,3,4],scale = [0.1,0.5,1] )
@@ -735,8 +729,6 @@ class LatinHyperCubeMacroGenerator(MacroGenerator):
     """ Generates AnyScript macros for parameter studies using Latin hyper cube
     sampling  .
 
-    Overview
-    ----------
     Class for building AnyScript macros for parameter studies with Latin
     Hypercube Sampling (LHS) of the parameter space. The number of generated
     macros determined the number of LHS samples.
@@ -761,24 +753,17 @@ class LatinHyperCubeMacroGenerator(MacroGenerator):
     ----------
     number_of_macros:
         The number of macros to generate.
-    criterion:
+    criterion: {None, 'c', 'm', 'cm', 'corr'}
         A a string that specifies how points are sampled
         (see: http://pythonhosted.org/pyDOE/randomized.html)
-
-        - None: Default, points are randomizes within the intervals
-
-        - "center" or "c": center the points within the sampling intervals
-
-        - "maximin" or "m": maximize the minimum distance between points, but place
-           the point in a randomized location within its interval
-
-        - "centermaximin" or "cm": same as “maximin”, but centered within the intervals
-
-        - "corr": minimize the maximum correlation coefficient
-
+        `None` (Default) points are randomizes within the intervals.
+        "center" or "c" center the points within the sampling intervals
+        "maximin" or "m": maximize the minimum distance between points, but place
+        the point in a randomized location within its interval
+        "centermaximin" or "cm": same as “maximin”, but centered within the intervals
+        "corr" minimize the maximum correlation coefficient
     iterations: int
         Specifies how many iterations are used to accomplished the selected criterion
-
 
     Returns
     -------
@@ -808,9 +793,9 @@ class LatinHyperCubeMacroGenerator(MacroGenerator):
         scale: The range of the sample interval
 
 
-        Examples:
-        ---------
-            Set variable across different macros
+        Examples
+        --------
+        Set variable across different macros
 
         >>> seed(1)
         >>> mg = LatinHyperCubeMacroGenerator(number_of_macros=8)
@@ -857,9 +842,8 @@ class LatinHyperCubeMacroGenerator(MacroGenerator):
             A frozen distribution from scipy.stats.distributions
 
 
-        Examples:
-        ---------
-
+        Examples
+        --------
         >>> seed(1)
         >>> from scipy.stats.distributions import norm
         >>> normdist = norm( [1,3,4], [0.1,0.5,1] )

@@ -15,6 +15,7 @@ import os
 import re
 import sys
 import copy
+import errno
 import pprint as _pprint
 import logging
 import warnings
@@ -48,6 +49,14 @@ def py3k_pprint(s):
 
 pprint = py3k_pprint
 
+
+
+def run_from_ipython():
+    try:
+        __IPYTHON__
+        return True
+    except NameError:
+        return False
 
 
 class mixedmethod(object):
@@ -417,6 +426,18 @@ def get_ncpu():
     """
     from multiprocessing import cpu_count
     return cpu_count()
+
+
+def silentremove(filename):
+    """ Removes a file ignoring cases where the file does not exits.  """
+    try:
+        os.remove(filename)
+    except OSError as e:
+        if e.errno != errno.ENOENT:  # errno.ENOENT : no such file or directory
+            logging.debug('Error removing file: ' + filename)
+            raise  # re-raise exception if a different error occured
+
+
 
 def _run_from_ipython():
     """ Return True if run from IPython

@@ -1,36 +1,35 @@
 # -*- coding: utf-8 -*-
 """
-Created on Fri Oct 19 21:14:59 2012
+Utilities for working with the AnyBody Console applicaiton
 
+Created on Fri Oct 19 21:14:59 2012
 @author: Morten
 """
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
 from builtins import *  # nopep8
-from future.utils import text_to_native_str
-from past.builtins import basestring as string_types
-
 import os
 import sys
 import time
 import copy
 import types
-import errno
 import ctypes
 import shelve
 import atexit
 import logging
 import warnings
 import collections
-
 from subprocess import Popen
 from tempfile import NamedTemporaryFile
 from threading import Thread, RLock
 from queue import Queue
 
+from future.utils import text_to_native_str
+from past.builtins import basestring as string_types
+
 from .tools import (make_hash, AnyPyProcessOutputList, parse_anybodycon_output,
                     getsubdirs, get_anybodycon_path, mixedmethod,
-                    AnyPyProcessOutput)
+                    AnyPyProcessOutput, run_from_ipython,get_ncpu, silentremove)
 from .macroutils import AnyMacro, MacroCommand
 
 try:
@@ -46,17 +45,17 @@ _thread_lock = RLock()
 _KILLED_BY_ANYPYTOOLS = -10
 
 
-class SubProcessContainer(object):
+class _SubProcessContainer(object):
     """ Class to hold a record of process pids from Popen.
 
-        Properties:
-        ------------
+        Properties
+        ----------
         stop_all: boolean
             If set to True all process held by the object will be automatically
             killed
 
-        Methods:
-        -----------
+        Methods
+        -------
         add(pid):
             Add process id to the record of process
 
@@ -110,37 +109,14 @@ class SubProcessContainer(object):
             self._pids.clear()
 
 
-_subprocess_container = SubProcessContainer()
+_subprocess_container = _SubProcessContainer()
 atexit.register(_subprocess_container._kill_running_processes)
 
 
-def _silentremove(filename):
-    """ Removes a file ignoring cases where the file does not exits.  """
-    try:
-        os.remove(filename)
-    except OSError as e:
-        if e.errno != errno.ENOENT:  # errno.ENOENT : no such file or directory
-            logging.debug('Error removing file: ' + filename)
-            raise  # re-raise exception if a different error occured
-
-
-def _get_ncpu():
-    """ Return the number of CPUs in the computer
-    """
-    from multiprocessing import cpu_count
-    return cpu_count()
-
-
-def _run_from_ipython():
-    try:
-        __IPYTHON__
-        return True
-    except NameError:
-        return False
 
 
 def _display(line, *args, **kwargs):
-    if _run_from_ipython():
+    if run_from_ipython():
         display(HTML(line))
     else:
         print(line, *args, **kwargs)
@@ -197,7 +173,7 @@ def _execute_anybodycon(macro,
             logfile.write('ERROR: anybodycon.exe exited unexpectedly.'
                           ' Return code: ' + str(proc.returncode))
         if not keep_macrofile:
-            _silentremove(macro_file.name)
+            silentremove(macro_file.name)
     finally:
         logfile.seek(0)
     return proc.returncode
@@ -288,7 +264,7 @@ class _Task(object):
         return all(k in output_elem for k in keys)
 
 
-class Summery(object):
+class _Summery(object):
     """ class to display the summery of task """
     def __init__(self, have_ipython=False, silent=False):
         self._silent = silent
@@ -326,7 +302,7 @@ class Summery(object):
                                                        task.number,
                                                        task.processtime)
         if task.logfile:
-            if _run_from_ipython():
+            if run_from_ipython():
                 tmpl = '<a href="file:///{0}" target="_blank">{1}</a>'
                 entry += tmpl.format(task.logfile,
                                      os.path.basename(task.logfile))
@@ -352,59 +328,51 @@ class Summery(object):
 
 class AnyPyProcess(object):
     """
-    AnyPyProcess(num_processes = nCPU,
-                 anybodycon_path = 'installed version',
-                 timeout = 3600, silent = False, keep_logfiles = False)
+    Class for configuring batch process jobs of AnyBody models.
 
-    Commen class for setting up batch process jobs of AnyBody models.
-
-    Overview
-    ----------
-    Main class for running the anybody console application from python.
-    The class have maethods for running different kind of batch processing:
-
-    - Batch job: running many different models)
-
-    - Parameter jobs: running the same model multiple times with different
-      input parameters. (Usefull for sensitivity studies)
-
-    - Pertubation jobs: Find the sensitivity of of some output parameters,
-      given a set of input parameters. (Usefull for calculating the
-      gradient in optimization studies)
+    This is the main interface to control the AnyBody console application from
+    python. The class stores all the configuration about how AnyBody is run.
+    It has one important method `start_macro` which launches the AnyBody with
+    a given anyscript macro.
 
     Parameters
     ----------
-    num_processes:
-        number of anybody models to start in parallel.
-        This defaults to the number of CPU in the computer.
-    anybodycon_path:
+    num_processes : int, optional
+        Number of anybody models to start in parallel.
+        This defaults to the number of logical CPU cores in the computer.
+    anybodycon_path : str, optional
         Overwrite the default anybodycon.exe file to
         use in batch processing. Defaults to what is found in the windows
-        registry
-    timeout:
-        maximum time a model can run until it is terminated.
-        Defaults to 1 hour
-    ignore_errors:
-        List of AnyBody Errors to ignore when running the models.
-    return_task_info: bool
-        Return the task status information when running macros
-    disp:
+        registry.
+    timeout : int, optional
+        Maximum time (i seconds) a model can run until it is terminated.
+        Defaults to 1 hour (3600 sec)-
+    ignore_errors : list of str, optional
+        List of AnyBody Errors substrings to ignore when running the models.
+    return_task_info : bool, optional
+        Return the task status information when running macros. Defaults to False
+    disp
         Set to False to suppress output (deprecated)
-    silent:
-        Set to True to suppres any output (progress bar and error messages)
-    warnings_to_include:
+    silent : bool, optional
+        Set to True to suppres any output (progress bar and error messages).
+    warnings_to_include : list of str, optional
         List of strings that are matched to warnings in the model
         output. If a warning with that string is found the warning
         is returned in the output.
 
     Returns
     -------
-    AnyPyProcess object:
-        a AnyPyProcess object for running batch processing, parameter
-        studies and pertubation jobs.
+    app instance : AnyPyProcess :
+        An instance of the AnyPyProcess object for running batch processing,
+        parameter studies and pertubation jobs.
+
+    Examples
+    --------
+    >>> app = AnyPyProcess(num_processes=8, return_task_info=True)
+
     """
     def __init__(self,
-                 num_processes=_get_ncpu(),
+                 num_processes= get_ncpu(),
                  anybodycon_path=None,
                  timeout=3600,
                  silent=False,
@@ -486,38 +454,42 @@ class AnyPyProcess(object):
 
     def start_macro(self, macrolist=None, folderlist=None, search_subdirs=None,
                     **kwargs):
-        """
-        app.start_marco(macrolist, folderlist = None, search_subdirs =None )
+        """Starts a batch processing job.
 
-        Starts a batch processing job. Runs a list of AnyBody Macro commands in
-        the current directory, or in the folders specified by folderlist. If
-        search_subdirs is a regular expression the folderlist will be expanded
+        Runs a list of AnyBody Macro commands in
+        the current directory, or in the folders specified by `folderlist`. If
+        `search_subdirs` is a regular expression the folderlist will be expanded
         to include all subdirectories that match the regular expression
 
         Parameters
         ----------
-
-        macrolist:
-            List or generator containing lists of anyscript macro commands
-        folderlist:
-            List of folders in which to excute the macro commands. If None the
+        macrolist : list of macrocommands, optional
+            List of anyscript macro commands. This may also be obmitted in
+            which case the previous macros will be re-run.
+        folderlist : list of str, optional
+            List of folders in which to excute the macro commands. If `None` the
             current working directory is used. This may also be a list of
             tuples to specify a name to appear in the output
-        search_subdirs:
+        search_subdirs : str, optional
             Regular expression used to extend the folderlist with all the
             subdirectories that match the regular expression.
             Defaults to None: No subdirectories are included.
 
-            For example:
+        Returns
+        -------
+        list
+            A list with the output from each macro executed. This maybe empty
+            the macros did not output any data.
 
-            >>> macro=[ ['load "model1.any"', 'operation Main.RunApplication',\
-                         'run', 'exit'],\
-                        ['load "model2.any"', 'operation Main.RunApplication',\
-                         'run', 'exit'],\
-                        ['load "model3.any"', 'operation Main.RunApplication',\
-                         'run', 'exit'] ]
-            >>> folderlist = [('path1/', 'name1'), ('path2/', 'name2')]
-            >>> start_macro(macro, folderlist, search_subdirs = "*.main.any")
+
+        Examples
+        --------
+
+        >>> macro = [['load "model1.any"', 'operation Main.RunApplication', 'run'],
+                     ['load "model2.any"', 'operation Main.RunApplication', 'run'],
+                     ['load "model3.any"', 'operation Main.RunApplication', 'run']]
+        >>> folderlist = [('path1/', 'name1'), ('path2/', 'name2')]
+        >>> start_macro(macrolist, folderlist, search_subdirs = "*.main.any")
 
         """
         # Handle different input types
@@ -575,12 +547,12 @@ class AnyPyProcess(object):
         else:
             raise ValueError('Nothing to process for ' + str(macrolist))
 
-        self.summery = Summery(have_ipython=_run_from_ipython(),
+        self.summery = _Summery(have_ipython=run_from_ipython(),
                                silent=self.silent)
 
         if self.logfile_prefix is None:
-            self.logfile_prefix = str(self.cached_arg_hash)[:4] + '_'       
-            
+            self.logfile_prefix = str(self.cached_arg_hash)[:4] + '_'
+
         # Start the scheduler
         process_time = self._schedule_processes(tasklist, self._worker)
         self.cleanup_logfiles(tasklist)
@@ -597,7 +569,7 @@ class AnyPyProcess(object):
 #        failed_tasks = [t for t in tasks if t.has_error and t.processtime > 0]
 #        if len(failed_tasks):
 #            _display('Tasks with errors: {:d}'.format(len(failed_tasks)))
-#            if not _run_from_ipython():
+#            if not run_from_ipython():
 #                _display('\n'.join([t.summery() for t in failed_tasks]))
 #        if len(unfinished_tasks):
 #            _display('Tasks that did not complete: '
@@ -654,7 +626,7 @@ class AnyPyProcess(object):
         finally:
             if not self.keep_logfiles and not task.has_error:
                 try:
-                    _silentremove(logfile.name)
+                    silentremove(logfile.name)
                     task.logfile = ""
                 except OSError as e:
                     pass  # Ignore if AnyBody has not released the log file.
@@ -674,7 +646,7 @@ class AnyPyProcess(object):
         use_threading = (number_tasks > 1 and self.num_processes > 1)
         starttime = time.clock()
         task_queue = Queue()
-        pbar = ProgressBar(number_tasks, self.silent)
+        pbar = _ProgressBar(number_tasks, self.silent)
         pbar.animate(0)
         processed_tasks = []
         n_errors = 0
@@ -725,10 +697,10 @@ class AnyPyProcess(object):
             try:
                 if not self.keep_logfiles and not task.has_error:
                     if task.logfile:
-                        _silentremove(task.logfile)
+                        silentremove(task.logfile)
                         task.logfile = ""
                 if task.processtime <= 0 and task.logfile:
-                    _silentremove(task.logfile)
+                    silentremove(task.logfile)
                     task.logfile = ""
             except OSError as e:
                 logger.debug('Could not remove '
@@ -736,20 +708,20 @@ class AnyPyProcess(object):
             if not self.keep_logfiles:
                 try:
                     macrofile = task.logfile.replace('.log', '.anymcr')
-                    _silentremove(macrofile)
+                    silentremove(macrofile)
                 except OSError as e:
                     logger.debug('Could not removing '
                                  '{} {}'.format(macrofile, str(e)))
 
 
-class ProgressBar:
+class _ProgressBar:
     def __init__(self, iterations, silent=False):
         self.silent = silent
         self.iterations = iterations
         self.prog_bar = '[]'
         self.fill_char = '*'
         self.width = 40
-        if _run_from_ipython() and not self.silent:
+        if run_from_ipython() and not self.silent:
             self.bar_widget = ipywidgets.IntProgress(
                                 min=0, max=iterations, value=0)
             display(self.bar_widget)
@@ -757,7 +729,7 @@ class ProgressBar:
     def animate(self, val, failed=0):
         if self.silent:
             return
-        if _run_from_ipython():
+        if run_from_ipython():
             self.bar_widget.value = val
             self.bar_widget.description = '%d of %s complete' % (val,
                                                 self.iterations)

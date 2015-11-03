@@ -55,10 +55,12 @@ def _batch(iterable, n = 1):
 
 
 class MacroCommand(object):
-    """ Class for custom macro commands and base class for other macro commands.
+    """ Class for custom macro commands
 
-    Example:
+    This class also serves as base class for other macro commands.
 
+    Examples
+    --------
     >>> mc = MacroCommand('operation "Main.MyStudy.InverseDynamics"') )
     >>> print(mc)
     operation "Main.MyStudy.InverseDynamics"
@@ -80,17 +82,17 @@ class MacroCommand(object):
 class Load(MacroCommand):
     """ Create a load macro command
 
-    Parameters:
+    Parameters
     ----------
-    filename: string
+    filename : str
         Path of the file to load
-    defs: dict
+    defs : dict
         Dictionary of defines statements to set during load
-    paths: dict
+    paths : dict
         Dictionary of path staements to set during load
 
-    Examples:
-    ---------
+    Examples
+    --------
     >>> Load('model.main.any')
     load "model.main.any"
 
@@ -127,66 +129,66 @@ class Load(MacroCommand):
 class SetValue(MacroCommand):
     """ Create 'Set Value' classoperation macro command.
 
-    Parameters:
+    Parameters
     ----------
-    var: string
+    var : string
         An AnyScript variable.
-    value:
+    value : number or list of number
         A value or list of values to assign to the AnyScript variable.
 
-    Examples:
+    Examples
     ---------
-        Set a single values:
+    Set a single values:
 
-        >>> SetValue('Main.Study.myvar1', 23.1)
-        classoperation Main.Study.myvar1 "Set Value" --value="23.1"
+    >>> SetValue('Main.Study.myvar1', 23.1)
+    classoperation Main.Study.myvar1 "Set Value" --value="23.1"
 
-        >>> SetValue('Main.Study.myvar2', np.array([2,3,4]))
-        classoperation Main.Study.myvar2 "Set Value" --value="{2,3,4}"
+    >>> SetValue('Main.Study.myvar2', np.array([2,3,4]))
+    classoperation Main.Study.myvar2 "Set Value" --value="{2,3,4}"
 
-        Set variable across different macros
+    Set variable across different macros
 
-        >>> SetValue('Main.Study.myvar1',[1,2,3])
-        classoperation Main.Study.myvar1 "Set Value" --value="1"
-        classoperation Main.Study.myvar1 "Set Value" --value="2"
-        classoperation Main.Study.myvar1 "Set Value" --value="3"
+    >>> SetValue('Main.Study.myvar1',[1,2,3])
+    classoperation Main.Study.myvar1 "Set Value" --value="1"
+    classoperation Main.Study.myvar1 "Set Value" --value="2"
+    classoperation Main.Study.myvar1 "Set Value" --value="3"
 
-        Here is a elaborate example:
+    Here is a elaborate example:
 
-        >>> mg = AnyMacro( Load('MyModel.main.any'),
-                         SetValue('Main.Study.myvar1',[1,2]),
-                         OperationRun('Main.Study.InverseDynamics') )
-        >>> mg.number_of_macros = 2
-        [['load "MyModel.main.any"',
-          'classoperation Main.Study.myvar1 "Set Value" --value="1"',
-          'operation Main.Study.InverseDynamics',
-          'run'],
-         ['load "MyModel.main.any"',
-          'classoperation Main.Study.myvar1 "Set Value" --value="2"',
-          'operation Main.Study.InverseDynamics',
-          'run']]
+    >>> mg = AnyMacro( Load('MyModel.main.any'),
+                     SetValue('Main.Study.myvar1',[1,2]),
+                     OperationRun('Main.Study.InverseDynamics') )
+    >>> mg.number_of_macros = 2
+    [['load "MyModel.main.any"',
+      'classoperation Main.Study.myvar1 "Set Value" --value="1"',
+      'operation Main.Study.InverseDynamics',
+      'run'],
+     ['load "MyModel.main.any"',
+      'classoperation Main.Study.myvar1 "Set Value" --value="2"',
+      'operation Main.Study.InverseDynamics',
+      'run']]
 
-        If we generate more macros that there are values then the values are just
-        repeated
+    If we generate more macros that there are values then the values are just
+    repeated
 
-        >>> mg.number_of_macros = 4
-        >>> mg
-        [['load "MyModel.main.any"',
-          'classoperation Main.Study.myvar1 "Set Value" --value="1"',
-          'operation Main.Study.InverseDynamics',
-          'run'],
-         ['load "MyModel.main.any"',
-          'classoperation Main.Study.myvar1 "Set Value" --value="2"',
-          'operation Main.Study.InverseDynamics',
-          'run'],
-         ['load "MyModel.main.any"',
-          'classoperation Main.Study.myvar1 "Set Value" --value="1"',
-          'operation Main.Study.InverseDynamics',
-          'run'],
-         ['load "MyModel.main.any"',
-          'classoperation Main.Study.myvar1 "Set Value" --value="2"',
-          'operation Main.Study.InverseDynamics',
-          'run']]
+    >>> mg.number_of_macros = 4
+    >>> mg
+    [['load "MyModel.main.any"',
+      'classoperation Main.Study.myvar1 "Set Value" --value="1"',
+      'operation Main.Study.InverseDynamics',
+      'run'],
+     ['load "MyModel.main.any"',
+      'classoperation Main.Study.myvar1 "Set Value" --value="2"',
+      'operation Main.Study.InverseDynamics',
+      'run'],
+     ['load "MyModel.main.any"',
+      'classoperation Main.Study.myvar1 "Set Value" --value="1"',
+      'operation Main.Study.InverseDynamics',
+      'run'],
+     ['load "MyModel.main.any"',
+      'classoperation Main.Study.myvar1 "Set Value" --value="2"',
+      'operation Main.Study.InverseDynamics',
+      'run']]
 
     """
 
@@ -225,19 +227,19 @@ class SetValue_random(SetValue):
     """ Create a 'Set Value' macro command where the value is chosen from a
     distibution in scipy.stats.distributions.
 
-    Parameters:
+    Parameters
     ----------
-    var: string
+    var : str
         An AnyScript variable.
-    frozen_dist: <scipy.stats.distributions.rv_frozen>
+    frozen_distribution : <scipy.stats.distributions.rv_frozen>
         A frozen distribution from scipy.stats.distributions
-    default_lower_tail_probability: float
-        The lower tail probability of the default value. Defaults to 0.5 which is
-        the mean value.
+    default_lower_tail_probability : float
+        The lower tail probability of the default value. Defaults to 0.5 which
+        is the mean value.
 
 
-    Examples:
-    ---------
+    Examples
+    --------
     Creating normal macros will use the default values. Usually the 50 percentile
     (mean values).
 
@@ -245,8 +247,7 @@ class SetValue_random(SetValue):
     >>> from scipy.stats.distributions import logistic, norm
     >>> log_dist = logistic( loc= [1,3,4],scale = [0.1,0.5,1] )
     >>> norm_dist = norm( loc= [0,0,0],scale = [0.1,0.5,1] )
-    >>> cmd = [ SetValue_random('Main.MyVar1', log_dist),
-                 SetValue_random('Main.MyVar2', norm_dist) ]
+    >>> cmd = [SetValue_random('Main.MyVar1', log_dist), SetValue_random('Main.MyVar2', norm_dist) ]
     >>> mg = AnyMacro(cmd, number_of_macros = 3)
     >>> mg
     [['classoperation Main.MyVar1 "Set Value" --value="{0,0,0}"',
@@ -268,14 +269,14 @@ class SetValue_random(SetValue):
       'classoperation Main.MyVar2 "Set Value" --value="{1.01555799978,2.83695956934,4.7778636562}"']]
 
     Values can also be sampled with a Latin Hyper Cube sampler.
-    >>> mg.create_macros_LHS()
-    [[u'classoperation Main.MyVar1 "Set Value" --value="{0.0928967116493,-0.591418725401,-0.484696993931}"',
-      u'classoperation Main.MyVar2 "Set Value" --value="{1.01049414425,2.46211329129,5.73806916203}"'],
-     [u'classoperation Main.MyVar1 "Set Value" --value="{-0.0166741228961,0.707722119582,-0.294180629253}"',
-      u'classoperation Main.MyVar2 "Set Value" --value="{1.11326829265,2.66016732923,4.28054911097}"'],
-     [u'classoperation Main.MyVar1 "Set Value" --value="{-0.20265197275,0.114947152258,0.924796936287}"',
-      u'classoperation Main.MyVar2 "Set Value" --value="{0.806864877696,4.4114188826,2.93941843565}"']]
 
+    >>> mg.create_macros_LHS()
+    [['classoperation Main.MyVar1 "Set Value" --value="{0.0928967116493,-0.591418725401,-0.484696993931}"',
+      'classoperation Main.MyVar2 "Set Value" --value="{1.01049414425,2.46211329129,5.73806916203}"'],
+     ['classoperation Main.MyVar1 "Set Value" --value="{-0.0166741228961,0.707722119582,-0.294180629253}"',
+      'classoperation Main.MyVar2 "Set Value" --value="{1.11326829265,2.66016732923,4.28054911097}"'],
+     ['classoperation Main.MyVar1 "Set Value" --value="{-0.20265197275,0.114947152258,0.924796936287}"',
+      'classoperation Main.MyVar2 "Set Value" --value="{0.806864877696,4.4114188826,2.93941843565}"']]
 
    """
 
@@ -319,21 +320,19 @@ class SetValue_random(SetValue):
 class Dump(MacroCommand):
     """ Create a Dump classoperation macro command.
 
-    Parameters:
+    Parameters
     ----------
-    variables: string or list of strings
+    var : str or list of str
         The anyscript values to create a 'Dump' macro command for
-    include_in_macro: integer or list of integers
+    include_in_macro: int or list of int
         Specifices in which macros [0,1,2....NumberOfMacros] to include the
         dump command.
         If None, the command is included in all macros.
 
-    Examples:
+    Examples
     ---------
-
     >>> Dump('Main.Study.myvar1')
     classoperation Main.Study.myvar1 "Dump"
-
 
     Only include the dump command in the two first macro
 
@@ -366,15 +365,15 @@ class Dump(MacroCommand):
 class SaveDesign(MacroCommand):
     """ Create a Save Design classoperation macro command.
 
-    Parameters:
+    Parameters
     ----------
-    operation: string
+    operation : str
         The AnyScript operation
-    filename: string
-        The file in which to save the design
+    filename : str
+        The filename in which to save the design
 
-    Examples:
-    ---------
+    Examples
+    --------
     >>> SaveDesign('Main.MyStudy.Kinematics', 'c:/design.txt')
     classoperation Main.MyStudy.Kinematics "Save design" --file="c:/design.txt"
     """
@@ -391,15 +390,15 @@ class SaveDesign(MacroCommand):
 class LoadDesign(MacroCommand):
     """ Create a Load Design classoperation macro command.
 
-    Parameters:
+    Parameters
     ----------
-    operation: string
+    operation : str
         The AnyScript operation
-    filename: string
+    filename : str
         The file in which to load the design from
 
-    Examples:
-    ---------
+    Examples
+    --------
     >>> LoadDesign('Main.MyStudy.Kinematics', 'c:/design.txt')
     classoperation Main.MyStudy.Kinematics "Load design" --file="c:/design.txt"
     """
@@ -415,13 +414,13 @@ class LoadDesign(MacroCommand):
 class SaveValues(MacroCommand):
     """ Create a Save Values classoperation macro command.
 
-    Parameters:
+    Parameters
     ----------
-    filename: string
+    filename : str
         The anyset file to save the values to
 
-    Examples:
-    ---------
+    Examples
+    --------
     >>> SaveValues('c:/values.anyset')
     classoperation Main "Save Values" --file="c:/values.anyset"
     """
@@ -436,13 +435,13 @@ class SaveValues(MacroCommand):
 class LoadValues(MacroCommand):
     """ Create a Load Values classoperation macro command.
 
-    Parameters:
+    Parameters
     ----------
-    filename: string
+    filename : str
         The anyset file to load the values from.
 
-    Examples:
-    ---------
+    Examples
+    --------
     >>> LoadValues('c:/values.anyset')
     classoperation Main "Load Values" --file="c:/values.anyset"
     """
@@ -455,10 +454,10 @@ class LoadValues(MacroCommand):
 
 
 class UpdateValues(MacroCommand):
-    """ Create a Update Values classoperation macro command.
+    """ Create an 'Update Values' classoperation macro command.
 
-    Examples:
-    ---------
+    Examples
+    --------
     >>> UpdateValues()
     classoperation Main "Update Values"
     """
@@ -472,8 +471,8 @@ class UpdateValues(MacroCommand):
 class OperationRun(MacroCommand):
     """ Create a macro command to select and run an operation
 
-    Examples:
-    ---------
+    Examples
+    --------
     >>> OperationRun('Main.MyStudy.Kinematics')
     >>> pprint( mg.generate_macros())
     operation Main.MyStudy.Kinematics
@@ -492,31 +491,34 @@ class OperationRun(MacroCommand):
 
 
 class AnyMacro(MutableSequence):
-    """ AnyMacro(*macro_commands, number_of_macros = 1, counter_token = None, seed = None)
+    """
+    Class to generate multiple macros.
 
-    Overview
-    ----------
     Use the class to contruct multiple anyscript macros from a single macro.
 
-    Parameters:
-    ------------
-    maco_commands: list or positional arguments
+    Parameters
+    ----------
+    maco_commands : list or positional arguments
         A list of macro command classes. These may also be given a arbitrary number
         of positional arguments.
-    counter_token: string
+    counter_token : str
         A string in the macro commands which will be replace with a counter
         for every macro generated
-    number_of_macros: int
+    number_of_macros : int
         The default number of macros which are created. This can be overruled when
         calling the AnyMacro.create_macros() function. Defults to 1.
-    seed: int or array_like
+    seed : int or array_like
         A constant seed value used which will be used every time macros are created.
         Must be convertable to 32 bit unsigned integers.
 
+    Returns
+    -------
+    An AnyMacro instance
+        A Macro object for constructing the macro.
 
 
-    For example:
-
+    Examples
+    --------
     >>> mg = AnyMacro(number_of_macros = 22)
     >>> mg.append( Load('c:/MyModel/model.main.any', defs = {}, paths = {} ) )
     >>> mg.append( SetValue('Main.myvar', 12.3)  )
@@ -544,10 +546,6 @@ class AnyMacro(MutableSequence):
 
 
 
-    Returns
-    -------
-    A AnyMacro object:
-        A Macro object for constructing the macro.
     """
 
     def __init__(self, *args,
