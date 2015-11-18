@@ -19,7 +19,8 @@ requirements:     # (optional)
     - future
     
   run:
-    - pywin32 # [win]
+    - python
+    - pywin32 # [win and py27]
     - future >=0.15
     - h5py >=2.5
     - setuptools
