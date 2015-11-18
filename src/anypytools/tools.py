@@ -389,9 +389,16 @@ def parse_anybodycon_output(strvar, errors_to_ignore=None,
                 first = dump_path
                 dump_path = None
             try:
-                out[first.strip()] = np.array(literal_eval(last))
-            except SyntaxError as e:
-                out['ERROR'].append(str(e))
+                out[first.strip()] = literal_eval(last)
+            except (SyntaxError, ValueError):
+                if last == '[...]': last = '...'
+                last, nrep = re.subn(r'([^\[\],\s]+)', r'"\1"', last)
+                if last == '': last = 'None'
+                try:
+                    out[first.strip()] = literal_eval(last)
+                except (SyntaxError, ValueError):
+                    print(last)
+                    out['ERROR'].append('ERROR parsing console ouput: '+last)
 
         line_has_errors = (line.startswith('ERROR') or line.startswith('Error') or
                            line.startswith('Model loading skipped'))
@@ -408,6 +415,11 @@ def parse_anybodycon_output(strvar, errors_to_ignore=None,
                 if warn_str in line:
                     out['WARNING'].append(line)
                     break
+    # Convert all list object to numpy arrays
+    for k,v in out.items():
+        if isinstance(v,list):
+            out[k] = np.array(v)
+
     # Move 'ERROR' and 'WARNING' entry to the last position in the ordered dict
     out['WARNING'] = out.pop('WARNING')
     out['ERROR'] = out.pop('ERROR')
