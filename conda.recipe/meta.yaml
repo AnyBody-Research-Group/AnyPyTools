@@ -19,14 +19,13 @@ requirements:     # (optional)
     - future
     
   run:
-    - python
     - pywin32 # [win]
-    - future
-    - h5py
+    - future >=0.15
+    - h5py >=2.5
     - setuptools
     - scipy >=0.15
-    - jupyter
-    - ipython
+    - jupyter >=1.0
+    - ipython >=4.0
     
 test:
   requires:
