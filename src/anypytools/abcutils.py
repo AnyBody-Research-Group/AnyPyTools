@@ -384,10 +384,11 @@ class AnyPyProcess(object):
                  python_env=None,
                  **kwargs):
 
-        if not isinstance(ignore_errors, list):
+
+        if not isinstance(ignore_errors, (list, type(None))):
             raise ValueError('ignore_errors must be a list of strings')
 
-        if not isinstance(warnings_to_include, list):
+        if not isinstance(warnings_to_include, (list, type(None))):
             raise ValueError('warnings_to_include must be a list of strings')
 
         if anybodycon_path is None:
