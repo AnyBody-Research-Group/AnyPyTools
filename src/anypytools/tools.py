@@ -421,13 +421,13 @@ def parse_anybodycon_output(strvar, errors_to_ignore=None,
             out[k] = np.array(v)
 
     # Move 'ERROR' and 'WARNING' entry to the last position in the ordered dict
-    out['WARNING'] = out.pop('WARNING')
-    out['ERROR'] = out.pop('ERROR')
+    out['WARNING'] = out.pop('WARNING').tolist()
+    out['ERROR'] = out.pop('ERROR').tolist()
 
     # Remove the ERROR/WARNING key if it does not have any entries
-    if not out['ERROR']:
+    if len(out['ERROR']) == 0:
         del out['ERROR']
-    if not out['WARNING']:
+    if len(out['WARNING']) == 0:
         del out['WARNING']
     return out
 
