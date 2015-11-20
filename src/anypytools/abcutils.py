@@ -384,6 +384,12 @@ class AnyPyProcess(object):
                  python_env=None,
                  **kwargs):
 
+        if not isinstance(ignore_errors, list):
+            raise ValueError('ignore_errors must be a list of strings')
+
+        if not isinstance(warnings_to_include, list):
+            raise ValueError('warnings_to_include must be a list of strings')
+
         if anybodycon_path is None:
             self.anybodycon_path = get_anybodycon_path()
         elif os.path.exists(anybodycon_path):
@@ -621,7 +627,9 @@ class AnyPyProcess(object):
                                       self.ignore_errors,
                                       self.warnings_to_include)
         except Exception as e:
-            task.add_error(str(type(e)) + str(e))
+            exc_type, exc_obj, exc_tb = sys.exc_info()
+            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+            task.add_error(str(exc_type) +'\n' + str(fname) + '\n' + str(exc_tb.tb_lineno))
             logger.debug(str(e))
         finally:
             if not self.keep_logfiles and not task.has_error:
