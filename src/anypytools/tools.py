@@ -362,7 +362,7 @@ class AnyPyProcessOutput(collections.OrderedDict):
             del _repr_running[call_key]
 
 
-
+dump_pattern = re.compile(r'Main.*=.*;$')
 
 def parse_anybodycon_output(strvar, errors_to_ignore=None,
                             warnings_to_include = None):
@@ -381,25 +381,29 @@ def parse_anybodycon_output(strvar, errors_to_ignore=None,
             me = re.search('Main[^ \"]*', line)
             if me:
                 dump_path = me.group(0)
-        if line.endswith(';') and line.count('=') == 1:
-            (first, last) = line.split('=')
-            first = first.strip()
-            last = last.strip(' ;').replace('{','[').replace('}',']')
+        if dump_pattern.match(line):
+            (first, last) = line.split('=',1)
+            last = last.strip(' ;')
+            var_name = first.strip()
+            value_str = last
+            if value_str.startswith('{') and value_str.endswith('}'):
+                value_str = value_str.replace('{','[').replace('}',']')
             if dump_path:
-                first = dump_path
+                var_name = dump_path
                 dump_path = None
             try:
-                out[first.strip()] = literal_eval(last)
+                out[var_name.strip()] = literal_eval(value_str)
             except (SyntaxError, ValueError):
-                if last == '[...]': last = '...'
-                last, nrep = re.subn(r'([^\[\],\s]+)', r'"\1"', last)
-                if last == '': last = 'None'
+                if value_str == '[...]': value_str = '...'
+                value_str, nrep = re.subn(r'([^\[\]",\s]+)', r"'''\1'''", value_str)
+                if value_str == '': value_str = 'None'
+                if value_str.startswith('"') and value_str.endswith('"'):
+                    value_str = "'''" + value_str[1:-1] + r"'''"
                 try:
-                    out[first.strip()] = literal_eval(last)
+                    out[var_name.strip()] = literal_eval(value_str)
                 except (SyntaxError, ValueError):
-                    print(last)
-                    out['ERROR'].append('ERROR parsing console ouput: '+last)
-
+                    out[var_name.strip()] = last
+                    warnings.warn('\n\nCould not parse console output:\n'+ line)
         line_has_errors = (line.startswith('ERROR') or line.startswith('Error') or
                            line.startswith('Model loading skipped'))
         if line_has_errors:
