@@ -13,7 +13,7 @@ demo_model_path = os.path.join(os.path.dirname(__file__), 'Demo.Arm2D.any')
 
 
 def setup_simple_model(tmpdir):
-    shutil.copyfile(demo_model_path, str( tmpdir.join('model.main.any') ) )
+    shutil.copyfile(demo_model_path, str(tmpdir.join('model.main.any')))
 
 
 @pytest.yield_fixture()
