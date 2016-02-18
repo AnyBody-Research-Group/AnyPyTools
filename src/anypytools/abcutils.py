@@ -12,6 +12,7 @@ import os
 import sys
 import time
 import copy
+import h5py
 import types
 import ctypes
 import shelve
@@ -19,6 +20,7 @@ import atexit
 import logging
 import warnings
 import collections
+import numpy as np
 from subprocess import Popen
 from tempfile import NamedTemporaryFile
 from threading import Thread, RLock
@@ -29,7 +31,7 @@ from past.builtins import basestring as string_types
 
 from .tools import (make_hash, AnyPyProcessOutputList, parse_anybodycon_output,
                     getsubdirs, get_anybodycon_path, mixedmethod,
-                    AnyPyProcessOutput, run_from_ipython,get_ncpu, silentremove)
+                    AnyPyProcessOutput, run_from_ipython, get_ncpu, silentremove)
 from .macroutils import AnyMacro, MacroCommand
 
 try:
@@ -113,8 +115,6 @@ _subprocess_container = _SubProcessContainer()
 atexit.register(_subprocess_container._kill_running_processes)
 
 
-
-
 def _display(line, *args, **kwargs):
     if run_from_ipython():
         display(HTML(line))
@@ -145,7 +145,7 @@ def _execute_anybodycon(macro,
         # Raymond Chen's response [1]
         SEM_NOGPFAULTERRORBOX = 0x0002  # From MSDN
         ctypes.windll.kernel32.SetErrorMode(SEM_NOGPFAULTERRORBOX)
-        subprocess_flags = 0x8000000   # win32con.CREATE_NO_WINDOW?
+        subprocess_flags = 0x8000000  # win32con.CREATE_NO_WINDOW?
     else:
         subprocess_flags = 0
     try:
@@ -188,6 +188,7 @@ class _Task(object):
         number: id number of the task
         name: name of the task, which is used for printing status informations
     """
+
     def __init__(self, folder=None, macro=None,
                  taskname=None, number=1):
         """ Init the Task class with the class attributes
@@ -219,7 +220,7 @@ class _Task(object):
         except KeyError:
             self.output['ERROR'] = [error_msg]
 
-    def get_output(self, include_task_info):
+    def get_output(self, include_task_info=True):
         out = self.output
         if include_task_info:
             out['task_macro_hash'] = make_hash(self.macro)
@@ -266,6 +267,7 @@ class _Task(object):
 
 class _Summery(object):
     """ class to display the summery of task """
+
     def __init__(self, have_ipython=False, silent=False):
         self._silent = silent
         if have_ipython and not self._silent:
@@ -299,8 +301,8 @@ class _Summery(object):
         else:
             entry += 'Completed :'
         entry += '{1!s} : {2:5.0f} sec : {0} : '.format(task.name,
-                                                       task.number,
-                                                       task.processtime)
+                                                        task.number,
+                                                        task.processtime)
         if task.logfile:
             if run_from_ipython():
                 tmpl = '<a href="file:///{0}" target="_blank">{1}</a>'
@@ -309,7 +311,6 @@ class _Summery(object):
             else:
                 entry += '{0}'.format(os.path.basename(task.logfile))
         return entry
-
 
     def final_summery(self, total_process_time, tasklist):
         unfinished_tasks = [t for t in tasklist if t.processtime <= 0]
@@ -371,8 +372,9 @@ class AnyPyProcess(object):
     >>> app = AnyPyProcess(num_processes=8, return_task_info=True)
 
     """
+
     def __init__(self,
-                 num_processes= get_ncpu(),
+                 num_processes=get_ncpu(),
                  anybodycon_path=None,
                  timeout=3600,
                  silent=False,
@@ -383,7 +385,6 @@ class AnyPyProcess(object):
                  logfile_prefix=None,
                  python_env=None,
                  **kwargs):
-
 
         if not isinstance(ignore_errors, (list, type(None))):
             raise ValueError('ignore_errors must be a list of strings')
@@ -442,6 +443,43 @@ class AnyPyProcess(object):
             db.close()
         else:
             raise ValueError('Noting to save')
+
+    def save_to_hdf5(self, filename: str, batch_name: str):
+        if self.cached_tasklist:
+            any_output = [task.get_output() for task in self.cached_tasklist]
+            any_output = AnyPyProcessOutputList(any_output)
+            with h5py.File(filename, "w") as f:  # , compression="gzip" # Not sure how much gzip effects reading speed.
+                group = f.create_group(batch_name)
+                task_names = []
+                for run in any_output:
+                    task_names.append(run['task_name'])
+                # If task names are unique, these will be used as run folder names
+                if len(task_names) == len(set(task_names)):
+                    for run in any_output:
+                            if len(task_names) == len(set(task_names)):
+                                task_name = run['task_name'].replace('/', '|')
+                                new_folder = group.create_group(task_name)
+                                for k, v in run.items():
+                                    if not isinstance(v, np.ndarray):
+                                        if isinstance(v, list):
+                                            new_folder.attrs[str(k)] = str(v)
+                                        else:
+                                            new_folder.attrs[str(k)] = v
+                                    elif isinstance(v, np.ndarray):
+                                        new_folder.create_dataset(str(k), data=v)
+                # If task names are not unique, task id's will be used as run folder names
+                elif len(task_names) != len(set(task_names)):
+                    for run in any_output:
+                        task_id = str(run['task_id'])
+                        new_folder = group.create_group(task_id)
+                        for k, v in run.items():
+                            if not isinstance(v, np.ndarray):
+                                    if isinstance(v, list):
+                                        new_folder.attrs[str(k)] = str(v)
+                                    else:
+                                        new_folder.attrs[str(k)] = v
+                            elif isinstance(v, np.ndarray):
+                                    new_folder.create_dataset(str(k), data=v)
 
     @mixedmethod
     def load_results(self, cls, filename):
@@ -555,7 +593,7 @@ class AnyPyProcess(object):
             raise ValueError('Nothing to process for ' + str(macrolist))
 
         self.summery = _Summery(have_ipython=run_from_ipython(),
-                               silent=self.silent)
+                                silent=self.silent)
 
         if self.logfile_prefix is None:
             self.logfile_prefix = str(self.cached_arg_hash)[:4] + '_'
@@ -570,19 +608,18 @@ class AnyPyProcess(object):
                        for task in tasklist]
         return AnyPyProcessOutputList(task_output)
 
-
-#    def _print_summery(self, tasks, duration):
-#        unfinished_tasks = [t for t in tasks if t.processtime <= 0]
-#        failed_tasks = [t for t in tasks if t.has_error and t.processtime > 0]
-#        if len(failed_tasks):
-#            _display('Tasks with errors: {:d}'.format(len(failed_tasks)))
-#            if not run_from_ipython():
-#                _display('\n'.join([t.summery() for t in failed_tasks]))
-#        if len(unfinished_tasks):
-#            _display('Tasks that did not complete: '
-#                     '{:d}'.format(len(unfinished_tasks)))
-#        if duration:
-#            _display('Total time: {:.1f} seconds'.format(duration))
+    #    def _print_summery(self, tasks, duration):
+    #        unfinished_tasks = [t for t in tasks if t.processtime <= 0]
+    #        failed_tasks = [t for t in tasks if t.has_error and t.processtime > 0]
+    #        if len(failed_tasks):
+    #            _display('Tasks with errors: {:d}'.format(len(failed_tasks)))
+    #            if not run_from_ipython():
+    #                _display('\n'.join([t.summery() for t in failed_tasks]))
+    #        if len(unfinished_tasks):
+    #            _display('Tasks that did not complete: '
+    #                     '{:d}'.format(len(unfinished_tasks)))
+    #        if duration:
+    #            _display('Total time: {:.1f} seconds'.format(duration))
 
     def _worker(self, task, task_queue):
         """ Handles processing of the tasks.
@@ -624,13 +661,13 @@ class AnyPyProcess(object):
                         return
                     task.processtime = endtime - starttime
                     task.output = parse_anybodycon_output(
-                                      logfile.read(),
-                                      self.ignore_errors,
-                                      self.warnings_to_include)
+                        logfile.read(),
+                        self.ignore_errors,
+                        self.warnings_to_include)
         except Exception as e:
             exc_type, exc_obj, exc_tb = sys.exc_info()
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            task.add_error(str(exc_type) +'\n' + str(fname) + '\n' + str(exc_tb.tb_lineno))
+            task.add_error(str(exc_type) + '\n' + str(fname) + '\n' + str(exc_tb.tb_lineno))
             logger.debug(str(e))
         finally:
             if not self.keep_logfiles and not task.has_error:
@@ -732,7 +769,7 @@ class _ProgressBar:
         self.width = 40
         if run_from_ipython() and not self.silent:
             self.bar_widget = ipywidgets.IntProgress(
-                                min=0, max=iterations, value=0)
+                min=0, max=iterations, value=0)
             display(self.bar_widget)
 
     def animate(self, val, failed=0):
@@ -741,7 +778,7 @@ class _ProgressBar:
         if run_from_ipython():
             self.bar_widget.value = val
             self.bar_widget.description = '%d of %s complete' % (val,
-                                                self.iterations)
+                                                                 self.iterations)
         else:
             self.update_iteration(val, failed)
             print('\r', end="")
@@ -768,7 +805,7 @@ class _ProgressBar:
         pct_place = int(len(self.prog_bar) / 2) - len(str(percent_done))
         pct_string = '%d%%' % percent_done
         self.prog_bar = self.prog_bar[0:pct_place] + \
-            (pct_string + self.prog_bar[pct_place + len(pct_string):])
+                        (pct_string + self.prog_bar[pct_place + len(pct_string):])
 
 
 if __name__ == '__main__':
