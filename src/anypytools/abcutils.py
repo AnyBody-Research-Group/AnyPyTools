@@ -444,7 +444,7 @@ class AnyPyProcess(object):
         else:
             raise ValueError('Noting to save')
 
-    def save_to_hdf5(self, filename: str, batch_name: str):
+    def save_to_hdf5(self, filename, batch_name):
         if self.cached_tasklist:
             any_output = [task.get_output() for task in self.cached_tasklist]
             any_output = AnyPyProcessOutputList(any_output)
