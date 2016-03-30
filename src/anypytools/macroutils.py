@@ -318,7 +318,10 @@ class SetValue_random(SetValue):
                 lower_tail_probability = lower_tail_probability[0]
 
         val = self.rv.ppf(lower_tail_probability).reshape(self.shape)
-
+        # Replace any nan from ppf function with actual sampled values.
+        if np.any(np.isnan(val)):
+            val[np.isnan(val)] = self.rv.rvs()[np.isnan(val)]
+        
         return self.format_macro(val)
 
 
