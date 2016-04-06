@@ -321,7 +321,7 @@ class SetValue_random(SetValue):
         # Replace any nan from ppf function with actual sampled values.
         if np.any(np.isnan(val)):
             val[np.isnan(val)] = self.rv.rvs()[np.isnan(val)]
-        
+
         return self.format_macro(val)
 
 
@@ -676,7 +676,8 @@ class AnyMacro(MutableSequence):
                           number_of_macros=None,
                           criterion=None,
                           iterations=None,
-                          batch_size = None):
+                          batch_size = None,
+                          append_default=False):
         try:
             import pyDOE
         except ImportError:
@@ -701,6 +702,7 @@ class AnyMacro(MutableSequence):
                                iterations=iterations)
 
         macro_list = []
+
         for macro_idx in range(number_of_macros):
             macro = []
             lhs_idx = 0
@@ -716,7 +718,16 @@ class AnyMacro(MutableSequence):
 
                 if self.counter_token:
                     mcr = mcr.replace(self.counter_token, str(macro_idx))
-                if mcr is not '':
+                if len(mcr) > 0:
+                    macro.extend(mcr.split('\n'))
+            macro_list.append(macro)
+        if append_default is not None:
+            macro = []
+            for elem in self:
+                mcr = elem.get_macro(number_of_macros)
+                if self.counter_token:
+                   mcr = mcr.replace(self.counter_token, str(number_of_macros))
+                if len(mcr) > 0:
                     macro.extend(mcr.split('\n'))
             macro_list.append(macro)
         return macro_list
