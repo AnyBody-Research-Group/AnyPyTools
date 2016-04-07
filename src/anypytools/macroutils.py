@@ -115,8 +115,8 @@ class Load(MacroCommand):
     """
     def __init__(self, filename, defs={}, paths={}):
         self.filename = filename
-        self.defs = defs
-        self.paths = paths
+        self.defs = defs.copy()
+        self.paths = paths.copy()
 
     def get_macro(self, index, **kwarg):
         cmd = ['load "{}"'.format(self.filename)]
