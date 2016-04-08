@@ -143,7 +143,7 @@ def read_anyoutputfile(filepath):
         except ValueError:
             return False
 
-    with open(filepath,'r') as anyoutputfile:
+    with open(filepath,'rU') as anyoutputfile:
         constants = {}
         reader = iter(anyoutputfile.readline, b'')
         #Check when the header section ends
