@@ -124,12 +124,14 @@ def _display(line, *args, **kwargs):
 
 def _execute_anybodycon(macro,
                         logfile,
-                        anybodycon_path=get_anybodycon_path(),
+                        anybodycon_path=None,
                         timeout=3600,
                         keep_macrofile=False,
                         env=None):
     """ Launches the AnyBodyConsole applicaiton with the specified macro
         saving the result to logfile """
+    if anybodycon_path is None:
+        anybodycon_path = get_anybodycon_path()
     if not os.path.isfile(anybodycon_path):
         raise IOError("Can not find anybodycon.exe: " + anybodycon_path)
     macro_filename = os.path.splitext(logfile.name)[0] + '.anymcr'
