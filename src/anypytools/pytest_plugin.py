@@ -47,8 +47,11 @@ def change_dir(path):
 
 def pytest_collect_file(parent, path):
     if path.ext.lower() == ".any" and path.basename.startswith("test_"):
-        return AnyFile(path, parent)
-
+            return AnyFile(path, parent)
+    elif parent.config.getoption("--collect-main-files"):
+        if path.basename.lower().endswith('main.any'):
+            return AnyFile(path, parent)
+        
         
 class AnyFile(pytest.File):
     def collect(self):
@@ -88,21 +91,33 @@ class AnyItem(pytest.Item):
         self.defs = defs
         self.name = name
         self.errors = None
-        
+
     def runtest(self):
         anybodycon = self.config.getoption("--anybodycon")
         anybodycon = None if anybodycon == 'default' else anybodycon
-        macro = [[macro_commands.Load(self.fspath.strpath),
-                  macro_commands.OperationRun('Main.RunApplication')]]
+        macro_load = [macro_commands.Load(self.fspath.strpath)]
+        macro_runapp = [macro_commands.OperationRun('Main.RunApplication')]
+        if self.config.getoption("--only-load"):
+            macro = macro_load
+        else:
+            macro = macro_load + macro_runapp
         tmpdir = self.config._tmpdirhandler.mktemp(self.name)
         with change_dir(tmpdir.strpath):
             app = AnyPyProcess(return_task_info=True,
                                silent=True,
                                anybodycon_path=anybodycon)
             result = app.start_macro(macro)[0]
+            if (self.config.getoption("--collect-main-files") and
+                not self.name.startswith('test_') and 
+                not self.config.getoption("--only-load")):
+                # Rerun any collected main files if they fail because of a 
+                # missing RunApplication operation
+                if any('Error : Main.RunApplication : Unresolved object' in e 
+                        for e in result.get('ERROR',[])):
+                    result = app.start_macro(macro_load)[0]
+                
         if 'ERROR' in result:
             self.errors = result['ERROR']
-            #import pdb;pdb.set_trace()
             raise  AnyException(self, self.name, self.defs, self.errors)
         return
         
@@ -112,8 +127,8 @@ class AnyItem(pytest.Item):
             return "\n".join([
                 "usecase execution failed",
                 "   Name: %r" % excinfo.value.args[1],
-                "   Defines:\n %r " % excinfo.value.args[2],
-                "   AMS errors:\n %r " % excinfo.value.args[3]
+                "   Defines: %r" % excinfo.value.args[2],
+                "   AMS errors: %r" % excinfo.value.args[3]
             ])
 
     def reportinfo(self):
@@ -194,6 +209,10 @@ def pytest_addoption(parser):
         help="AMMR used in test: built-in or path-to-ammr")
     group._addoption("--anybodycon", action="store", default="default", metavar="path",
         help="anybodycon.exe used in test: default or path-to-anybodycon")
+    group._addoption("--collect-main-files", action="store_true",
+        help="Also collect any files called ending in 'main.any'")
+    group._addoption("--only-load", action="store_true",
+        help="Only run a load test. I.e. do not run the 'RunApplication' macro")
     group._addoption("--inplace", action="store_true",
         help="Run tests in place. The macro file will be placed together with "
              "the model files. It becomes the responsobility of the model to "
