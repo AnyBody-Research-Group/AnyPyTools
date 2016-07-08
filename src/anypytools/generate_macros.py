@@ -15,7 +15,7 @@ from past.builtins import basestring as string_types
 
 import sys
 from scipy.stats import distributions
-if sys.platform.startswith("win"):
+if sys.platform.startswith("win") and sys.version_info.major < 3:
     # This is a horrible hack to work around a bug in
     # scipy http://stackoverflow.com/questions/15457786/ctrl-c-crashes-python-after-importing-scipy-stats
     try:
