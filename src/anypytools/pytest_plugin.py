@@ -55,7 +55,7 @@ def pytest_collect_file(parent, path):
         
 class AnyFile(pytest.File):
     def collect(self):
-        #import pdb;pdb.set_trace()
+        # Collect define statements from the header
         name = self.fspath.basename
         define_str = ''
         with self.fspath.open() as f:
@@ -65,11 +65,14 @@ class AnyFile(pytest.File):
                     define_str += line
                 else:
                     break
+        # Evaluate the collected header
+        defs_list = None
         if define_str:
-            defs_list = ast.literal_eval(define_str)
-        else:
-            defs_list = [{}]
-        
+            try:
+                defs_list = ast.literal_eval(define_str)
+            except SyntaxError:
+                pass
+        #Check the types of the defines collected from the header
         if isinstance(defs_list, dict):
             defs_list = [defs_list]
         elif isinstance(defs_list, tuple):
@@ -77,7 +80,11 @@ class AnyFile(pytest.File):
             defs_list = []
             for elem in combinations:
                 defs_list.append({k:v for d in elem for k,v in d.items()})
-
+        elif isinstance(defs_list, list):
+            pass
+        else:
+            defs_list = [{}]
+        # Run though the defines an create a test case for each
         for i, defs in enumerate(defs_list):
             if isinstance(defs, dict):
                 yield AnyItem('{}_{}'.format(name,i), self, defs)
