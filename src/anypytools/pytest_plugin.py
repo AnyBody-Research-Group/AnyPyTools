@@ -35,6 +35,28 @@ def _limited_traceback(excinfo):
         return format_list(tb)
 
         
+def _exec_header(path):
+    with open(path) as f:
+        code = ''
+        for line in f.readlines():
+            if line.startswith('//'):
+                line = line.strip('//')
+                code += line
+            else:
+                break
+        ns = {}
+        try:
+            exec(code, globals(), ns)
+        except Exception as e:
+            raise e
+        if len(ns) == 0:
+            try:
+                ns['define'] = ast.literal_eval(code)
+            except SyntaxError:
+                pass
+        return ns
+
+
 @contextlib.contextmanager        
 def change_dir(path):
     prev_cwd = os.getcwd()
@@ -51,80 +73,73 @@ def pytest_collect_file(parent, path):
     elif parent.config.getoption("--collect-main-files"):
         if path.basename.lower().endswith('main.any'):
             return AnyFile(path, parent)
-        
-        
+      
+def _format_switches(defs):
+    if isinstance(defs, dict):
+        defs = [defs]
+    elif isinstance(defs, tuple):
+        combinations = list(itertools.product(*defs))
+        defs = []
+        for elem in combinations:
+            defs.append({k:v for d in elem for k,v in d.items()})
+    elif isinstance(defs, list):
+        pass
+    else:
+        defs = [{}]
+    if len(defs) == 0:
+        defs = [{}]
+    return defs
+            
+def _as_absolute_paths(d, start): 
+    return {k: os.path.abspath(os.path.relpath(v,start)) for k,v in d.items()}
+
+    
 class AnyFile(pytest.File):
     def collect(self):
         # Collect define statements from the header
         name = self.fspath.basename
-        header_str = ''
-        with self.fspath.open() as f:
-            for line in f.readlines():
-                if line.startswith('//'):
-                    line = line.strip('//').strip()
-                    if not line.startswith('#'):
-                        header_str += line
-                else:
-                    break
-        # Evaluate the collected header
-        defs_list = None
-        if header_str:
-            try:
-                defs_list = ast.literal_eval(header_str)
-            except SyntaxError:
-                pass
-        #Check the types of the defines collected from the header
-        if isinstance(defs_list, dict):
-            defs_list = [defs_list]
-        elif isinstance(defs_list, tuple):
-            combinations = list(itertools.product(*defs_list))
-            defs_list = []
-            for elem in combinations:
-                defs_list.append({k:v for d in elem for k,v in d.items()})
-        elif isinstance(defs_list, list):
-            pass
-        else:
-            defs_list = [{}]
+        ns = _exec_header(self.fspath.strpath)
+        def_list = _format_switches(ns.get('define', {}))
+        path_list = _format_switches(ns.get('path', {}))
+        combinations = itertools.product(def_list, path_list)
         # Run though the defines an create a test case for each
-        for i, defs in enumerate(defs_list):
-            if isinstance(defs, dict):
-                yield AnyItem('{}_{}'.format(name,i), self, defs)
+        for i, (defs, paths) in enumerate(combinations):
+            if isinstance(defs, dict) and isinstance(paths, dict):
+                yield AnyItem('{}_{}'.format(name,i), self, defs, paths)
             else:
                 raise ValueError('Malformed input: ', header_str)
 
                 
 class AnyItem(pytest.Item):
-    def __init__(self, name, parent, defs):
+    def __init__(self, name, parent, defs, paths):
         super().__init__(name, parent)
         self.defs = defs
+        self.paths = _as_absolute_paths(paths, self.fspath.dirname)
         self.name = name
         self.errors = None
+        self.macro = [macro_commands.Load(self.fspath.strpath,
+                                          self.defs, self.paths)]
+        if not self.config.getoption("--only-load"):
+            self.macro.append(macro_commands.OperationRun('Main.RunApplication') )
+        self.anybodycon = self.config.getoption("--anybodycon")
+        if self.anybodycon == 'default':
+            self.anybodycon = None
+            
 
     def runtest(self):
-        anybodycon = self.config.getoption("--anybodycon")
-        anybodycon = None if anybodycon == 'default' else anybodycon
-        macro_load = [macro_commands.Load(self.fspath.strpath)]
-        macro_runapp = [macro_commands.OperationRun('Main.RunApplication')]
-        if self.config.getoption("--only-load"):
-            macro = macro_load
-        else:
-            macro = macro_load + macro_runapp
         tmpdir = self.config._tmpdirhandler.mktemp(self.name)
         with change_dir(tmpdir.strpath):
             app = AnyPyProcess(return_task_info=True,
                                silent=True,
-                               anybodycon_path=anybodycon)
-            result = app.start_macro(macro)[0]
-            if (self.config.getoption("--collect-main-files") and
-                not self.name.startswith('test_') and 
-                not self.config.getoption("--only-load")):
-                # Rerun any collected main files if they fail because of a 
-                # missing RunApplication operation
-                if any('Error : Main.RunApplication : Unresolved object' in e 
-                        for e in result.get('ERROR',[])):
-                    result = app.start_macro(macro_load)[0]
-                
+                               anybodycon_path=self.anybodycon)
+            result = app.start_macro(self.macro)[0]
+        # Ignore error due to missing Main.RunApplication
         if 'ERROR' in result:
+            for i, e in enumerate(result['ERROR']):
+                if 'Error : Main.RunApplication : Unresolved object' in e:
+                    del result['ERROR'][i]
+                    break
+        if 'ERROR' in result and len(result['ERROR']) > 0:
             self.errors = result['ERROR']
             raise  AnyException(self, self.name, self.defs, self.errors)
         return
@@ -136,7 +151,7 @@ class AnyItem(pytest.Item):
                 "usecase execution failed",
                 "   Name: %r" % excinfo.value.args[1],
                 "   Defines: %r" % excinfo.value.args[2],
-                "   AMS errors: %r" % excinfo.value.args[3]
+                "   AMS errors: %r\n" % excinfo.value.args[3]
             ])
 
     def reportinfo(self):
