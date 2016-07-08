@@ -9,15 +9,121 @@ from __future__ import (absolute_import, division,
 from builtins import *
 
 import os
-import pytest
+import ast
 import shutil
+import itertools
+import contextlib
 import subprocess 
+from traceback import format_list, extract_tb
 
-from .abcutils import AnyPyProcess
-from .tools import get_anybodycon_path
-from .generate_macros import MacroGenerator
+import pytest
+
+from anypytools import AnyPyProcess, macro_commands
+from anypytools.tools import get_anybodycon_path
+from anypytools.generate_macros import MacroGenerator
 
 
+def _limited_traceback(excinfo):
+    """ Return a formatted traceback with all the stack
+        from this frame (i.e __file__) up removed
+    """
+    tb = extract_tb(excinfo.tb)
+    try:
+        idx = [__file__ in e for e in tb].index(True)
+        return format_list(tb[idx+1:])
+    except ValueError:
+        return format_list(tb)
+
+        
+@contextlib.contextmanager        
+def change_dir(path):
+    prev_cwd = os.getcwd()
+    os.chdir(path)
+    try:
+        yield
+    finally:
+        os.chdir(prev_cwd)    
+     
+
+def pytest_collect_file(parent, path):
+    if path.ext.lower() == ".any" and path.basename.startswith("test_"):
+        return AnyFile(path, parent)
+
+        
+class AnyFile(pytest.File):
+    def collect(self):
+        #import pdb;pdb.set_trace()
+        name = self.fspath.basename
+        define_str = ''
+        with self.fspath.open() as f:
+            for line in f.readlines():
+                if line.startswith('//'):
+                    line = line.strip('//').strip()
+                    define_str += line
+                else:
+                    break
+        if define_str:
+            defs_list = ast.literal_eval(define_str)
+        else:
+            defs_list = [{}]
+        
+        if isinstance(defs_list, dict):
+            defs_list = [defs_list]
+        elif isinstance(defs_list, tuple):
+            combinations = list(itertools.product(*defs_list))
+            defs_list = []
+            for elem in combinations:
+                defs_list.append({k:v for d in elem for k,v in d.items()})
+
+        for i, defs in enumerate(defs_list):
+            if isinstance(defs, dict):
+                yield AnyItem('{}_{}'.format(name,i), self, defs)
+            else:
+                raise ValueError('Malformed input: ', define_str)
+
+                
+class AnyItem(pytest.Item):
+    def __init__(self, name, parent, defs):
+        super().__init__(name, parent)
+        self.defs = defs
+        self.name = name
+        self.errors = None
+        
+    def runtest(self):
+        anybodycon = self.config.getoption("--anybodycon")
+        anybodycon = None if anybodycon == 'default' else anybodycon
+        macro = [[macro_commands.Load(self.fspath.strpath),
+                  macro_commands.OperationRun('Main.RunApplication')]]
+        tmpdir = self.config._tmpdirhandler.mktemp(self.name)
+        with change_dir(tmpdir.strpath):
+            app = AnyPyProcess(return_task_info=True,
+                               silent=True,
+                               anybodycon_path=anybodycon)
+            result = app.start_macro(macro)[0]
+        if 'ERROR' in result:
+            self.errors = result['ERROR']
+            #import pdb;pdb.set_trace()
+            raise  AnyException(self, self.name, self.defs, self.errors)
+        return
+        
+    def repr_failure(self, excinfo):
+        """ called when self.runtest() raises an exception. """
+        if isinstance(excinfo.value, AnyException):
+            return "\n".join([
+                "usecase execution failed",
+                "   Name: %r" % excinfo.value.args[1],
+                "   Defines:\n %r " % excinfo.value.args[2],
+                "   AMS errors:\n %r " % excinfo.value.args[3]
+            ])
+
+    def reportinfo(self):
+        return self.fspath, 0, "usecase: %s" % self.name
+
+        
+class AnyException(Exception):
+    """ custom exception for error reporting. """
+
+    
 def get_ammr_version(ammr_path):
     import xml.etree.ElementTree as ET
     version_file = os.path.join(ammr_path,'AMMR.version.xml')
@@ -30,7 +136,6 @@ def get_ammr_version(ammr_path):
     except:
         vstring = "Unknown AMMR version"
     return vstring
-
 
 
 def copy_files(src_dir, dst_dir):
@@ -48,7 +153,6 @@ def copy_files(src_dir, dst_dir):
             shutil.copytree(full_name,dst_subdir, 
                             ignore=shutil.ignore_patterns('test_*.py','*_test.py'))
 
-
         
 @pytest.fixture(scope='module')
 def copyfiles(request, test_dir):
@@ -62,7 +166,6 @@ def copyfiles(request, test_dir):
     return test_dir
 
 
-
 @pytest.fixture(scope='module')
 def test_dir(request):
     model_folder = request.fspath.new(basename='')
@@ -74,6 +177,7 @@ def test_dir(request):
                                                    numbered=True)
         return tempdir
 
+        
 @pytest.fixture(scope='module')
 def model_dir(request, test_dir):
     model_folder = request.fspath.new(basename='')
