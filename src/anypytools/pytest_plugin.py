@@ -57,19 +57,20 @@ class AnyFile(pytest.File):
     def collect(self):
         # Collect define statements from the header
         name = self.fspath.basename
-        define_str = ''
+        header_str = ''
         with self.fspath.open() as f:
             for line in f.readlines():
                 if line.startswith('//'):
                     line = line.strip('//').strip()
-                    define_str += line
+                    if not line.startswith('#'):
+                        header_str += line
                 else:
                     break
         # Evaluate the collected header
         defs_list = None
-        if define_str:
+        if header_str:
             try:
-                defs_list = ast.literal_eval(define_str)
+                defs_list = ast.literal_eval(header_str)
             except SyntaxError:
                 pass
         #Check the types of the defines collected from the header
@@ -89,7 +90,7 @@ class AnyFile(pytest.File):
             if isinstance(defs, dict):
                 yield AnyItem('{}_{}'.format(name,i), self, defs)
             else:
-                raise ValueError('Malformed input: ', define_str)
+                raise ValueError('Malformed input: ', header_str)
 
                 
 class AnyItem(pytest.Item):
