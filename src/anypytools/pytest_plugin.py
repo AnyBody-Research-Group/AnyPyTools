@@ -22,6 +22,41 @@ from anypytools import AnyPyProcess, macro_commands
 from anypytools.tools import get_anybodycon_path
 from anypytools.generate_macros import MacroGenerator
 
+BM_CONSTANTS = {
+'ON': '1',
+'OFF': '0',
+'CONST_MUSCLES_NONE': '0',
+'CONST_MUSCLES_SIMPLE': '1',
+'CONST_MUSCLES_3E_HILL': '2',
+'CONST_HAND_SIMPLE': '0',
+'CONST_HAND_DETAILED': '1',
+'CONST_LEG_MODEL_OFF': '"OFF"',
+'CONST_LEG_MODEL_Leg': '"Leg"',
+'CONST_LEG_MODEL_TLEM': '"TLEM"',
+'CONST_MORPH_NONE': '0',
+'CONST_MORPH_TRUNK_TO_LEG': '1',
+'CONST_MORPH_LEG_TO_TRUNK': '2',
+'CONST_PELVIS_DISPLAY_NONE': '0',
+'CONST_PELVIS_DISPLAY_LEGPELVIS_ONLY': '1',
+'CONST_PELVIS_DISPLAY_LEGANDTRUNKPELVIS': '2',
+'CONST_SCALING_CUSTOM': '-1',
+'CONST_SCALING_STANDARD': '0',
+'CONST_SCALING_UNIFORM': '1',
+'CONST_SCALING_LENGTHMASS': '2',
+'CONST_SCALING_LENGTHMASSFAT': '3',
+'CONST_SCALING_UNIFORM_EXTMEASUREMENTS': '4',
+'CONST_SCALING_LENGTHMASS_EXTMEASUREMENTS': '5',
+'CONST_SCALING_LENGTHMASSFAT_EXTMEASUREMENTS': '6',
+'CONST_SCALING_LENGTHMASSFAT_MULTIDOFS': '7',
+}
+
+
+
+def _replace_bm_constants(d):
+    for k, v in d.items():
+        if v in BM_CONSTANTS:
+            d[k] = BM_CONSTANTS[v]
+    return d
 
 def _limited_traceback(excinfo):
     """ Return a formatted traceback with all the stack
@@ -35,26 +70,29 @@ def _limited_traceback(excinfo):
         return format_list(tb)
 
         
-def _exec_header(path):
+def _read_header(path):
+    code = ''
     with open(path) as f:
-        code = ''
         for line in f.readlines():
             if line.startswith('//'):
                 line = line.strip('//')
                 code += line
             else:
                 break
-        ns = {}
+    return code
+            
+def _exec_header(header):
+    ns = {}
+    try:
+        exec(header, globals(), ns)
+    except Exception as e:
+        raise e
+    if len(ns) == 0:
         try:
-            exec(code, globals(), ns)
-        except Exception as e:
-            raise e
-        if len(ns) == 0:
-            try:
-                ns['define'] = ast.literal_eval(code)
-            except SyntaxError:
-                pass
-        return ns
+            ns['define'] = ast.literal_eval(header)
+        except SyntaxError:
+            pass
+    return ns
 
 
 @contextlib.contextmanager        
@@ -97,21 +135,27 @@ def _as_absolute_paths(d, start):
 class AnyFile(pytest.File):
     def collect(self):
         # Collect define statements from the header
-        name = self.fspath.basename
-        ns = _exec_header(self.fspath.strpath)
+        #import pdb;pdb.set_trace()
+        header = _read_header(self.fspath.strpath)
+        ns = _exec_header(header)
         def_list = _format_switches(ns.get('define', {}))
+        def_list = [_replace_bm_constants(d) for d in def_list]
         path_list = _format_switches(ns.get('path', {}))
         combinations = itertools.product(def_list, path_list)
         # Run though the defines an create a test case for each
         for i, (defs, paths) in enumerate(combinations):
+            name = '{}_{}'.format(self.fspath.basename,i) 
             if isinstance(defs, dict) and isinstance(paths, dict):
-                yield AnyItem('{}_{}'.format(name,i), self, defs, paths)
+                yield AnyItem(name, self, 
+                              defs=defs,
+                              paths=paths,
+                              ignore_errors = ns.get('ignore_errors',None))
             else:
-                raise ValueError('Malformed input: ', header_str)
+                raise ValueError('Malformed input: ', header)
 
                 
 class AnyItem(pytest.Item):
-    def __init__(self, name, parent, defs, paths):
+    def __init__(self, name, parent, defs, paths, ignore_errors=None):
         super().__init__(name, parent)
         self.defs = defs
         self.paths = _as_absolute_paths(paths, self.fspath.dirname)
@@ -121,17 +165,18 @@ class AnyItem(pytest.Item):
                                           self.defs, self.paths)]
         if not self.config.getoption("--only-load"):
             self.macro.append(macro_commands.OperationRun('Main.RunApplication') )
-        self.anybodycon = self.config.getoption("--anybodycon")
-        if self.anybodycon == 'default':
-            self.anybodycon = None
+        self.apt_opts = {
+            'return_task_info': True,
+            'silent': True,
+            'anybodycon_path': self.config.getoption("--anybodycon"),
+            'ignore_errors': ignore_errors,
+            }
             
 
     def runtest(self):
         tmpdir = self.config._tmpdirhandler.mktemp(self.name)
         with change_dir(tmpdir.strpath):
-            app = AnyPyProcess(return_task_info=True,
-                               silent=True,
-                               anybodycon_path=self.anybodycon)
+            app = AnyPyProcess(**self.apt_opts)
             result = app.start_macro(self.macro)[0]
         # Ignore error due to missing Main.RunApplication
         if 'ERROR' in result:
@@ -230,7 +275,7 @@ def pytest_addoption(parser):
 
     group._addoption("--ammr", action="store", default="built-in", metavar="path",
         help="AMMR used in test: built-in or path-to-ammr")
-    group._addoption("--anybodycon", action="store", default="default", metavar="path",
+    group._addoption("--anybodycon", action="store", metavar="path",
         help="anybodycon.exe used in test: default or path-to-anybodycon")
     group._addoption("--collect-main-files", action="store_true",
         help="Also collect any files called ending in 'main.any'")
@@ -256,7 +301,7 @@ def pytest_addoption(parser):
 
 def pytest_configure(config):
     anybodycon_path = config.getoption("--anybodycon")
-    if anybodycon_path == 'default':
+    if anybodycon_path is None:
         anybodycon_path = get_anybodycon_path()
 
     if not os.path.isfile(anybodycon_path):
@@ -343,7 +388,7 @@ def ammr(request):
 @pytest.fixture(scope='session')
 def anybodycon(request):
     anybodycon_path = request.config.getoption("--anybodycon")
-    if anybodycon_path == 'default':
+    if anybodycon_path == None:
         anybodycon_path = get_anybodycon_path()
     if not os.path.isfile(anybodycon_path):
         raise IOError('Cound not find: {}'.format(anybodycon_path))
