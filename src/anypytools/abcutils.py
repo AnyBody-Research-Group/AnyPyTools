@@ -35,11 +35,11 @@ from .tools import (make_hash, AnyPyProcessOutputList, parse_anybodycon_output,
 from .macroutils import AnyMacro, MacroCommand
 
 try:
-    __IPYTHON__
-    from IPython.display import HTML, display
+    from IPython.display import HTML, display 
     import ipywidgets
-except NameError:
-    pass
+except ImportError:
+    ipywidgets = HTML = display = None
+
 
 logger = logging.getLogger('abt.anypytools')
 
@@ -272,7 +272,7 @@ class _Summery(object):
 
     def __init__(self, have_ipython=False, silent=False):
         self._silent = silent
-        if have_ipython and not self._silent:
+        if have_ipython and ipywidgets and not self._silent:
             self.ipywidget = ipywidgets.HTML()
             self.ipywidget.initialized = False
         else:
@@ -771,30 +771,39 @@ class _ProgressBar:
         self.width = 40
         if run_from_ipython() and not self.silent:
             self.bar_widget = ipywidgets.IntProgress(
-                min=0, max=iterations, value=0)
-            display(self.bar_widget)
+                min=0, max=iterations, value=0, bar_style='')
+            self.bar_description = ipywidgets.Label('')
+            box = ipywidgets.HBox([self.bar_description, self.bar_widget])
+            box.layout.align_items = 'center'
+            display(box)
 
     def animate(self, val, failed=0):
         if self.silent:
             return
         if run_from_ipython():
-            self.bar_widget.value = val
-            self.bar_widget.description = '%d of %s complete' % (val,
-                                                                 self.iterations)
+            self._widget_animate(val, failed)
         else:
-            self.update_iteration(val, failed)
-            print('\r', end="")
-            print(self.prog_bar, end="")
-            sys.stdout.flush()
+            self._ascii_animate(val, failed)
 
-    def update_iteration(self, elapsed_iter, number_failed, tasks=[]):
-        self.__update_amount((elapsed_iter / float(self.iterations)) * 100.0)
-        self.prog_bar += '  %d of %s complete' % (elapsed_iter,
-                                                  self.iterations)
-        if number_failed == 1:
-            self.prog_bar += ' ({0} Error)'.format(number_failed)
-        elif number_failed > 1:
-            self.prog_bar += ' ({0} Errors)'.format(number_failed)
+    def _widget_animate(self, val, failed):
+        self.bar_widget.value = val
+        self.bar_description.value = '%d of %s' % (val, self.iterations)
+        if failed > 0:
+            self.bar_widget.bar_style = 'danger'
+        elif val == self.iterations:
+            self.bar_widget.bar_style = 'success'
+            
+            
+    def _ascii_animate(self, val, failed):
+        self.__update_amount((val / float(self.iterations)) * 100.0)
+        self.prog_bar += '  %d of %s complete' % (val,self.iterations)
+        if failed == 1:
+            self.prog_bar += ' ({0} Error)'.format(failed)
+        elif failed > 1:
+            self.prog_bar += ' ({0} Errors)'.format(failed)
+        print('\r', end="")
+        print(self.prog_bar, end="")
+        sys.stdout.flush()
 
     def __update_amount(self, new_amount):
         percent_done = int(round((new_amount / 100.0) * 100.0))
