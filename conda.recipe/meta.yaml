@@ -27,7 +27,8 @@ requirements:     # (optional)
     - setuptools
     - scipy >=0.15
     - jupyter >=1.0
-    - ipython >=4.0
+    - ipywidgets >=5.1
+    - ipython >=5.0
     
 test:
   requires:
