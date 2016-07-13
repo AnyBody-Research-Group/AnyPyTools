@@ -10,7 +10,7 @@ from setuptools import setup
 
 setup(
     name='AnyPyTools',
-    version='0.8.3',
+    version='0.9.0',
     install_requires=['future'],
     py_modules=['anypytools.abcutils', 'anypytools.h5py_wrapper',
                 'anypytools.datautils', 'anypytools.genereate_macros',
