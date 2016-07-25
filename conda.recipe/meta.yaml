@@ -1,12 +1,13 @@
 package:
-  version: {{ environ.get('GIT_DESCRIBE_TAG', '0.0.0') }}
-  name: anypytools     # lower case name of package, may contain '-' but no spaces
+  name: anypytools     
+  version: {{ GIT_DESCRIBE_TAG + '.dev' + GIT_DESCRIBE_NUMBER }}
 
 source:
    git_url: ../
 
 build:          
-  number: {{ environ.get('GIT_DESCRIBE_NUMBER', 0) }}
+  number: 0
+  #string: {{'py' + CONDA_PY + '_' + GIT_DESCRIBE_HASH }}
   # Added to allow the pytest entry points in setup.py to work
   # This is also the reason for setuptools beeing a runtime dependency. 
   preserve_egg_dir: True
@@ -21,24 +22,25 @@ requirements:     # (optional)
     
   run:
     - python
-    - pywin32 # [win and py27]
+    - pywin32 # [py27 or py34]
     - future >=0.15
     - h5py >=2.5
     - setuptools
     - scipy >=0.15
-    - jupyter >=1.0
     - ipywidgets >=5.1
-    - ipython >=5.0
+    - notebook >=4.2
+    - jupyter >=1.0
     
 test:
-  requires:
-    - pytest
-
+  imports:
+    - anypytools
+    - anypytools.abcutils
+    - anypytools.macro_commands
 #  commands:
 #    - python -c "import anypytools; anypytools.test()"
 
 app:
-    entry: ipython notebook ${PREFIX}/AnyPyToolsTutorial/00_AnyPyTools_tutorial.ipynb
+    entry: jupyter notebook %PREFIX%\\share\\notebooks\\anypytools\\00_AnyPyTools_tutorial.ipynb
     summary: AnyPyTools Tutorial
     icon: apt_icon.png
 #    type: web
@@ -47,9 +49,8 @@ app:
 #        default: "${PREFIX}/AnyPyToolsTutorial 00_AnyPyTools_tutorial.ipynb"
 #        name: "Start directory"
 
-    
 
-
-about:            # (optional)
+about:
   home: https://github.com/AnyBody-Research-Group/AnyPyTools
   license: MIT
+  summary: Python tools and utilities for working with the AnyBody Modelling System

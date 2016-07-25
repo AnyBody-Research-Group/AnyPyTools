@@ -12,7 +12,8 @@ AnyPyTools is a toolkit for working with the [AnyBody Modeling System (AMS)](htt
 - After installation opens the Anaconda command prompt and type:
 
 >``` cmd
-> conda install -c melund anypytools
+> conda config --add channels conda-forge
+> conda install anypytools
 > ```
 
 

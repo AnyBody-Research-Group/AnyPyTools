@@ -85,8 +85,8 @@ def _exec_header(header):
     ns = {}
     try:
         exec(header, globals(), ns)
-    except Exception as e:
-        raise e
+    except SyntaxError:
+        pass
     if len(ns) == 0:
         try:
             ns['define'] = ast.literal_eval(header)
@@ -186,7 +186,7 @@ class AnyItem(pytest.Item):
                     break
         if 'ERROR' in result and len(result['ERROR']) > 0:
             self.errors = result['ERROR']
-            raise  AnyException(self, self.name, self.defs, self.errors)
+            raise  AnyException(self, self.fspath.strpath, self.defs, self.errors)
         return
         
     def repr_failure(self, excinfo):
@@ -194,7 +194,7 @@ class AnyItem(pytest.Item):
         if isinstance(excinfo.value, AnyException):
             return "\n".join([
                 "usecase execution failed",
-                "   Name: %r" % excinfo.value.args[1],
+                "   Main file: %r" % excinfo.value.args[1],
                 "   Defines: %r" % excinfo.value.args[2],
                 "   AMS errors: %r\n" % excinfo.value.args[3]
             ])

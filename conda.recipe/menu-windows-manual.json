@@ -2,8 +2,8 @@
   "menu_items": [
     {
       "name": "AnyPyTools Tutorial",
-      "pyscript": "${PYTHON_SCRIPTS}/ipython-script.py notebook --notebook-dir ${PYTHON_SCRIPTS}/../AnyPyToolsTutorial 00_AnyPyTools_tutorial.ipynb", 
-      "workdir": "${PYTHON_SCRIPTS}/../AnyPyToolsTutorial/",
+      "pyscript": "${PYTHON_SCRIPTS}/jupyter-notebook-script.py --notebook-dir ${PYTHON_SCRIPTS}/../share/notebooks/anypytools 00_AnyPyTools_tutorial.ipynb", 
+      "workdir": "${PYTHON_SCRIPTS}/../share/notebooks/anypytools",
       "icon": "${PYTHON_SCRIPTS}/anypytools.ico"
     }  
     ],
