@@ -19,7 +19,6 @@ setup(
                 'anypytools.utils.blaze_converter',
                 'anypytools.pygments_plugin.anyscript_lexer',
                 'anypytools.pygments_plugin.anyscript_style'],
-    scripts=['src/scripts/pp2any.py'],
     packages=['anypytools'],
     package_dir={'': 'src'},
     package_data={'anypytools': ['test_models/Demo.Arm2D.any', 'pygments_plugin/*.txt']},    
