@@ -11,6 +11,7 @@ from builtins import *
 import os
 import ast
 import shutil
+import textwrap
 import itertools
 import contextlib
 import subprocess 
@@ -106,7 +107,7 @@ def change_dir(path):
      
 
 def pytest_collect_file(parent, path):
-    if path.ext.lower() == ".any" and path.basename.startswith("test_"):
+    if path.ext.lower() == ".any" and path.basename.lower().startswith("test_"):
             return AnyFile(path, parent)
     elif parent.config.getoption("--collect-main-files"):
         if path.basename.lower().endswith('main.any'):
@@ -158,11 +159,13 @@ class AnyItem(pytest.Item):
     def __init__(self, name, parent, defs, paths, ignore_errors=None):
         super().__init__(name, parent)
         self.defs = defs
+        self.defs['TEST_NAME'] = '"{}"'.format(name)
         self.paths = _as_absolute_paths(paths, self.fspath.dirname)
         self.name = name
         self.errors = None
         self.macro = [macro_commands.Load(self.fspath.strpath,
                                           self.defs, self.paths)]
+        self.macro_file = None                                  
         if not self.config.getoption("--only-load"):
             self.macro.append(macro_commands.OperationRun('Main.RunApplication') )
         self.apt_opts = {
@@ -178,6 +181,7 @@ class AnyItem(pytest.Item):
         with change_dir(tmpdir.strpath):
             app = AnyPyProcess(**self.apt_opts)
             result = app.start_macro(self.macro)[0]
+            self.app = app
         # Ignore error due to missing Main.RunApplication
         if 'ERROR' in result:
             for i, e in enumerate(result['ERROR']):
@@ -186,25 +190,46 @@ class AnyItem(pytest.Item):
                     break
         if 'ERROR' in result and len(result['ERROR']) > 0:
             self.errors = result['ERROR']
-            raise  AnyException(self, self.fspath.strpath, self.defs, self.errors)
+            if self.config.getoption("--create-macros"):
+                macro_file = 'run_{}.anymcr'.format(self.name)
+                macro_file = os.path.join(self.fspath.dirname, macro_file)
+                with open(macro_file,'w') as f:
+                    f.writelines([str(mcr)+'\n' for mcr in self.macro])
+                self.macro_file = macro_file
+            raise  AnyException(self)
         return
         
     def repr_failure(self, excinfo):
         """ called when self.runtest() raises an exception. """
         if isinstance(excinfo.value, AnyException):
-            return "\n".join([
-                "usecase execution failed",
-                "   Main file: %r" % excinfo.value.args[1],
-                "   Defines: %r" % excinfo.value.args[2],
-                "   AMS errors: %r\n" % excinfo.value.args[3]
-            ])
+            rtn = 'Execution failed:\n'
+            for elem in self.errors:
+                rtn += textwrap.fill(elem, 80, 
+                                     initial_indent='  *',
+                                     subsequent_indent='   ')
+                rtn += '\n'
+            rtn += "\nMain file:\n"
+            rtn += "  {}\n".format(self.fspath.strpath.replace(os.sep,os.altsep))
+            rtn += "AnyBody Console:\n"
+            rtn += "  {}\n".format(self.app.anybodycon_path.replace(os.sep, os.altsep))
+            rtn += "Special model configuration:\n"
+            for k,v in self.defs.items():
+                rtn += "  #define {} {}\n".format(k,v)
+            for k,v in self.paths.items():
+                rtn += "  #path {} {}\n".format(k,v)
+            if self.macro_file is not None:
+                macro_file = self.macro_file.replace(os.sep,os.altsep)
+                rtn += 'Macro:\n'
+                rtn += '  anybody.exe -m "{}" &\n'.format(macro_file)
+            return rtn
 
     def reportinfo(self):
-        return self.fspath, 0, "usecase: %s" % self.name
+        return self.fspath, 0, "AnyBody Simulation: %s" % self.name
 
         
 class AnyException(Exception):
     """ custom exception for error reporting. """
+
 
     
 def get_ammr_version(ammr_path):
@@ -281,6 +306,9 @@ def pytest_addoption(parser):
         help="Also collect any files called ending in 'main.any'")
     group._addoption("--only-load", action="store_true",
         help="Only run a load test. I.e. do not run the 'RunApplication' macro")
+    group._addoption("--create-macros", action="store_true",
+        help="Create a macro file if the test fails. This makes it easy to re-run "
+             "the failed test in the gui application.")
     group._addoption("--inplace", action="store_true",
         help="Run tests in place. The macro file will be placed together with "
              "the model files. It becomes the responsobility of the model to "
