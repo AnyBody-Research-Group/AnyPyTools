@@ -143,26 +143,37 @@ class AnyFile(pytest.File):
         def_list = [_replace_bm_constants(d) for d in def_list]
         path_list = _format_switches(ns.get('path', {}))
         combinations = itertools.product(def_list, path_list)
+        ignore_errors = ns.get('ignore_errors',[]) 
+        if not isinstance(ignore_errors,list):
+            raise TypeError('ignore_errors must be a list')  
+        expect_errors = ns.get('expect_errors',[]) 
+        if not isinstance(expect_errors,list):
+            raise TypeError('expect_errors must be a list')   
         # Run though the defines an create a test case for each
         for i, (defs, paths) in enumerate(combinations):
             name = '{}_{}'.format(self.fspath.basename,i) 
             if isinstance(defs, dict) and isinstance(paths, dict):
-                yield AnyItem(name, self, 
-                              defs=defs,
-                              paths=paths,
-                              ignore_errors = ns.get('ignore_errors',None))
+                yield AnyItem(
+                    name = name, 
+                    parent = self, 
+                    defs=defs,
+                    paths=paths,
+                    ignore_errors = ignore_errors,
+                    expect_errors = expect_errors
+                )
             else:
                 raise ValueError('Malformed input: ', header)
 
                 
 class AnyItem(pytest.Item):
-    def __init__(self, name, parent, defs, paths, ignore_errors=None):
+    def __init__(self, name, parent, defs, paths, ignore_errors=None, expect_errors=None):
         super().__init__(name, parent)
         self.defs = defs
         self.defs['TEST_NAME'] = '"{}"'.format(name)
         self.paths = _as_absolute_paths(paths, self.fspath.dirname)
         self.name = name
-        self.errors = None
+        self.expect_errors = expect_errors
+        self.errors = []
         self.macro = [macro_commands.Load(self.fspath.strpath,
                                           self.defs, self.paths)]
         self.macro_file = None                                  
@@ -188,8 +199,25 @@ class AnyItem(pytest.Item):
                 if 'Error : Main.RunApplication : Unresolved object' in e:
                     del result['ERROR'][i]
                     break
+        # Check that the expected errors are present
+        if self.expect_errors is not None:
+            if 'ERROR' in result:
+                error_list = result['ERROR']
+            else:
+                error_list = []
+            for xerr in self.expect_errors:
+                xerr_found = False
+                for i, error in enumerate(error_list):
+                    if xerr in error:
+                        xerr_found = True
+                        del error_list[i]
+                if not xerr_found:
+                    self.errors.append('TEST ERROR: Expected error not '
+                                        'found: "{}"'.format(xerr))
+        # Add remaining errors to item's error list
         if 'ERROR' in result and len(result['ERROR']) > 0:
-            self.errors = result['ERROR']
+            self.errors.extend(result['ERROR'])
+        if len(self.errors) > 0:
             if self.config.getoption("--create-macros"):
                 macro_file = 'run_{}.anymcr'.format(self.name)
                 macro_file = os.path.join(self.fspath.dirname, macro_file)
@@ -222,6 +250,8 @@ class AnyItem(pytest.Item):
                 rtn += 'Macro:\n'
                 rtn += '  anybody.exe -m "{}" &\n'.format(macro_file)
             return rtn
+        else:
+            return str(excinfo.value)
 
     def reportinfo(self):
         return self.fspath, 0, "AnyBody Simulation: %s" % self.name
