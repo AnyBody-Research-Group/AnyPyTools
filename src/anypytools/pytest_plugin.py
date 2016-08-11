@@ -176,9 +176,12 @@ class AnyItem(pytest.Item):
         self.errors = []
         self.macro = [macro_commands.Load(self.fspath.strpath,
                                           self.defs, self.paths)]
-        self.macro_file = None                                  
+        self.macro_file = None     
         if not self.config.getoption("--only-load"):
-            self.macro.append(macro_commands.OperationRun('Main.RunApplication') )
+            self.macro.append(macro_commands.OperationRun('Main.RunTest') )
+            user_macro =  self.config.getoption("--run-macro")
+            if user_macro is not None:
+                self.macro.append(macro_commands.OperationRun(user_macro))
         self.apt_opts = {
             'return_task_info': True,
             'silent': True,
@@ -193,10 +196,10 @@ class AnyItem(pytest.Item):
             app = AnyPyProcess(**self.apt_opts)
             result = app.start_macro(self.macro)[0]
             self.app = app
-        # Ignore error due to missing Main.RunApplication
+        # Ignore error due to missing Main.RunTest
         if 'ERROR' in result:
             for i, e in enumerate(result['ERROR']):
-                if 'Error : Main.RunApplication : Unresolved object' in e:
+                if 'Error : Main.RunTest : Unresolved object' in e:
                     del result['ERROR'][i]
                     break
         # Check that the expected errors are present
@@ -335,7 +338,9 @@ def pytest_addoption(parser):
     group._addoption("--collect-main-files", action="store_true",
         help="Also collect any files called ending in 'main.any'")
     group._addoption("--only-load", action="store_true",
-        help="Only run a load test. I.e. do not run the 'RunApplication' macro")
+        help="Only run a load test. I.e. do not run the 'RunTest' macro")
+    group._addoption("--run-macro", action="store", default=None,
+        help="Specify a special macro to run")
     group._addoption("--create-macros", action="store_true",
         help="Create a macro file if the test fails. This makes it easy to re-run "
              "the failed test in the gui application.")
