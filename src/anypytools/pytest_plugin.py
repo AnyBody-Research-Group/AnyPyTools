@@ -20,44 +20,9 @@ from traceback import format_list, extract_tb
 import pytest
 
 from anypytools import AnyPyProcess, macro_commands
-from anypytools.tools import get_anybodycon_path
+from anypytools.tools import get_anybodycon_path, replace_bm_constants
 from anypytools.generate_macros import MacroGenerator
 
-BM_CONSTANTS = {
-'ON': '1',
-'OFF': '0',
-'CONST_MUSCLES_NONE': '0',
-'CONST_MUSCLES_SIMPLE': '1',
-'CONST_MUSCLES_3E_HILL': '2',
-'CONST_HAND_SIMPLE': '0',
-'CONST_HAND_DETAILED': '1',
-'CONST_LEG_MODEL_OFF': '"OFF"',
-'CONST_LEG_MODEL_Leg': '"Leg"',
-'CONST_LEG_MODEL_TLEM': '"TLEM"',
-'CONST_MORPH_NONE': '0',
-'CONST_MORPH_TRUNK_TO_LEG': '1',
-'CONST_MORPH_LEG_TO_TRUNK': '2',
-'CONST_PELVIS_DISPLAY_NONE': '0',
-'CONST_PELVIS_DISPLAY_LEGPELVIS_ONLY': '1',
-'CONST_PELVIS_DISPLAY_LEGANDTRUNKPELVIS': '2',
-'CONST_SCALING_CUSTOM': '-1',
-'CONST_SCALING_STANDARD': '0',
-'CONST_SCALING_UNIFORM': '1',
-'CONST_SCALING_LENGTHMASS': '2',
-'CONST_SCALING_LENGTHMASSFAT': '3',
-'CONST_SCALING_UNIFORM_EXTMEASUREMENTS': '4',
-'CONST_SCALING_LENGTHMASS_EXTMEASUREMENTS': '5',
-'CONST_SCALING_LENGTHMASSFAT_EXTMEASUREMENTS': '6',
-'CONST_SCALING_LENGTHMASSFAT_MULTIDOFS': '7',
-}
-
-
-
-def _replace_bm_constants(d):
-    for k, v in d.items():
-        if v in BM_CONSTANTS:
-            d[k] = BM_CONSTANTS[v]
-    return d
 
 def _limited_traceback(excinfo):
     """ Return a formatted traceback with all the stack
@@ -140,7 +105,7 @@ class AnyFile(pytest.File):
         header = _read_header(self.fspath.strpath)
         ns = _exec_header(header)
         def_list = _format_switches(ns.get('define', {}))
-        def_list = [_replace_bm_constants(d) for d in def_list]
+        def_list = [replace_bm_constants(d) for d in def_list]
         path_list = _format_switches(ns.get('path', {}))
         combinations = itertools.product(def_list, path_list)
         ignore_errors = ns.get('ignore_errors',[]) 
