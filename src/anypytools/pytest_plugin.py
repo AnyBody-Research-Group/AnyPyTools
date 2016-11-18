@@ -170,6 +170,11 @@ class AnyItem(pytest.Item):
         # Check that the expected errors are present
         if self.expect_errors is not None:
             if 'ERROR' in result:
+                # Remove any failures due to RunTest not working on failed models
+                for i, e in enumerate(result['ERROR']):
+                    if 'Main.RunTest : Select Operation is not expected' in e:
+                        del result['ERROR'][i]
+                        break
                 error_list = result['ERROR']
             else:
                 error_list = []
