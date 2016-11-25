@@ -14,7 +14,7 @@ __all__ = ['datautils', 'h5py_wrapper', 'AnyPyProcess',
            'MacroGenerator', 'MonteCarloMacroGenerator', 'LatinHyperCubeMacroGenerator'
            'AnyMacro', 'macro_commands', 'print_versions']
 
-__version__ = '0.9.3'
+__version__ = '0.9.4'
 
 
 def print_versions():
