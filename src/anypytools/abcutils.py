@@ -12,7 +12,6 @@ import os
 import sys
 import time
 import copy
-import h5py
 import types
 import ctypes
 import shelve
@@ -447,6 +446,7 @@ class AnyPyProcess(object):
             raise ValueError('Noting to save')
 
     def save_to_hdf5(self, filename, batch_name):
+        import h5py
         if self.cached_tasklist:
             any_output = [task.get_output() for task in self.cached_tasklist]
             any_output = AnyPyProcessOutputList(any_output)
