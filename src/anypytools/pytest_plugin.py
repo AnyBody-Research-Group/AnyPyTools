@@ -46,8 +46,53 @@ def _read_header(path):
             else:
                 break
     return code
-            
-def _exec_header(header):
+
+
+@contextlib.contextmanager
+def change_dir(path):
+    prev_cwd = os.getcwd()
+    os.chdir(path)
+    try:
+        yield
+    finally:
+        os.chdir(prev_cwd)
+
+
+def pytest_collect_file(parent, path):
+    if path.ext.lower() == ".any" and path.basename.lower().startswith("test_"):
+        return AnyFile(path, parent)
+    elif parent.config.getoption("--collect-main-files"):
+        if path.basename.lower().endswith('main.any'):
+            return AnyFile(path, parent)
+
+def _format_switches(defs):
+    if isinstance(defs, dict):
+        defs = [defs]
+    elif isinstance(defs, tuple):
+        combinations = list(itertools.product(*defs))
+        defs = []
+        for elem in combinations:
+            defs.append({k: v for d in elem for k,v in d.items()})
+    elif isinstance(defs, list):
+        pass
+    else:
+        defs = [{}]
+    if len(defs) == 0:
+        defs = [{}]
+    return defs
+
+def _as_absolute_paths(d, start): 
+    return {k: os.path.abspath(os.path.relpath(v, start)) for k, v in d.items()}
+
+
+HEADER_ENSURES = (
+    ('define', (dict, list, tuple)),
+    ('path', (dict, list, tuple)),
+    ('ignore_errors', (list, )),
+    ('expect_errors', (list, )),
+)
+
+def _parse_header(header):
     ns = {}
     try:
         exec(header, globals(), ns)
@@ -58,102 +103,58 @@ def _exec_header(header):
             ns['define'] = ast.literal_eval(header)
         except SyntaxError:
             pass
+    for name, types in HEADER_ENSURES:
+        if name in ns and not isinstance(ns[name], types):
+            typestr = ', '.join([t.__name__ for t in types])
+            msg = '{} must be one of the following type(s) ({})'.format(name, typestr)
+            raise TypeError('define must be a dictionary, list or tuple')
     return ns
 
-
-@contextlib.contextmanager        
-def change_dir(path):
-    prev_cwd = os.getcwd()
-    os.chdir(path)
-    try:
-        yield
-    finally:
-        os.chdir(prev_cwd)    
-     
-
-def pytest_collect_file(parent, path):
-    if path.ext.lower() == ".any" and path.basename.lower().startswith("test_"):
-            return AnyFile(path, parent)
-    elif parent.config.getoption("--collect-main-files"):
-        if path.basename.lower().endswith('main.any'):
-            return AnyFile(path, parent)
-      
-def _format_switches(defs):
-    if isinstance(defs, dict):
-        defs = [defs]
-    elif isinstance(defs, tuple):
-        combinations = list(itertools.product(*defs))
-        defs = []
-        for elem in combinations:
-            defs.append({k:v for d in elem for k,v in d.items()})
-    elif isinstance(defs, list):
-        pass
-    else:
-        defs = [{}]
-    if len(defs) == 0:
-        defs = [{}]
-    return defs
-            
-def _as_absolute_paths(d, start): 
-    return {k: os.path.abspath(os.path.relpath(v,start)) for k,v in d.items()}
-
-    
 class AnyFile(pytest.File):
     def collect(self):
         # Collect define statements from the header
-        #import pdb;pdb.set_trace()
-        header = _read_header(self.fspath.strpath)
-        ns = _exec_header(header)
-        def_list = _format_switches(ns.get('define', {}))
+        strheader = _read_header(self.fspath.strpath)
+        header = _parse_header(strheader)
+        def_list = _format_switches(header.pop('define', {}))
         def_list = [replace_bm_constants(d) for d in def_list]
-        path_list = _format_switches(ns.get('path', {}))
+        path_list = _format_switches(header.pop('path', {}))
         combinations = itertools.product(def_list, path_list)
-        ignore_errors = ns.get('ignore_errors',[]) 
-        if not isinstance(ignore_errors,list):
-            raise TypeError('ignore_errors must be a list')  
-        expect_errors = ns.get('expect_errors',[]) 
-        if not isinstance(expect_errors,list):
-            raise TypeError('expect_errors must be a list')   
         # Run though the defines an create a test case for each
         for i, (defs, paths) in enumerate(combinations):
-            name = '{}_{}'.format(self.fspath.basename,i) 
+            name = '{}_{}'.format(self.fspath.basename, i)
             if isinstance(defs, dict) and isinstance(paths, dict):
-                yield AnyItem(
-                    name = name, 
-                    parent = self, 
-                    defs=defs,
-                    paths=paths,
-                    ignore_errors = ignore_errors,
-                    expect_errors = expect_errors
-                )
+                yield AnyItem(name=name, parent=self, defs=defs, paths=paths, **header)
             else:
                 raise ValueError('Malformed input: ', header)
 
-                
+
 class AnyItem(pytest.Item):
-    def __init__(self, name, parent, defs, paths, ignore_errors=None, expect_errors=None):
+    def __init__(self, name, parent, defs, paths, **kwargs):
         super().__init__(name, parent)
         self.defs = defs
         self.defs['TEST_NAME'] = '"{}"'.format(name)
         self.paths = _as_absolute_paths(paths, self.fspath.dirname)
         self.name = name
-        self.expect_errors = expect_errors
+        self.expect_errors = kwargs.get('expect_errors', [])
+        self.ignore_errors = kwargs.get('ignore_errors', [])
+        self.timeout = self.config.getoption("--timeout")
         self.errors = []
         self.macro = [macro_commands.Load(self.fspath.strpath,
                                           self.defs, self.paths)]
-        self.macro_file = None     
+        self.macro_file = None
         if not self.config.getoption("--only-load"):
-            self.macro.append(macro_commands.OperationRun('Main.RunTest') )
-            user_macro =  self.config.getoption("--run-macro")
+            self.macro.append(macro_commands.OperationRun('Main.RunTest'))
+            user_macro = self.config.getoption("--run-macro")
             if user_macro is not None:
                 self.macro.append(macro_commands.OperationRun(user_macro))
         self.apt_opts = {
             'return_task_info': True,
             'silent': True,
             'anybodycon_path': self.config.getoption("--anybodycon"),
-            'ignore_errors': ignore_errors,
+            'ignore_errors': self.ignore_errors,
+            'timeout': self.timeout
             }
-            
+
 
     def runtest(self):
         tmpdir = self.config._tmpdirhandler.mktemp(self.name)
@@ -309,6 +310,8 @@ def pytest_addoption(parser):
         help="Also collect any files called ending in 'main.any'")
     group._addoption("--only-load", action="store_true",
         help="Only run a load test. I.e. do not run the 'RunTest' macro")
+    group._addoption("--timeout", default=3600, type=int,
+        help="terminate tests after a certain timeout period")
     group._addoption("--run-macro", action="store", default=None,
         help="Specify a special macro to run")
     group._addoption("--create-macros", action="store_true",
