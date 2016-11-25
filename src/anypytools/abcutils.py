@@ -43,7 +43,7 @@ except ImportError:
 logger = logging.getLogger('abt.anypytools')
 
 _thread_lock = RLock()
-_KILLED_BY_ANYPYTOOLS = -10
+_KILLED_BY_ANYPYTOOLS = 10
 
 
 class _SubProcessContainer(object):
@@ -169,16 +169,17 @@ def _execute_anybodycon(macro,
                 break
             time.sleep(0.05)
         _subprocess_container.remove(proc.pid)
-        if proc.returncode == _KILLED_BY_ANYPYTOOLS:
-            logfile.write('Anybodycon.exe was interrupted by AnyPyTools')
-        elif proc.returncode:
-            logfile.write('ERROR: anybodycon.exe exited unexpectedly.'
+        retcode = ctypes.c_int32(proc.returncode).value
+        if retcode == _KILLED_BY_ANYPYTOOLS:
+            logfile.write('\nAnybodycon.exe was interrupted by AnyPyTools')
+        elif retcode:
+            logfile.write('\nERROR: AnyPyTools : anybodycon.exe exited unexpectedly.'
                           ' Return code: ' + str(proc.returncode))
         if not keep_macrofile:
             silentremove(macro_file.name)
     finally:
         logfile.seek(0)
-    return proc.returncode
+    return retcode
 
 
 class _Task(object):
