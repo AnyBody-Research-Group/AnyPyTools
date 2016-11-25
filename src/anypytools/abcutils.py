@@ -152,19 +152,20 @@ def _execute_anybodycon(macro,
     try:
         # Check global module flag to avoid starting processes after
         # the user cancelled the processes
+        timeout_time = time.clock() + timeout
         proc = Popen(anybodycmd,
                      stdout=logfile,
                      stderr=logfile,
                      creationflags=subprocess_flags,
                      env=env)
         _subprocess_container.add(proc.pid)
-        timeout_time = time.clock() + timeout
         while proc.poll() is None:
             if time.clock() > timeout_time:
                 proc.terminate()
                 proc.communicate()
                 logfile.seek(0, 2)
-                logfile.write('ERROR: Timeout after {:d} sec.'.format(timeout))
+                logfile.write('\nERROR: AnyPyTools : Timeout after {:d} sec.'.format(int(timeout)))
+                proc.returncode = 0
                 break
             time.sleep(0.05)
         _subprocess_container.remove(proc.pid)
