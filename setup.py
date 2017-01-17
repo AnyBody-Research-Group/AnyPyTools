@@ -10,7 +10,7 @@ from setuptools import setup
 
 setup(
     name='AnyPyTools',
-    version='0.9.4',
+    version='0.9.5',
     install_requires=['future'],
     py_modules=['anypytools.abcutils', 'anypytools.h5py_wrapper',
                 'anypytools.datautils', 'anypytools.genereate_macros',
@@ -21,18 +21,18 @@ setup(
                 'anypytools.pygments_plugin.anyscript_style'],
     packages=['anypytools'],
     package_dir={'': 'src'},
-    package_data={'anypytools': ['test_models/Demo.Arm2D.any', 'pygments_plugin/*.txt']},    
+    package_data={'anypytools': ['test_models/Demo.Arm2D.any', 'pygments_plugin/*.txt']},
     # the following makes a plugin available to pytest
     entry_points = {
         'pytest11': [
             'anypytools = anypytools.pytest_plugin',
         ],
-        'pygments.lexers': 
+        'pygments.lexers':
             ['anyscript = anypytools.pygments_plugin.anyscript_lexer:AnyScriptLexer',
-            '/.any = anypytools.pygments_plugin.anyscript_lexer:AnyScriptLexer'],
-        'pygments.styles': 
+             '/.any = anypytools.pygments_plugin.anyscript_lexer:AnyScriptLexer'],
+        'pygments.styles':
             ['anyscript = anypytools.pygments_plugin.anyscript_style:AnyScriptStyle',
-             '/.any = anypytools.pygments_plugin.anyscript_style:AnyScriptStyle' ]
+             '/.any = anypytools.pygments_plugin.anyscript_style:AnyScriptStyle']
     },
     author='Morten Lund',
     author_email='melund@gmail.com',
@@ -42,8 +42,9 @@ setup(
     url='https://github.com/AnyBody-Research-Group/AnyPyTools',
     classifiers=[
         'Development Status :: 1 - Alpha',
-          "Programming Language :: Python :: 2.7",
-          "Programming Language :: Python :: 3.4",
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: MIT License',
         'Operating System :: Windows',
