@@ -14,12 +14,15 @@ from past.builtins import basestring as string_types
 import os
 import re
 import sys
+import xml
 import copy
 import errno
 import pprint as _pprint
 import logging
+import datetime
 import warnings
 import functools
+import subprocess
 import collections
 from ast import literal_eval
 from _thread import get_ident as _get_ident
@@ -80,6 +83,132 @@ class mixedmethod(object):
     def __get__(self, instance, cls):
         return functools.partial(self.func, instance, cls)
 
+ANYBODYCON_VERSION_RE = re.compile(r'.*version\s:\s(?P<version>(?P<v1>\d)\.\s(?P<v2>\d)'
+                                   r'\.\s(?P<v3>\d)\.\s(?P<build>\d+)\s\((?P<arc>.*)\))')
+def anybodycon_version(anybodyconpath):
+    """ Calls AnyBodyCon and extract version"""
+    if anybodyconpath is None:
+        anybodyconpath = get_anybodycon_path()
+    out = subprocess.check_output([anybodyconpath, '-ni'], universal_newlines=True)
+    m = ANYBODYCON_VERSION_RE.search(out)
+    if m is not None:
+        return m.groupdict()['version']
+
+AMMR_VERSION_RE = re.compile(r'.*AMMR_VERSION\s"(?P<version>.*)"')
+
+def ammr_any_version(fpath):
+    with open(fpath) as f:
+        out = f.read()
+    match = AMMR_VERSION_RE.search(out)
+    if match:
+        return match.groupdict()['version']
+    else:
+        return "Unknown AMMR version"
+
+def amm_xml_version(fpath):
+    try:
+        tree = xml.etree.ElementTree.parse(fpath)
+        version = tree.getroot()
+        v1, v2, v3 = version.find('v1').text, version.find('v2').text, version.find('v3').text
+        return "{}.{}.{}".format(v1, v2, v3)
+    except:
+        vstring = "Unknown AMMR version"
+    return vstring
+
+def find_ammr_version(folder):
+    """ Return the AMMR version if possible.
+        The function will walk up a directory tree looking
+        for a ammr_verion.any file to parse"""
+    any_version_file = 'AMMR.version.any'
+    xml_version_file = 'AMMR.version.xml'
+    for basedir, dirs, files in walk_up(folder.strpath):
+        if any_version_file in files:
+            return ammr_any_version(os.path.join(basedir, any_version_file))
+        elif xml_version_file in files:
+            return amm_xml_version(os.path.join(basedir, xml_version_file))
+    else:
+        return ""
+
+
+
+
+def walk_up(bottom):
+    """ 
+    mimic os.walk, but walk 'up'
+    instead of down the directory tree
+    """
+    bottom = os.path.realpath(bottom)
+    #get files in current dir
+    names = os.listdir(bottom)
+    dirs, nondirs = [], []
+    for name in names:
+        if os.path.isdir(os.path.join(bottom, name)):
+            dirs.append(name)
+        else:
+            nondirs.append(name)
+    yield bottom, dirs, nondirs
+    new_path = os.path.realpath(os.path.join(bottom, '..'))
+    # see if we are at the top
+    if new_path == bottom:
+        return
+    for x in walk_up(new_path):
+        yield x
+
+def get_current_time():
+    return datetime.datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+
+
+def get_tag(project_name=None):
+    info = get_git_commit_info(project_name)
+    parts = [info['id'], get_current_time()]
+    if info['dirty']:
+        parts.append("uncommited-changes")
+    return "_".join(parts)
+
+def get_git_project_name():
+    cmd = 'git config --local remote.origin.url'.split()
+    try:
+        output = subprocess.check_output(cmd, universal_newlines=True)
+    except subprocess.CalledProcessError:
+        name = None
+    else:
+        name = re.findall(r'/([^/]*)\.git', output)[0]
+    return name if name is not None else os.path.basename(os.getcwd())
+
+
+def get_git_branch_info():
+    """ return the branch name for git repository"""
+    cmd = 'git rev-parse --abbrev-ref HEAD'
+    try:
+        branch = subprocess.check_output(cmd, universal_newlines=True).strip()
+    except subprocess.CalledProcessError as e:
+        branch = 'unknown'
+    else:
+        if branch == 'HEAD':
+            return '(detached head)'
+    return branch
+
+
+def get_git_commit_info(project_name=None):
+    dirty = False
+    commit = 'unversioned'
+    project_name = project_name or get_git_project_name()
+    branch = get_git_branch_info()
+    cmd = 'git describe --dirty --always --long --abbrev=6'.split()
+    try:
+        output = subprocess.check_output(cmd, universal_newlines=True).strip()
+    except subprocess.CalledProcessError as e:
+        pass
+    else:
+        try:
+            output = output.split('-')
+            if output[-1].strip() == 'dirty':
+                dirty = True
+                output.pop()
+            commit = output[-1].strip('g')
+        except Exception as e:
+            commit = 'unknown'
+    return dict(id=commit, dirty=dirty, project=project_name, branch=branch)
 
 
 def get_first_key_match(key, names):

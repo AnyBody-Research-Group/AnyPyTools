@@ -9,19 +9,109 @@ from __future__ import (absolute_import, division,
 from builtins import *
 
 import os
+import re
 import ast
+import glob
 import shutil
 import textwrap
 import itertools
 import contextlib
-import subprocess 
+import subprocess
 from traceback import format_list, extract_tb
 
 import pytest
 
 from anypytools import AnyPyProcess, macro_commands
-from anypytools.tools import get_anybodycon_path, replace_bm_constants
+from anypytools.tools import (
+    get_anybodycon_path, replace_bm_constants,
+    anybodycon_version, find_ammr_version, get_tag
+)
 from anypytools.generate_macros import MacroGenerator
+
+
+
+class AnyTestSession(object):
+    """ Class for storing configuation of the AnyTest plugin to pytest. """ 
+
+    def __init__(self):
+        self.ammr_version = ''
+        self.ams_version = ''
+        self.basefolder = ''
+        self.anytest_compare_dir = ''
+        self.current_run_folder = ''
+        self.save = ''
+        self.last_number = None
+        self.last_session = None
+
+    def configure(self, config):
+        """ Configures the AnyTestSession object. This can't be in __init__()
+            since it is instantiated and added to the pytest namespace very
+            early in the pytest startup.
+        """
+        self.basefolder = config.getoption("--anytest-storage")
+        self.last_number = self._get_heighest_number()
+        if not self.last_number:
+            self.last_number = 0
+            self.last_session = None
+        else:
+            self.last_session = self._get_folder(self.last_number)
+
+        self.save = config.getoption("--anytest-save") or config.getoption("--anytest-autosave")
+        self.ammr_version = find_ammr_version(config.rootdir)
+        self.ams_version = anybodycon_version(anybodycon_path(config))
+        self.current_run_folder = os.path.join(self.basefolder, 'current_run')
+        if os.path.exists(self.current_run_folder):
+            shutil.rmtree(self.current_run_folder)
+
+
+
+    def finalize(self, config):
+        if self.save:
+            storage_folder = os.path.join(self.basefolder, self.session_name)
+            if os.path.exists(self.current_run_folder):
+                shutil.copytree(self.current_run_folder, storage_folder)
+
+
+    @property
+    def session_name(self):
+        if self.save:
+            return '{:0>4d}_{}'.format(self.last_number + 1, self.save)
+
+
+    def _get_heighest_number(self):
+        """ Return the heights prefix number for folders
+            in the self.basedir
+        """
+        subdirs = next(os.walk(self.basefolder))[1]
+        prefixes = [s.split('_')[0] for s in subdirs]
+        numbers = [int(s) for s in prefixes if s.isdigit()]
+        return max(numbers + [0])
+
+    def _get_folder(self, num):
+        """ Return the full folder name starting with num in
+            self.basedir
+        """
+        folder = glob.glob('{}\\{:0>4d}_*\\'.format(self.basefolder, num))
+        if len(folder) > 1:
+            raise ValueError('More folders with the same'
+                             ' number prefix in {}'.format(self.basefolder))
+        elif len(folder) == 0:
+            return ''
+        else:
+            return folder[0]
+
+    def get_compare_test_filename(self, name, id, study):
+        """ Return the name of the compare h5file, and ensure the parent folder exists"""
+        if self.save:
+            if id > 0:
+                compare_test_name = '{}_{}'.format(name, id)
+            else:
+                compare_test_name = '{}'.format(name)
+            compare_test_folder = os.path.join(self.current_run_folder, compare_test_name)
+            studyname = '{}.anydata.h5'.format(study)
+            return os.path.join(compare_test_folder, studyname)
+        else:
+            return ''
 
 
 def _limited_traceback(excinfo):
@@ -35,10 +125,13 @@ def _limited_traceback(excinfo):
     except ValueError:
         return format_list(tb)
 
-        
-def _read_header(path):
+
+def _read_header(fpath):
+    """ Read the commented header of anyscript
+        file and return it with leading '//' comments
+        removed"""
     code = ''
-    with open(path) as f:
+    with open(fpath) as f:
         for line in f.readlines():
             if line.startswith('//'):
                 line = line.strip('//')
@@ -61,9 +154,6 @@ def change_dir(path):
 def pytest_collect_file(parent, path):
     if path.ext.lower() == ".any" and path.basename.lower().startswith("test_"):
         return AnyFile(path, parent)
-    elif parent.config.getoption("--collect-main-files"):
-        if path.basename.lower().endswith('main.any'):
-            return AnyFile(path, parent)
 
 def _format_switches(defs):
     if isinstance(defs, dict):
@@ -81,7 +171,7 @@ def _format_switches(defs):
         defs = [{}]
     return defs
 
-def _as_absolute_paths(d, start): 
+def _as_absolute_paths(d, start):
     return {k: os.path.abspath(os.path.relpath(v, start)) for k, v in d.items()}
 
 
@@ -110,6 +200,36 @@ def _parse_header(header):
             raise TypeError('define must be a dictionary, list or tuple')
     return ns
 
+
+
+def pytest_namespace():
+    """ Add an instance of the AnyTestSession class to
+        to the pytest name space """
+    return {'anytest': AnyTestSession()}
+
+
+
+def pytest_configure(config):
+    pytest.anytest.configure(config)
+
+def pytest_unconfigure(config):
+    pytest.anytest.finalize(config)
+    #config.anytest_abc_version = anybodycon_version(config.getoption("--anybodycon"))
+    #config.anytest_ammr_version = find_ammr_version(config.rootdir)
+
+
+def write_macro_file(path, name, macro):
+    filename = os.path.join(path, name + '.anymcr')
+    with open(filename, 'w') as f:
+        f.writelines([str(mcr)+'\n' for mcr in macro])
+    return filename
+
+def anybodycon_path(config):
+    path = config.getoption("--anybodycon")
+    if path is None:
+        path = get_anybodycon_path()
+    return path
+
 class AnyFile(pytest.File):
     def collect(self):
         # Collect define statements from the header
@@ -121,64 +241,69 @@ class AnyFile(pytest.File):
         combinations = itertools.product(def_list, path_list)
         # Run though the defines an create a test case for each
         for i, (defs, paths) in enumerate(combinations):
-            name = '{}_{}'.format(self.fspath.basename, i)
             if isinstance(defs, dict) and isinstance(paths, dict):
-                yield AnyItem(name=name, parent=self, defs=defs, paths=paths, **header)
+                yield AnyItem(name=self.fspath.basename, id=i, parent=self,
+                              defs=defs, paths=paths, **header)
             else:
                 raise ValueError('Malformed input: ', header)
 
 
 class AnyItem(pytest.Item):
-    def __init__(self, name, parent, defs, paths, **kwargs):
-        super().__init__(name, parent)
+    def __init__(self, name, id, parent, defs, paths, **kwargs):
+        test_name = '{}_{}'.format(name, id)
+        super().__init__(test_name, parent)
         self.defs = defs
-        self.defs['TEST_NAME'] = '"{}"'.format(name)
+        self.defs['TEST_NAME'] = '"{}"'.format(test_name)
         self.paths = _as_absolute_paths(paths, self.fspath.dirname)
-        self.name = name
+        self.name = test_name
         self.expect_errors = kwargs.get('expect_errors', [])
         self.ignore_errors = kwargs.get('ignore_errors', [])
+        self.compare_study = kwargs.get('compare_study', None)
         self.timeout = self.config.getoption("--timeout")
         self.errors = []
         self.macro = [macro_commands.Load(self.fspath.strpath,
                                           self.defs, self.paths)]
+        self.compare_filename = None
         self.macro_file = None
-        if not self.config.getoption("--only-load"):
-            self.macro.append(macro_commands.OperationRun('Main.RunTest'))
-            user_macro = self.config.getoption("--run-macro")
-            if user_macro is not None:
-                self.macro.append(macro_commands.OperationRun(user_macro))
+        self.anybodycon_path = anybodycon_path(self.config)
         self.apt_opts = {
             'return_task_info': True,
             'silent': True,
-            'anybodycon_path': self.config.getoption("--anybodycon"),
+            'anybodycon_path': self.anybodycon_path,
             'ignore_errors': self.ignore_errors,
             'timeout': self.timeout
-            }
+        }
+        if not self.config.getoption("--only-load"):
+            self.macro.append(macro_commands.OperationRun('Main.RunTest'))
+        if pytest.anytest.save and self.compare_study:
+            # Add compare test to the test macro
+            self.compare_filename = pytest.anytest.get_compare_test_filename(name, id, self.compare_study)
+            save_str = 'classoperation {}.Output "Save data" --type="Deep" --file="{}"'
+            save_str = save_str.format(self.compare_study, self.compare_filename)
+            self.macro.append(macro_commands.MacroCommand(save_str))
+
 
 
     def runtest(self):
+        #import ipdb; ipdb.set_trace()
         tmpdir = self.config._tmpdirhandler.mktemp(self.name)
+        if self.compare_filename:
+            os.makedirs(os.path.dirname(self.compare_filename))
         with change_dir(tmpdir.strpath):
             app = AnyPyProcess(**self.apt_opts)
             result = app.start_macro(self.macro)[0]
             self.app = app
         # Ignore error due to missing Main.RunTest
         if 'ERROR' in result:
-            for i, e in enumerate(result['ERROR']):
-                if 'Error : Main.RunTest : Unresolved object' in e:
+            for i, err in enumerate(result['ERROR']):
+                runtest_errros = ('Error : Main.RunTest : Unresolved object',
+                                  'Main.RunTest : Select Operation is not expected')
+                if any(s in err for s in runtest_errros):
                     del result['ERROR'][i]
                     break
         # Check that the expected errors are present
-        if self.expect_errors is not None:
-            if 'ERROR' in result:
-                # Remove any failures due to RunTest not working on failed models
-                for i, e in enumerate(result['ERROR']):
-                    if 'Main.RunTest : Select Operation is not expected' in e:
-                        del result['ERROR'][i]
-                        break
-                error_list = result['ERROR']
-            else:
-                error_list = []
+        if self.expect_errors:
+            error_list = result.get('ERROR', [])
             for xerr in self.expect_errors:
                 xerr_found = False
                 for i, error in enumerate(error_list):
@@ -187,17 +312,29 @@ class AnyItem(pytest.Item):
                         del error_list[i]
                 if not xerr_found:
                     self.errors.append('TEST ERROR: Expected error not '
-                                        'found: "{}"'.format(xerr))
+                                       'found: "{}"'.format(xerr))
         # Add remaining errors to item's error list
         if 'ERROR' in result and len(result['ERROR']) > 0:
             self.errors.extend(result['ERROR'])
+        # Add info to the hdf5 file if compare output was set
+        if self.compare_filename is not None:
+            import h5py
+            f = h5py.File(self.compare_filename, 'a')
+            f.attrs['anytest_processtime'] = result['task_processtime']
+            f.attrs['anytest_macro'] = '\n'.join(result['task_macro'][:-1])
+            f.attrs['anytest_ammr_version'] = pytest.anytest.ammr_version
+            f.attrs['anytest_ams_version'] = pytest.anytest.ams_version
+            f.close()
+            basedir = os.path.dirname(self.compare_filename)
+            macrofile = write_macro_file(basedir, self.compare_study, self.macro[:-1])
+            with open(os.path.join(basedir, self.compare_study + '.bat'), 'w') as f:
+                anybodygui = re.sub(r"(?i)anybodycon\.exe", r"anybody\.exe", self.anybodycon_path)
+                f.write('"{}" -m "{}"'.format(anybodygui, macrofile))
+        
         if len(self.errors) > 0:
             if self.config.getoption("--create-macros"):
-                macro_file = 'run_{}.anymcr'.format(self.name)
-                macro_file = os.path.join(self.fspath.dirname, macro_file)
-                with open(macro_file,'w') as f:
-                    f.writelines([str(mcr)+'\n' for mcr in self.macro])
-                self.macro_file = macro_file
+                macro_name = write_macro_file(self.fspath.dirname, self.name, self.macro)
+                self.macro_file = macro_name
             raise  AnyException(self)
         return
         
@@ -236,231 +373,52 @@ class AnyException(Exception):
 
 
     
-def get_ammr_version(ammr_path):
-    import xml.etree.ElementTree as ET
-    version_file = os.path.join(ammr_path,'AMMR.version.xml')
-    try:
-        tree = ET.parse(version_file)
-        version = tree.getroot()
-        vstring = "{}.{}.{}".format(version.find('v1').text,
-                                    version.find('v2').text,
-                                    version.find('v3').text )
-    except:
-        vstring = "Unknown AMMR version"
-    return vstring
 
 
-def copy_files(src_dir, dst_dir):
-    src_dir = str(src_dir)
-    dst_dir = str(dst_dir)
-    dirlist = os.listdir( src_dir )
-    for name in dirlist:
-        if name.endswith('.py') and name.find('test') != -1:
-            continue
-        full_name = os.path.join( src_dir, name)
-        if (os.path.isfile(full_name) and name.find('_test')):
-            shutil.copy(full_name, dst_dir)
-        if os.path.isdir(full_name):
-            dst_subdir = os.path.join(dst_dir, name)
-            shutil.copytree(full_name,dst_subdir, 
-                            ignore=shutil.ignore_patterns('test_*.py','*_test.py'))
-
-        
-@pytest.fixture(scope='module')
-def copyfiles(request, test_dir):
-    if request.config.getoption('--inplace') or request.config.getoption('--copyfiles'):
-        # No need to copy files if test is allready run inplace, or if it
-        # is done as a global option.
-        pass
-    else:
-        model_folder = request.fspath.new(basename='')
-        copy_files(model_folder, test_dir)
-    return test_dir
-
-
-@pytest.fixture(scope='module')
-def test_dir(request):
-    model_folder = request.fspath.new(basename='')
-    if ( request.config.getoption('--inplace') 
-         and not request.config.getoption('--copyfiles')):
-        return model_folder
-    else:
-        tempdir = request.config._tmpdirhandler.mktemp(model_folder.basename,
-                                                   numbered=True)
-        return tempdir
-
-        
-@pytest.fixture(scope='module')
-def model_dir(request, test_dir):
-    model_folder = request.fspath.new(basename='')
-    if (request.config.getoption('--copyfiles') ):
-        copy_files(model_folder, test_dir)
-        model_folder = test_dir
-    return model_folder
-
+def parse_save_name(stringval):
+    if not stringval:
+        raise argparse.ArgumentTypeError("Argument can't be empty.")
+    not_allowed = ''.join(c for c in r"\/:*?<>|" if c in stringval)
+    if not_allowed:
+        raise argparse.ArgumentTypeError("The following characters are not allowed: "
+                                         "/:*?<>|\\ (it has %r)" % not_allowed)
+    return stringval
 
 def pytest_addoption(parser):
     group = parser.getgroup("anypytools", "testing AnyBody models")
 
-    group._addoption("--ammr", action="store", default="built-in", metavar="path",
-        help="AMMR used in test: built-in or path-to-ammr")
-    group._addoption("--anybodycon", action="store", metavar="path",
+    group.addoption("--anybodycon", action="store", metavar="path",
         help="anybodycon.exe used in test: default or path-to-anybodycon")
-    group._addoption("--collect-main-files", action="store_true",
-        help="Also collect any files called ending in 'main.any'")
-    group._addoption("--only-load", action="store_true",
+    group.addoption("--only-load", action="store_true",
         help="Only run a load test. I.e. do not run the 'RunTest' macro")
     group._addoption("--timeout", default=3600, type=int,
         help="terminate tests after a certain timeout period")
-    group._addoption("--run-macro", action="store", default=None,
-        help="Specify a special macro to run")
-    group._addoption("--create-macros", action="store_true",
+    tag = get_tag()
+    group.addoption("--anytest-save", metavar="NAME", type=parse_save_name,
+        help='Save the current run into folder `~/.anytest/counter-NAME/`.'
+        'Default: `<commitid>_<date>_<time>_<isdirty>`, example: `%s`.'% tag)
+    group.addoption( "--anytest-autosave", action='store_const', const=tag,
+        help="Autosave the current run into folder'~/.anytest/counter_%s/" % tag)
+    group.addoption("--create-macros", action="store_true",
         help="Create a macro file if the test fails. This makes it easy to re-run "
              "the failed test in the gui application.")
-    group._addoption("--inplace", action="store_true",
-        help="Run tests in place. The macro file will be placed together with "
-             "the model files. It becomes the responsobility of the model to "
-             "ensure that the correct path statements are set.")
-    group._addoption("--copyfiles", action="store_true",
-        help=("Copy all test files to temp dir before test." 
-              "This option has no effect if --inplace is set.") )
-    group._addoption("--ammrdirs", action="append", default=[], metavar="path",
-           help="add AMMR path to test for. (still under test)")
+    group.addoption("--anytest-compare",
+        metavar="NUM", nargs="?", default=[], const=True,
+        help="Compare the current run against run NUM or the latest "
+             "saved run if unspecified.")
+    group.addoption("--anytest-storage",
+        metavar="path", default=os.path.expanduser("~/.anytest"),
+        help="Specify a path to store the runs (when --anytest-save "
+             "or --benchmark-autosave are used). Default: %(default)r."
+    )
     
-    parser.addini('ammrdirs', 'list of ammr paths to test against.', type="pathlist")
+    #parser.addini('ammrdirs', 'list of ammr paths to test against.', type="pathlist")
 
 
 #def pytest_report_header(config):
 #    return '\nAnyPyTools Test Plugin\n'
 #    
 
-
-def pytest_configure(config):
-    anybodycon_path = config.getoption("--anybodycon")
-    if anybodycon_path is None:
-        anybodycon_path = get_anybodycon_path()
-
-    if not os.path.isfile(anybodycon_path):
-        raise IOError('Cound not find: {}'.format(anybodycon_path))
-    
-    console_output = subprocess.check_output([anybodycon_path, '/ni'])
-    ams_version = console_output.splitlines()[2].decode()[23:]
-    setattr(config, 'anybodycon_version', ams_version)
-    setattr(config,'anybodycon_path', anybodycon_path)
     
 
-class AnyTestFixture():
-    def __init__(self, test_dir, model_dir, app, ammr):
-        self.app = app
-        self.ammr = ammr
-        self.model_path = model_dir
-        self.test_dir = test_dir
-        self.macro_gen = MacroGenerator()
-        self.path_kw = {'AMMR_PATH':ammr,
-                        'TEMP_PATH': test_dir, 
-                        'ANYBODY_PATH_OUTPUT':test_dir}
-        self.define_kw = {}
-
-       
-    def load_macro(self,mainfile,define={},path={}):
-        main_path = os.path.join(self.model_path,mainfile)
-        load_str = 'load "{}" '.format(main_path)
-        self.path_kw.update(path)
-        self.define_kw.update(define)
-        for key,value in self.path_kw.items():
-            load_str += self.path2str(key,value)+" "
-        for key,value in self.define_kw.items():
-            load_str += self.define2str(key,value)+" "
-        return load_str
-
-    def check_output_log(self,result_list):
-        __tracebackhide__ = True
-        for result in result_list:
-            if 'ERROR' in result:
-                for err in result['ERROR']:
-                    pytest.fail(err)
-    
-    def check_model_load_failure(self, result_list):
-        __tracebackhide__ = True
-        for result in result_list:
-            if 'ERROR' in result:
-                for err in result['ERROR']:
-                    if 'Model loading skipped' in err:
-                        pytest.fail(err)
-    
-    
-    def define2str(self,key,value=None):
-        if isinstance(value, str):
-            if value.startswith('"') and value.endswith('"'):
-                defstr = '-def %s=---"\\"%s\\""'% (key, value[1:-1])
-            else:
-                defstr = '-def %s="%s"'% (key, value)
-        elif value is None:
-            defstr = '-def %s=""'% (key)
-        elif isinstance(value,float) :
-            defstr =  '-def %s="%g"'% (key, value) 
-        else:
-            defstr = '-def %s="%d"'% (key, value) 
-        return defstr 
         
-    def path2str(self,key,path='.'):
-        return '-p %s=---"%s"'% (key, path.replace('\\','\\\\')) 
-        
-        
-        
-        
-@pytest.fixture(scope='session')
-def ammr(request):
-    ammr_path = request.config.getoption("--ammr")
-    if ammr_path == 'built-in':
-        ammr_path = os.path.join(os.path.dirname(get_anybodycon_path()),'AMMR')
-    if not os.path.exists(ammr_path):
-        raise IOError('Cound not find: {}'.format(ammr_path))
-    ammr_version = get_ammr_version(ammr_path)
-
-    return ammr_path
-        
-        
-@pytest.fixture(scope='session')
-def anybodycon(request):
-    anybodycon_path = request.config.getoption("--anybodycon")
-    if anybodycon_path == None:
-        anybodycon_path = get_anybodycon_path()
-    if not os.path.isfile(anybodycon_path):
-        raise IOError('Cound not find: {}'.format(anybodycon_path))
-    console_output = subprocess.check_output([anybodycon_path, '/ni'])
-    ams_version = console_output.splitlines()[2].decode()[23:]
-    return anybodycon_path
-        
-
-        
-@pytest.yield_fixture()
-def anytest(request, test_dir, model_dir, ammr, anybodycon):  
-    #global _anybodycon_path, _ammr_path
-    
-    ammr_path = ammr
-    abc_path = anybodycon
-    
-    if (request.config.getoption('--inplace') 
-          and not request.config.getoption('--copyfiles') ):
-        # Don't keep log files if test are not copied and inplace option is set.
-        # This avoids clutter in the model directory
-        keep_files = False
-    else:
-        keep_files = True
-        
-    
-    
-    app = AnyPyProcess( anybodycon_path = abc_path,
-                        keep_logfiles = keep_files,
-                        logfile_prefix = request.function.__name__, 
-                        disp=False)
-    
-    atf = AnyTestFixture(str(test_dir), str(model_dir), app, ammr_path)
-    if request.config.getoption('--inplace'):
-        atf.path_kw = {}
-        atf.model_path = ''
-        
-    
-    with test_dir.as_cwd():
-        yield atf
