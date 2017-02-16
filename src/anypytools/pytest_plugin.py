@@ -19,6 +19,7 @@ import contextlib
 import subprocess
 from traceback import format_list, extract_tb
 
+import h5py
 import pytest
 
 from anypytools import AnyPyProcess, macro_commands
@@ -27,6 +28,15 @@ from anypytools.tools import (
     anybodycon_version, find_ammr_version, get_tag
 )
 from anypytools.generate_macros import MacroGenerator
+
+@contextlib.contextmanager
+def cwd(path):
+    oldpwd=os.getcwd()
+    os.chdir(path)
+    try:
+        yield
+    finally:
+        os.chdir(oldpwd)
 
 
 
@@ -38,10 +48,11 @@ class AnyTestSession(object):
         self.ams_version = ''
         self.basefolder = ''
         self.anytest_compare_dir = ''
-        self.current_run_folder = ''
+        self.current_run_folder = None
         self.save = ''
         self.last_number = None
         self.last_session = None
+        self.compare_session = None
 
     def configure(self, config):
         """ Configures the AnyTestSession object. This can't be in __init__()
@@ -49,21 +60,27 @@ class AnyTestSession(object):
             early in the pytest startup.
         """
         self.basefolder = config.getoption("--anytest-storage")
-        self.last_number = self._get_heighest_number()
-        if not self.last_number:
-            self.last_number = 0
-            self.last_session = None
-        else:
-            self.last_session = self._get_folder(self.last_number)
-
+        if not os.path.exists(self.basefolder):
+            os.makedirs(self.basefolder)
         self.save = config.getoption("--anytest-save") or config.getoption("--anytest-autosave")
         self.ammr_version = find_ammr_version(config.rootdir)
         self.ams_version = anybodycon_version(anybodycon_path(config))
-        self.current_run_folder = os.path.join(self.basefolder, 'current_run')
-        if os.path.exists(self.current_run_folder):
-            shutil.rmtree(self.current_run_folder)
+        self.compare_session = self.get_compare_session(config)
+        self.run_compare_test = bool(self.save or self.compare_session)
 
 
+    def get_compare_session(self, config):
+        """ Get the session to compare against """
+        comp = config.getoption("--anytest-compare")
+        if not comp:
+            return None
+        elif isinstance(comp, str) and comp.isdigit():
+            session = self._get_storage_folder(int(comp))
+        else:
+            session = self._get_storage_folder()
+        if not session:
+            raise ValueError('Could not find any stored test runs to compare against')
+        return session
 
     def finalize(self, config):
         if self.save:
@@ -78,7 +95,17 @@ class AnyTestSession(object):
             return '{:0>4d}_{}'.format(self.last_number + 1, self.save)
 
 
-    def _get_heighest_number(self):
+    def get_compare_params(self):
+        """ Return (base, h5) for every file compare store. """ 
+        if self.compare_session is None:
+            return []
+        with cwd(self.compare_session):
+            stored_h5files = glob.glob('**/*.anydata.h5')
+        return zip([self.compare_session]*len(stored_h5files), stored_h5files)
+
+
+
+    def _get_largest_prefix(self):
         """ Return the heights prefix number for folders
             in the self.basedir
         """
@@ -87,31 +114,40 @@ class AnyTestSession(object):
         numbers = [int(s) for s in prefixes if s.isdigit()]
         return max(numbers + [0])
 
-    def _get_folder(self, num):
+    def _get_storage_folder(self, number=None):
         """ Return the full folder name starting with num in
             self.basedir
         """
-        folder = glob.glob('{}\\{:0>4d}_*\\'.format(self.basefolder, num))
+        if not number:
+            number = self._get_largest_prefix()
+        if number is None:
+            return None
+        folder = glob.glob('{}\\{:0>4d}_*\\'.format(self.basefolder, number))
         if len(folder) > 1:
             raise ValueError('More folders with the same'
                              ' number prefix in {}'.format(self.basefolder))
         elif len(folder) == 0:
-            return ''
+            return None
         else:
             return folder[0]
 
-    def get_compare_test_filename(self, name, id, study):
+    def get_compare_fname(self, name, id, study):
         """ Return the name of the compare h5file, and ensure the parent folder exists"""
-        if self.save:
-            if id > 0:
-                compare_test_name = '{}_{}'.format(name, id)
-            else:
-                compare_test_name = '{}'.format(name)
-            compare_test_folder = os.path.join(self.current_run_folder, compare_test_name)
-            studyname = '{}.anydata.h5'.format(study)
-            return os.path.join(compare_test_folder, studyname)
+        # Initialize and empty the current_run folder.
+        if not self.current_run_folder:
+            self.current_run_folder = os.path.join(self.basefolder, 'current_run')
+            if os.path.exists(self.current_run_folder):
+                shutil.rmtree(self.current_run_folder)
+        if id > 0:
+            compare_test_name = '{}_{}'.format(name, id)
         else:
-            return ''
+            compare_test_name = '{}'.format(name)
+        compare_test_folder = os.path.join(self.current_run_folder, compare_test_name)
+        studyname = '{}.anydata.h5'.format(study)
+        return os.path.join(compare_test_folder, studyname)
+
+
+
 
 
 def _limited_traceback(excinfo):
@@ -149,6 +185,28 @@ def change_dir(path):
         yield
     finally:
         os.chdir(prev_cwd)
+
+
+def pytest_generate_tests(metafunc):
+    if 'anytest_compare' in metafunc.fixturenames:
+        params = pytest.anytest.get_compare_params()
+        metafunc.parametrize("anytest_compare",
+                             params, indirect=True)
+
+
+@pytest.fixture
+def anytest_compare(request):
+    import ipdb;ipdb.set_trace()
+    storage_folder, h5file = request.param
+    current_folder = pytest.anytest.current_run_folder
+    current_fname = os.path.join(current_folder, h5file)
+    if os.path.exists(current_fname):
+        current_h5 = h5py.File(current_fname)
+        stored_h5 = h5py.File(os.path.join(storage_folder, h5file))
+        yield current_h5, stored_h5
+    else:
+        pytest.skip('No matching h5 file found')
+        yield (None, None)
 
 
 def pytest_collect_file(parent, path):
@@ -200,13 +258,23 @@ def _parse_header(header):
             raise TypeError('define must be a dictionary, list or tuple')
     return ns
 
-
+def pytest_collection_modifyitems(session, config, items):
+    first = []
+    last = []
+    other = []
+    for item in items:
+        if hasattr(item, 'fixturenames') and 'anytest_compare' in item.fixturenames:
+            last.append(item)
+        elif item.get_marker('stores_h5'):
+            first.append(item)
+        else:
+            other.append(item)
+    items[:] = first + other + last
 
 def pytest_namespace():
     """ Add an instance of the AnyTestSession class to
         to the pytest name space """
     return {'anytest': AnyTestSession()}
-
 
 
 def pytest_configure(config):
@@ -259,6 +327,8 @@ class AnyItem(pytest.Item):
         self.expect_errors = kwargs.get('expect_errors', [])
         self.ignore_errors = kwargs.get('ignore_errors', [])
         self.compare_study = kwargs.get('compare_study', None)
+        if self.compare_study:
+            self.add_marker('stores_h5')
         self.timeout = self.config.getoption("--timeout")
         self.errors = []
         self.macro = [macro_commands.Load(self.fspath.strpath,
@@ -275,9 +345,9 @@ class AnyItem(pytest.Item):
         }
         if not self.config.getoption("--only-load"):
             self.macro.append(macro_commands.OperationRun('Main.RunTest'))
-        if pytest.anytest.save and self.compare_study:
+        if pytest.anytest.run_compare_test and self.compare_study:
             # Add compare test to the test macro
-            self.compare_filename = pytest.anytest.get_compare_test_filename(name, id, self.compare_study)
+            self.compare_filename = pytest.anytest.get_compare_fname(name, id, self.compare_study)
             save_str = 'classoperation {}.Output "Save data" --type="Deep" --file="{}"'
             save_str = save_str.format(self.compare_study, self.compare_filename)
             self.macro.append(macro_commands.MacroCommand(save_str))
@@ -285,7 +355,6 @@ class AnyItem(pytest.Item):
 
 
     def runtest(self):
-        #import ipdb; ipdb.set_trace()
         tmpdir = self.config._tmpdirhandler.mktemp(self.name)
         if self.compare_filename:
             os.makedirs(os.path.dirname(self.compare_filename))
