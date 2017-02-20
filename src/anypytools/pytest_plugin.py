@@ -63,7 +63,8 @@ class AnyTestSession(object):
         if not os.path.exists(self.basefolder):
             os.makedirs(self.basefolder)
         self.save = config.getoption("--anytest-save") or config.getoption("--anytest-autosave")
-        self.ammr_version = find_ammr_version(config.rootdir)
+        ammr_path = config.getoption("--ammr") or config.rootdir
+        self.ammr_version = find_ammr_version(ammr_path)
         self.ams_version = anybodycon_version(anybodycon_path(config))
         self.compare_session = self.get_compare_session(config)
         self.run_compare_test = bool(self.save or self.compare_session)
@@ -322,6 +323,8 @@ class AnyItem(pytest.Item):
         super().__init__(test_name, parent)
         self.defs = defs
         self.defs['TEST_NAME'] = '"{}"'.format(test_name)
+        if self.config.getoption("--ammr"):
+            paths['AMMR_PATH'] = self.config.getoption("--ammr")
         self.paths = _as_absolute_paths(paths, self.fspath.dirname)
         self.name = test_name
         self.expect_errors = kwargs.get('expect_errors', [])
@@ -458,6 +461,10 @@ def pytest_addoption(parser):
 
     group.addoption("--anybodycon", action="store", metavar="path",
         help="anybodycon.exe used in test: default or path-to-anybodycon")
+    group.addoption("--ammr", action="store", metavar="path",
+        help="Can be used to specify which AnyBody Managed Model Repository (AMMR) "
+             "to use. Setting this will pass a 'AMMR_PATH' path statement for all "
+             "models")
     group.addoption("--only-load", action="store_true",
         help="Only run a load test. I.e. do not run the 'RunTest' macro")
     group._addoption("--timeout", default=3600, type=int,
