@@ -63,7 +63,7 @@ class AnyTestSession(object):
         if not os.path.exists(self.basefolder):
             os.makedirs(self.basefolder)
         self.save = config.getoption("--anytest-save") or config.getoption("--anytest-autosave")
-        ammr_path = config.getoption("--ammr") or config.rootdir
+        ammr_path = config.getoption("--ammr") or config.rootdir.strpath
         self.ammr_version = find_ammr_version(ammr_path)
         self.ams_version = anybodycon_version(anybodycon_path(config))
         self.compare_session = self.get_compare_session(config)

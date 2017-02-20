@@ -121,7 +121,7 @@ def find_ammr_version(folder):
         for a ammr_verion.any file to parse"""
     any_version_file = 'AMMR.version.any'
     xml_version_file = 'AMMR.version.xml'
-    for basedir, dirs, files in walk_up(folder.strpath):
+    for basedir, dirs, files in walk_up(folder):
         if any_version_file in files:
             return ammr_any_version(os.path.join(basedir, any_version_file))
         elif xml_version_file in files:
