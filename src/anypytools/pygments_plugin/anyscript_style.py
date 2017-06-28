@@ -9,7 +9,7 @@ from builtins import *
 
 
 from pygments.style import Style
-from pygments.token import Keyword, Name, Comment, String, Error, Number, Operator, Generic, Whitespace, Token 
+from pygments.token import Keyword, Name, Comment, String, Error, Number, Operator, Generic, Whitespace, Token, Other 
 
 __all__ = ['AnyScriptStyle']
 
@@ -33,7 +33,7 @@ class AnyScriptStyle(Style):
           Name.Builtin:              "#0000FF", 
           Name.Function:             "#0000FF", 
           Name.Class:                "#0000FF", 
-          Name.Namespace:            "#0000FF", 
+          Name.Namespace:            "#900090", 
           Name.Exception:            "#D2413A", 
           Name.Variable:             "#19177C", 
           Name.Constant:             "#880000", 
@@ -42,6 +42,9 @@ class AnyScriptStyle(Style):
           Name.Attribute:            "#7D9029", 
           Name.Tag:                  "bold #008000", 
           Name.Decorator:            "#AA22FF", 
+	
+		  Other.Statements:			 "#900090",
+		  Other.Options:			 "bold",
    
           String:                    "#666666", 
           String.Doc:                "italic", 

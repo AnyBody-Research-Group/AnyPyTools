@@ -14,7 +14,7 @@ import os
 from pygments.lexer import (RegexLexer, include, bygroups,
                             default, words, inherit)
 from pygments.token import (Text, Comment, Operator, Keyword, Name, String,
-                            Number, Punctuation, Generic)
+                            Number, Punctuation, Generic, Other)
 
 
 __all__ = ['AnyScriptLexer', 'AnyScriptDocLexer']
@@ -28,7 +28,10 @@ with open(os.path.join(_ROOT, 'functions.txt')) as f:
     ANYFUNCTIONS = f.read().split('\n')
 with open(os.path.join(_ROOT, 'globals.txt')) as f:
     ANYGLOBALS = f.read().split('\n')
-
+with open(os.path.join(_ROOT, 'statements.txt')) as f:
+	ANYSTATEMENTS = f.read().split('\n')
+with open(os.path.join(_ROOT, 'options.txt')) as f:
+	ANYOPTIONS = f.read().split('\n')
 
 class AnyScriptLexer(RegexLexer):
     """
@@ -77,6 +80,12 @@ class AnyScriptLexer(RegexLexer):
             # Globals
             (words(ANYGLOBALS,
                  suffix=r'\b'), Keyword),
+			# BM_Statements
+			(words(ANYSTATEMENTS,
+                 suffix=r'\b'), Other.Statements),
+			# BM_Options
+			(words(ANYOPTIONS,
+                 suffix=r'\b'), Other.Options),
             # Functions
             (words(ANYFUNCTIONS, suffix=r'\b'), Name.Builtin),
             # (r'(\.)([a-zA-Z_]\w*)',
