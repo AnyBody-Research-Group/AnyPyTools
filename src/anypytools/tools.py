@@ -25,6 +25,7 @@ import functools
 import subprocess
 import collections
 from ast import literal_eval
+from ctypes import create_unicode_buffer, windll
 from _thread import get_ident as _get_ident
 
 #external imports
@@ -347,6 +348,14 @@ class AnyPyProcessOutputList(collections.MutableSequence):
         db.close()
         return out
 
+def _expand_short_path_name(short_path_name):
+    BUFFER_SIZE = 500
+    buffer = create_unicode_buffer(BUFFER_SIZE)
+    get_long_path_name = windll.kernel32.GetLongPathNameW
+    get_long_path_name(short_path_name, buffer, BUFFER_SIZE)
+    long_path_name = buffer.value
+    return long_path_name
+
 
 
 def get_anybodycon_path():
@@ -361,8 +370,12 @@ def get_anybodycon_path():
                         'AnyBody.AnyScript\shell\open\command')
     except WindowsError:
         raise WindowsError('Could not locate AnyBody in registry')
-    abpath = abpath.rsplit(' ',1)[0].strip('"')
-    return os.path.join(os.path.dirname(abpath),'AnyBodyCon.exe')
+    abpath = abpath.rsplit(' ', 1)[0].strip('"')
+    abpath = os.path.join(os.path.dirname(abpath), 'AnyBodyCon.exe')
+    if '~' in abpath:
+        abpath = _expand_short_path_name(abpath)
+    return abpath
+
 
 
 def define2str(key,value=None):

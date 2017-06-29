@@ -65,9 +65,11 @@ class AnyTestSession(object):
         self.save = config.getoption("--anytest-save") or config.getoption("--anytest-autosave")
         ammr_path = config.getoption("--ammr") or config.rootdir.strpath
         self.ammr_version = find_ammr_version(ammr_path)
-        self.ams_version = anybodycon_version(anybodycon_path(config))
+        self.ams_path = anybodycon_path(config)
+        self.ams_version = anybodycon_version(self.ams_path)
         self.compare_session = self.get_compare_session(config)
         self.run_compare_test = bool(self.save or self.compare_session)
+
 
 
     def get_compare_session(self, config):
@@ -197,7 +199,6 @@ def pytest_generate_tests(metafunc):
 
 @pytest.fixture
 def anytest_compare(request):
-    import ipdb;ipdb.set_trace()
     storage_folder, h5file = request.param
     current_folder = pytest.anytest.current_run_folder
     current_fname = os.path.join(current_folder, h5file)
@@ -271,6 +272,9 @@ def pytest_collection_modifyitems(session, config, items):
         else:
             other.append(item)
     items[:] = first + other + last
+
+def pytest_collection_finish(session):
+    print('\nUsing AnyBodyCon: ', pytest.anytest.ams_path)
 
 def pytest_namespace():
     """ Add an instance of the AnyTestSession class to
