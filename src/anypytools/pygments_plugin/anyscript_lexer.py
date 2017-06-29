@@ -12,23 +12,26 @@ from builtins import *
 import os
 
 from pygments.lexer import (RegexLexer, include, bygroups,
-                            default, words, inherit)
+                            default, words)
 from pygments.token import (Text, Comment, Operator, Keyword, Name, String,
-                            Number, Punctuation, Generic)
+                            Number, Punctuation, Generic, Other)
 
 
-__all__ = ['AnyScriptLexer', 'AnyScriptDocLexer']
+__all__ = ['AnyScriptLexer']
 
 _ROOT = os.path.abspath(os.path.dirname(__file__))
 
 
 with open(os.path.join(_ROOT, 'classes.txt')) as f:
-    ANYCLASSES = f.read().split('\n')
+    ANYCLASSES = f.read().split()
 with open(os.path.join(_ROOT, 'functions.txt')) as f:
-    ANYFUNCTIONS = f.read().split('\n')
+    ANYFUNCTIONS = f.read().split()
 with open(os.path.join(_ROOT, 'globals.txt')) as f:
-    ANYGLOBALS = f.read().split('\n')
-
+    ANYGLOBALS = f.read().split()
+with open(os.path.join(_ROOT, 'statements.txt')) as f:
+    ANYSTATEMENTS = f.read().split()
+with open(os.path.join(_ROOT, 'options.txt')) as f:
+    ANYOPTIONS = f.read().split()
 
 class AnyScriptLexer(RegexLexer):
     """
@@ -48,9 +51,9 @@ class AnyScriptLexer(RegexLexer):
             # ('^#', Comment.Preproc, 'macro'),
             # # or with whitespace
             # ('^(' + _ws1 + r')(#if\s+0)',
-             # bygroups(using(this), Comment.Preproc), 'if0'),
+            # bygroups(using(this), Comment.Preproc), 'if0'),
             # ('^(' + _ws1 + ')(#)',
-             # bygroups(using(this), Comment.Preproc), 'macro'),
+            # bygroups(using(this), Comment.Preproc), 'macro'),
             (r'\n', Text),
             (r'\s+', Text),
             (r'\\\n', Text),  # line continuation
@@ -60,13 +63,12 @@ class AnyScriptLexer(RegexLexer):
 
         'statements': [
             # For AnyDoc highlighting
-            (r'(§)(/[*])(§)((.|\n)*?)(§)([*]/)(§)', 
-            bygroups(Generic.Deleted,Generic.Error,Generic.Deleted,Comment.Multiline,Comment.Multiline,Generic.Deleted,Generic.Error,Generic.Deleted)),
-            (r'(§)(//)(§)',bygroups(Generic.Deleted,Generic.Error,Generic.Deleted),'multiline-directive'),
-            (r'§',Generic.Deleted,'new-codes'),
+            (r'(§)(/[*])(§)((.|\n)*?)(§)([*]/)(§)',
+            bygroups(Generic.Deleted,Generic.Error, Generic.Deleted, Comment.Multiline, Comment.Multiline, Generic.Deleted, Generic.Error, Generic.Deleted)),
+            (r'(§)(//)(§)',bygroups(Generic.Deleted, Generic.Error, Generic.Deleted), 'multiline-directive'),
+            (r'§',Generic.Deleted, 'new-codes'),
             ####################
-            (words(('#if','#ifdef','#ifndef','#undef','#endif' ,'#include', '#import', '#else', '#elif', '#classtemplate','#define','#path')
-             ), Comment.Preproc),
+            (words(('#if', '#ifdef', '#ifndef', '#undef', '#endif', '#include', '#import', '#else', '#elif', '#classtemplate', '#define', '#path', '#var')), Comment.Preproc),
             (r'[L@]?"', String, 'string'),
             (r'(\d+\.\d*|\.\d+|\d+)[eE][+-]?\d+[lL]?', Number.Float),
             (r'(\d+\.\d*|\.\d+|\d+[fF])[fF]?', Number.Float),
@@ -77,14 +79,20 @@ class AnyScriptLexer(RegexLexer):
             # Globals
             (words(ANYGLOBALS,
                  suffix=r'\b'), Keyword),
+            # BM_Statements
+            (words(ANYSTATEMENTS,
+                 suffix=r'\b'), Other.Statements),
+            # BM_Options
+            (words(ANYOPTIONS,
+                 suffix=r'\b'), Other.Options),
             # Functions
             (words(ANYFUNCTIONS, suffix=r'\b'), Name.Builtin),
             # (r'(\.)([a-zA-Z_]\w*)',
-             # bygroups(Operator, Name.Attribute)),
+            # bygroups(Operator, Name.Attribute)),
             # void is an actual keyword, others are in glib-2.0.vapi
             (words(ANYCLASSES,
                    suffix=r'\b'), Keyword),
-            ('[a-zA-Z_]\w*', Name),
+            (r'[a-zA-Z_]\w*', Name),
         ],
         'root': [
             include('whitespace'),
