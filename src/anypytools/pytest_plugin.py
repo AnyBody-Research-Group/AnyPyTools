@@ -230,7 +230,7 @@ def _format_switches(defs):
         defs = [{}]
     return defs
 
-def _as_absolute_paths(d, start):
+def _as_absolute_paths(d, start=os.getcwd()):
     return {k: os.path.abspath(os.path.relpath(v, start)) for k, v in d.items()}
 
 
@@ -325,7 +325,7 @@ class AnyItem(pytest.Item):
         self.defs['TEST_NAME'] = '"{}"'.format(test_name)
         if self.config.getoption("--ammr"):
             paths['AMMR_PATH'] = self.config.getoption("--ammr")
-        self.paths = _as_absolute_paths(paths, self.fspath.dirname)
+        self.paths = _as_absolute_paths(paths, start=self.config.rootdir.strpath)
         self.name = test_name
         self.expect_errors = kwargs.get('expect_errors', [])
         self.ignore_errors = kwargs.get('ignore_errors', [])
