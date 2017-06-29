@@ -68,7 +68,7 @@ class AnyScriptLexer(RegexLexer):
             (r'(§)(//)(§)',bygroups(Generic.Deleted, Generic.Error, Generic.Deleted), 'multiline-directive'),
             (r'§',Generic.Deleted, 'new-codes'),
             ####################
-            (words(('#if', '#ifdef', '#ifndef', '#undef', '#endif', '#include', '#import', '#else', '#elif', '#classtemplate', '#define', '#path')), Comment.Preproc),
+            (words(('#if', '#ifdef', '#ifndef', '#undef', '#endif', '#include', '#import', '#else', '#elif', '#classtemplate', '#define', '#path', '#var')), Comment.Preproc),
             (r'[L@]?"', String, 'string'),
             (r'(\d+\.\d*|\.\d+|\d+)[eE][+-]?\d+[lL]?', Number.Float),
             (r'(\d+\.\d*|\.\d+|\d+[fF])[fF]?', Number.Float),
