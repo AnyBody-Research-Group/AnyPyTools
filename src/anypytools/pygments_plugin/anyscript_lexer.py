@@ -12,12 +12,12 @@ from builtins import *
 import os
 
 from pygments.lexer import (RegexLexer, include, bygroups,
-                            default, words, inherit)
+                            default, words)
 from pygments.token import (Text, Comment, Operator, Keyword, Name, String,
                             Number, Punctuation, Generic, Other)
 
 
-__all__ = ['AnyScriptLexer', 'AnyScriptDocLexer']
+__all__ = ['AnyScriptLexer']
 
 _ROOT = os.path.abspath(os.path.dirname(__file__))
 
