@@ -348,16 +348,15 @@ class AnyPyProcessOutputList(collections.MutableSequence):
         db.close()
         return out
       
-    def to_json_list(self, ):
-        listofdicts_output = []
-        for AnyPyProOut in self:
-            trial = {}
-            for key, val in AnyPyProOut.items():
-                if isinstance(val, np.ndarray):
-                    val = val.tolist()
-                trial[key] = val
-            listofdicts_output.append(trial)
-        return listofdicts_output
+    def tolist(self):
+    """ Return as native python types (list of dicts)"""
+    return [
+        { 
+            k: v.tolist() if isinstance(v, np.ndarray) else v
+            for k, v in elem.items()
+        }
+        for elem in self
+    ]
 
 def _expand_short_path_name(short_path_name):
     BUFFER_SIZE = 500
