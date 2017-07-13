@@ -347,6 +347,16 @@ class AnyPyProcessOutputList(collections.MutableSequence):
         out = db[key]
         db.close()
         return out
+      
+    def tolist(self):
+    """ Return as native python types (list of dicts)"""
+    return [
+        { 
+            k: v.tolist() if isinstance(v, np.ndarray) else v
+            for k, v in elem.items()
+        }
+        for elem in self
+    ]
 
 def _expand_short_path_name(short_path_name):
     BUFFER_SIZE = 500
