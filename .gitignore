@@ -2,7 +2,7 @@
 *.py[c]
 Tutorial/.ipynb_checkpoints
 *.anymcr
-src/*egg-info
+*egg-info
 *.bak
 dist/*
 build/*
