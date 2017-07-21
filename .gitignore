@@ -6,3 +6,5 @@ Tutorial/.ipynb_checkpoints
 *.bak
 dist/*
 build/*
+docs/_build/*
+
