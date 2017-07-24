@@ -1,4 +1,4 @@
-Macro commands
+anypytools.macro_commands
 ================================
 
 .. automodule:: anypytools.macro_commands

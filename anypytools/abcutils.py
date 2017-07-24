@@ -29,7 +29,7 @@ from future.utils import text_to_native_str
 from past.builtins import basestring as string_types
 
 from .tools import (make_hash, AnyPyProcessOutputList, parse_anybodycon_output,
-                    getsubdirs, get_anybodycon_path, mixedmethod,
+                    getsubdirs, get_anybodycon_path,
                     AnyPyProcessOutput, run_from_ipython, get_ncpu, silentremove)
 from .macroutils import AnyMacro, MacroCommand
 
@@ -366,13 +366,15 @@ class AnyPyProcess(object):
 
     Returns
     -------
-    app instance : AnyPyProcess :
+    AnyPyProcess
         An instance of the AnyPyProcess object for running batch processing,
         parameter studies and pertubation jobs.
 
-    Examples
-    --------
+    Example
+    -------
     >>> app = AnyPyProcess(num_processes=8, return_task_info=True)
+    >>> macro = ['load "MyModel.any"', 'operation Main.MyStudy.Kinematics', 'run']
+    >>> app.start_macro(macro)
 
     """
 
@@ -436,6 +438,29 @@ class AnyPyProcess(object):
         logging.debug('\nAnyPyProcess initialized')
 
     def save_results(self, filename, append=False):
+        """Save resently processed results
+        
+        Save results for later reloading or to continue processing unfished 
+        results at a later time. 
+
+        Parameters
+        ----------
+        filename : str
+            filename of the file where processing was stored.
+        append : bool
+            If true append data to what ever is already saved. This allows 
+            for saving data in batches.
+
+        Returns
+        -------
+        None
+
+        Examples
+        --------
+        >>> macro = ['load "model1.any"', 'operation Main.RunApplication', 'run']
+        >>> app.start_macro(macro)
+        >>> app.save_results('saved_data.db')
+        """
         if self.cached_tasklist:
             savekey = text_to_native_str('processed_tasks')
             db = shelve.open(text_to_native_str(filename), writeback=True)
@@ -485,8 +510,37 @@ class AnyPyProcess(object):
                             elif isinstance(v, np.ndarray):
                                     new_folder.create_dataset(str(k), data=v)
 
-    @mixedmethod
-    def load_results(self, cls, filename):
+    def load_results(self, filename):
+        """Load previously saved results
+        
+        Besides reloading results the function can be used to continue
+        a partial finished processing process. 
+
+
+        Parameters
+        ----------
+        filename : str
+            filename of the file where processing was stored.
+
+        Returns
+        -------
+        list
+            A list with the output from each macro executed. This maybe empty
+            the macros did not output any data.
+
+        Examples
+        --------
+
+        Results are easily reloaded:
+
+        >>> app = AnyPyProcess()
+        >>> results = app.load_results('saved_results.db')
+
+        Continue processing unfinished batches:
+
+        >>> app.load_results('unfinished_results.db')
+        >>> results = app.start_macro() # rerun unfinished
+        """
         loadkey = text_to_native_str('processed_tasks')
         db = shelve.open(text_to_native_str(filename))
         loaded_data = db[loadkey]
@@ -495,9 +549,7 @@ class AnyPyProcess(object):
         if not isinstance(loaded_data[0].output, AnyPyProcessOutput):
             for task in loaded_data:
                 task.output = AnyPyProcessOutput(task.output)
-        # Check if the functions is called as an instance method.
-        if self is not None:
-            self.cached_tasklist = loaded_data
+        self.cached_tasklist = loaded_data
         results = [task.get_output(True) for task in loaded_data]
         return AnyPyProcessOutputList(results)
 
@@ -533,12 +585,11 @@ class AnyPyProcess(object):
 
         Examples
         --------
-
         >>> macro = [['load "model1.any"', 'operation Main.RunApplication', 'run'],
                      ['load "model2.any"', 'operation Main.RunApplication', 'run'],
                      ['load "model3.any"', 'operation Main.RunApplication', 'run']]
         >>> folderlist = [('path1/', 'name1'), ('path2/', 'name2')]
-        >>> start_macro(macrolist, folderlist, search_subdirs = "*.main.any")
+        >>> app.start_macro(macro, folderlist, search_subdirs = "*.main.any")
 
         """
         # Handle different input types

@@ -22,6 +22,10 @@
 # sys.path.insert(0, os.path.abspath('.'))
 
 from anypytools import __version__ as ANYPYTOOLS_VERSION
+from recommonmark.parser import CommonMarkParser
+from recommonmark.transform import AutoStructify
+
+import cloud_sptheme
 
 
 # -- General configuration ------------------------------------------------
@@ -36,24 +40,41 @@ from anypytools import __version__ as ANYPYTOOLS_VERSION
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.mathjax',
-    'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
     'sphinx.ext.viewcode',
     'sphinx.ext.autosummary',
     'nbsphinx',
-    #'sphinx.ext.napoleon',
-    'numpydoc',
-    #yt'IPython.sphinxext.ipython_console_highlighting',
-]
+    'sphinx.ext.napoleon',
+    'IPython.sphinxext.ipython_console_highlighting',
+    'cloud_sptheme.ext.autodoc_sections',
+    'cloud_sptheme.ext.index_styling',
+    'cloud_sptheme.ext.relbar_toc',
+    'cloud_sptheme.ext.escaped_samp_literals',
+    'cloud_sptheme.ext.issue_tracker',
+    'cloud_sptheme.ext.table_styling',
+    ]
+
+napoleon_google_docstring = False
+napoleon_numpy_docstring = True
+napoleon_use_admonition_for_examples = True
+napoleon_use_admonition_for_notes = True
+napoleon_use_admonition_for_references = True
+
+
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
+source_parsers = {
+   '.md': CommonMarkParser,
+}
+
+
+
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
 #
-# source_suffix = ['.rst', '.md']
-source_suffix = '.rst'
+source_suffix = ['.rst', '.md']
 
 # The master toctree document.
 master_doc = 'index'
@@ -62,6 +83,9 @@ master_doc = 'index'
 project = 'AnyPyTools'
 copyright = '2017, Morten Enemark Lund'
 author = 'Morten Enemark Lund'
+
+github_doc_root = 'https://github.com/anybody-research-group/anypytools/tree/master/docs/'
+
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -82,7 +106,7 @@ language = None
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
-exclude_patterns = ['_build', '**.ipynb_checkpoints']
+exclude_patterns = ['_build', '**.ipynb_checkpoints', 'slides' ]
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
@@ -93,16 +117,28 @@ todo_include_todos = False
 
 # -- Options for HTML output ----------------------------------------------
 
+
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-#
-html_theme = 'alabaster'
+html_theme = "cloud"
+
+html_theme_path = [cloud_sptheme.get_theme_dir()]
+
+
+#html_theme = 'sphinxdoc'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
-# html_theme_options = {}
+html_theme_options = {
+    'roottarget': 'index' ,
+    'max_width': '1250px',
+    'minimal_width': '700px',
+    'borderless_decor':True,
+    'sidebarwidth':"3in",
+}
+
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -126,6 +162,9 @@ htmlhelp_basename = 'AnyPyToolsdoc'
 
 
 html_logo = '_static/anypytools_logo.png'
+
+
+nbsphinx_execute = 'never'
 
 
 
@@ -188,5 +227,9 @@ autosummary_generate = []
 # Prevent numpy from making silly tables
 numpydoc_show_class_members = False
 
-
-
+def setup(app):
+    app.add_config_value('recommonmark_config', {
+            'url_resolver': lambda url: github_doc_root + url,
+            'auto_toc_tree_section': 'Contents',
+            }, True)
+    app.add_transform(AutoStructify)

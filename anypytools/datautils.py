@@ -120,7 +120,7 @@ def read_anyoutputfile(filepath):
     """ Read an AnyOutput file
 
     Parameters
-    ---------
+    ----------
     filepath : str
 
 

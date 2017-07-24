@@ -1,0 +1,4 @@
+cloud_sptheme
+numpydoc
+Sphinx
+recommonmark

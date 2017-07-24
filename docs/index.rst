@@ -3,24 +3,29 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to AnyPyTools's documentation!
+AnyPyTools's documentation!
 ======================================
 
+AnyPyTools is a toolkit for working with the AnyBody Modeling System (AMS) from
+Python. Its main purpose is to launch AnyBody simulations and collect results.
+It has a scheduler to launch multiple instances of AMS utilising computers with
+multiple cores. AnyPyTools makes it possible to run parameter and Monte Carlo
+studies more efficiently than from within AMS.
 
-=========
-Contents:
-=========
-
-**Installation:**
+=============
+Installation
+=============
 
 .. toctree::
     :titlesonly:
     :maxdepth: 1
 
     dependencies
-    
+    install_guide
 
-**Guides:**
+=============
+Guides
+=============
 
 .. toctree::
     :titlesonly:
@@ -33,31 +38,35 @@ Contents:
     Tutorial/05_Monte_Carlo_studies_etc.ipynb
     Tutorial/06_Tips&Tricks.ipynb
 
-
-**Development Spiral:**
+==============
+Documentation
+==============
 
 .. toctree::
     :titlesonly:
     :maxdepth: 1
 
     api/index
-    devguide/
-    changelog
-    faq
-    todo
-
+    pytest_plugin
 
 
 ============
-Contributing
+Development
 ============
-We highly encourage contributions to AnyPyTools!  If you would like to contribute,
+
+I greatly appreciate any contributions to AnyPyTools!  If you would like to contribute,
 it is as easy as forking the repository on GitHub, making your changes, and
 issuing a pull request.  If you have any questions about this process don't
 hesitate to ask.
 
 See the `Developer's Guide <devguide.html>`_ for more information about contributing.
 
+.. toctree::
+    :titlesonly:
+    :maxdepth: 1
+    
+    devguide
+    changelog
 
 
 ==========
