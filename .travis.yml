@@ -27,7 +27,7 @@ before_script:
 script:
     - set -e
     - cd docs;
-    - make html;
+    - make html-dev<;
     - cd ..;
     - doctr deploy --deploy-repo AnyBody-Research-Group/anypytools-docs dev;
       #git checkout $(git describe --tags `git rev-list --tags --max-count=1`);
