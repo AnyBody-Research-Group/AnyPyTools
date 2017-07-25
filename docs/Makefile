@@ -2,13 +2,17 @@
 #
 
 # You can set these variables from the command line.
-SPHINXOPTS    =
+SPHINXOPTS    = -W
 SPHINXBUILD   = python -msphinx
 SPHINXPROJ    = AnyPyTools
 SOURCEDIR     = .
 BUILDDIR      = _build
 
-html: SPHINXOPTS += -W
+html: 
+	@$(SPHINXBUILD) -M html "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+
+html-dev: 
+	@$(SPHINXBUILD) -M html "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) -t DEV_BUILD $(O)
 
 # Put it first so that "make" without argument is like "make help".
 help:
