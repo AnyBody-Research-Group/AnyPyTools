@@ -54,6 +54,7 @@ extensions = [
     'cloud_sptheme.ext.table_styling',
     ]
 
+
 napoleon_google_docstring = False
 napoleon_numpy_docstring = True
 napoleon_use_admonition_for_examples = True
