@@ -20,11 +20,14 @@ import numpy as np
 
 from scipy.stats import distributions
 
-def is_python35():
-    return (sys.version_info[0]==3 and sys.version_info[1]>=5)
+def is_python2():
+    return (sys.version_info[0]==2)
+
+def is_python34():
+    return (sys.version_info[0]==3 and sys.version_info[1]==4)
 
 
-if sys.platform.startswith("win") and not is_python35():
+if sys.platform.startswith("win") and (is_python2() or is_python34()):
     # This is a horrible hack to work around a bug in
     # scipy http://stackoverflow.com/questions/15457786/ctrl-c-crashes-python-after-importing-scipy-stats
     try:
