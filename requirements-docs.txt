@@ -1,5 +1,6 @@
 cloud_sptheme
-nbsphinx 
+nbsphinx
 numpydoc
 Sphinx
 recommonmark
+ipython
