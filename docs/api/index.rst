@@ -27,7 +27,7 @@ Data utilities
     h5py_wrapper
 
 Internal utilities
---------------
+------------------s
 
 .. toctree::
     :maxdepth: 2

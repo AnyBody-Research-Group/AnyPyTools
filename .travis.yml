@@ -1,32 +1,38 @@
 language: python
-    env:
-      global:
-        - secure: "vKZ1zbnGIhZSJOIOLWSKQbHQRoTBt9HNzGSvjW96+EFdOZ6ushzuWtRrv8Y8NKJRAKfSWHjewU+0bpjpCQiZR5nA0w7Y77iiwtmcR2rOP00zb/pYNydwxmLsZzGk0nNpuYaD7tiHnLC3JCzIM7MnVwAU1+sEyUvfvRApVakUrDBETy/NcIdSXSa9NM9XUwAQovsGsRCQ37OeA2ug+yb2zujy6DVh960R1I9VEKVAXJSZCVe1DQY8GYOqlBrRVbbvQJKBP3onKaDp5h8syeFrqXxPIb5DgnIRMhAQE66rl1RpXDosBbbI58G0yBUx0knO+iCJI0coHRMAode2i9H9O0azvKtBpadObzAxFKKPfCZzdNcsqUuxunkNhghg3LWrz6niQn5rmX2MIbGgGw/c2HaUGooZZdZmP7JmGB5fTHNuL9qlsK8JNXaPGE6EK1rrSVMfAhMi5Fm/PCf7GGcx4Qnb0Kudjjchh0kEvB4vqigeg1XMcWb96jSxfnR7gckPXQEMZBRGQl+rxqcQcQgL5iCooR2ze1982FlgoL13JDd6sjx2ksUPlTaq99O6foVZV0Gi92yZeIw1j3p/1k5tfYDKt1q3Vus8hVWP1ql/VYjvUVRyl2En/C8NFDX104A91covqhnof8fM1x9PZhYbh7lvs1JpVMYpZfmIDU925IA="matrix:
-    include:
-        - os: linux
-          python: 3.6
-          env:
-            - MINICONDA_OS="Linux"
+
+python:
+  - 3.6
+
+env:
+    global:
+        - secure: "vKZ1zbnGIhZSJOIOLWSKQbHQRoTBt9HNzGSvjW96+EFdOZ6ushzuWtRrv8Y8NKJRAKfSWHjewU+0bpjpCQiZR5nA0w7Y77iiwtmcR2rOP00zb/pYNydwxmLsZzGk0nNpuYaD7tiHnLC3JCzIM7MnVwAU1+sEyUvfvRApVakUrDBETy/NcIdSXSa9NM9XUwAQovsGsRCQ37OeA2ug+yb2zujy6DVh960R1I9VEKVAXJSZCVe1DQY8GYOqlBrRVbbvQJKBP3onKaDp5h8syeFrqXxPIb5DgnIRMhAQE66rl1RpXDosBbbI58G0yBUx0knO+iCJI0coHRMAode2i9H9O0azvKtBpadObzAxFKKPfCZzdNcsqUuxunkNhghg3LWrz6niQn5rmX2MIbGgGw/c2HaUGooZZdZmP7JmGB5fTHNuL9qlsK8JNXaPGE6EK1rrSVMfAhMi5Fm/PCf7GGcx4Qnb0Kudjjchh0kEvB4vqigeg1XMcWb96jSxfnR7gckPXQEMZBRGQl+rxqcQcQgL5iCooR2ze1982FlgoL13JDd6sjx2ksUPlTaq99O6foVZV0Gi92yZeIw1j3p/1k5tfYDKt1q3Vus8hVWP1ql/VYjvUVRyl2En/C8NFDX104A91covqhnof8fM1x9PZhYbh7lvs1JpVMYpZfmIDU925IA="
 
 install:
-    pip install -r requirements.txt
-    python setup.py install;
-    pip install -r requirements-docs.txt;
-    pip install doctr;
-
+  - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+  - bash miniconda.sh -b -p $HOME/miniconda
+  - export PATH="$HOME/miniconda/bin:$PATH"
+  - hash -r
+  - conda config --set always_yes yes --set changeps1 no
+  - conda config --add channels conda-forge # For sphinxcontrib.autoprogram
+  - conda update -q conda 
+  - conda info -a
+  - conda create -q -n doc-build-environment python=3.6 sphinx pandoc cloud_sptheme nbconvert ipykernel nbsphinx numpy scipy future doctr h5py pytest
+  - source activate doc-build-environment
+  - pip install recommonmark
+  - python setup.py install
 
 before_script:
-  - rvm get head || true
+    - rvm get head || true
 
 script:
-  - set -e
-    cd docs;
-    make html;
-    cd ..;
-    doctr deploy --deploy-repo AnyBody-Research-Group/anypytools-docs dev;
-    #git checkout $(git describe --tags `git rev-list --tags --max-count=1`);
-    #cd docs;
-    #make clean html;
-    #cd ..;
-    #doctr deploy --deploy-repo AnyBody-Research-Group/anypytools-docs .;
+    - set -e
+    - cd docs;
+    - make html;
+    - cd ..;
+    - doctr deploy --deploy-repo AnyBody-Research-Group/anypytools-docs dev;
+      #git checkout $(git describe --tags `git rev-list --tags --max-count=1`);
+      #cd docs;
+      #make clean html;
+      #cd ..;
+      #doctr deploy --deploy-repo AnyBody-Research-Group/anypytools-docs .;
 

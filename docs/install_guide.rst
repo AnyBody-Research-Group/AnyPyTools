@@ -31,7 +31,6 @@ Install from source
 
 To install xonsh from source on Windows, first install `Python`_. Remember to select "Add python to PATH" during installation.
 
-Next, install the `dependencies`_:
 
 Download the latest `anypytools-master.zip`_ from github and unzip it
 to ``anypytools-master``.
@@ -43,7 +42,7 @@ Now install anypytools:
    > cd anypytools-master
    > pip install -e
 
-.. _Python v3.4+: https://www.python.org/downloads/windows/
+.. _Python: https://www.python.org/downloads/windows/
 .. _anypytools-master.zip: https://github.com/anybody-research-group/anypytools/archive/master.zip
 
 
