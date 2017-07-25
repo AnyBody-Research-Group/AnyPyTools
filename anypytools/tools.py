@@ -25,7 +25,6 @@ import functools
 import subprocess
 import collections
 from ast import literal_eval
-from ctypes import create_unicode_buffer, windll
 from _thread import get_ident as _get_ident
 
 #external imports
@@ -338,6 +337,7 @@ class AnyPyProcessOutputList(collections.MutableSequence):
         ]
 
 def _expand_short_path_name(short_path_name):
+    from ctypes import create_unicode_buffer, windll
     BUFFER_SIZE = 500
     buffer = create_unicode_buffer(BUFFER_SIZE)
     get_long_path_name = windll.kernel32.GetLongPathNameW
