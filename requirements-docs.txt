@@ -4,3 +4,4 @@ numpydoc
 Sphinx
 recommonmark
 ipython
+pandoc
