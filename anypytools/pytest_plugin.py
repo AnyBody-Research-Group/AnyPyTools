@@ -27,7 +27,6 @@ from anypytools.tools import (
     get_anybodycon_path, replace_bm_constants,
     anybodycon_version, find_ammr_version, get_tag
 )
-from anypytools.generate_macros import MacroGenerator
 
 @contextlib.contextmanager
 def cwd(path):
