@@ -21,9 +21,11 @@ def print_versions():
     """ Print all the versions of software that AnyPyTools relies on."""
     import sys, platform
     import numpy as np
+    import scipy as sp
     print("-=" * 38)
     print("AnyPyTools version: %s" % __version__)
     print("NumPy version: %s" % np.__version__)
+    print("SciPy version: %s" % sp.__version__)
     print("Python version: %s" % sys.version)
     (sysname, nodename, release, version, machine, processor) = \
         platform.uname()

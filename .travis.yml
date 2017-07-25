@@ -23,10 +23,10 @@ script:
     cd docs;
     make html;
     cd ..;
-    doctr deploy --deploy-repo anybody-research-group/anypytools-docs dev;
+    doctr deploy --deploy-repo AnyBody-Research-Group/anypytools-docs dev;
     git checkout $(git describe --tags `git rev-list --tags --max-count=1`);
     cd docs;
     make clean html;
     cd ..;
-    doctr deploy --deploy-repo anybody-research-group/anypytools-docs .;
+    doctr deploy --deploy-repo AnyBody-Research-Group/anypytools-docs .;
 
