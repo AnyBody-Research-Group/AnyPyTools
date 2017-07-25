@@ -20,7 +20,7 @@ demo_model_path = os.path.join(os.path.dirname(__file__), 'Demo.Arm2D.any')
 
 def has_blaze():
     try:
-        import anypytools.utils.blaze_converter
+        import anypytools.blaze_converter
         return True
     except ImportError:
         return False
@@ -193,9 +193,6 @@ class TestAnyPyProcess():
         app.save_results('test.db')
 
         reloaded = app.load_results('test.db')
-        reloaded['Main.ArmModel.GlobalRef.t']
-
-        reloaded = AnyPyProcess.load_results('test.db')
         reloaded['Main.ArmModel.GlobalRef.t']
 
     @pytest.mark.skipif(has_blaze, reason="blaze and dynd must be installed")

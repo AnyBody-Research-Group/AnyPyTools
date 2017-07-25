@@ -243,7 +243,7 @@ class AnyPyProcessOutputList(collections.MutableSequence):
                 # Data will be stacked as an array of objects, if the
                 # time dimension is not consistant. Warn that some numpy
                 # featurs will not be avaiable.
-                warnings.warn('\n\nSimulation time varies across macros. '
+                warnings.warn('\n\The time varies across macros. '
                       'Numpy does not support ragged arrays. Data is returned  '
                       'as an array of array objects' )
             return data
@@ -307,7 +307,7 @@ class AnyPyProcessOutputList(collections.MutableSequence):
 
     def to_dynd(self, **kwargs):
         try:
-            from .utils.blaze_converter import convert
+            from anypytools.blaze_converter import convert
             return convert(self.list,**kwargs)
         except ImportError:
             raise ImportError('The packages libdynd, dynd-python, datashape, '

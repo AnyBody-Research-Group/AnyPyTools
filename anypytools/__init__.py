@@ -4,14 +4,10 @@ logger.addHandler(logging.NullHandler())
 
 
 from .abcutils import AnyPyProcess
-from .generate_macros import (MacroGenerator, MonteCarloMacroGenerator,
-                              LatinHyperCubeMacroGenerator)
-
 from .macroutils import AnyMacro
 from . import macro_commands
 
 __all__ = ['datautils', 'h5py_wrapper', 'AnyPyProcess',
-           'MacroGenerator', 'MonteCarloMacroGenerator', 'LatinHyperCubeMacroGenerator'
            'AnyMacro', 'macro_commands', 'print_versions']
 
 __version__ = '0.9.7'
