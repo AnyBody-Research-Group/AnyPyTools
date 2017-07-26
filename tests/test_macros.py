@@ -72,6 +72,10 @@ def test_savevalues():
     c = mc.SaveValues('c:/design.anyset')
     assert c.get_macro(0) == 'classoperation Main "Save Values" --file="c:/design.anyset"'
 
+def test_savedata():
+    c = mc.SaveData('Main.MyStudy', 'output.anydata.h5')
+    assert c.get_macro(0) == 'classoperation Main.MyStudy.Output "Save data" --type="Deep" --file="output.anydata.h5"'
+
 def test_loadvalues():
     c = mc.LoadValues('c:/design.anyset')
     assert c.get_macro(0) == 'classoperation Main "Load Values" --file="c:/design.anyset"'
