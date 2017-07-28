@@ -33,6 +33,9 @@ def _check_input_path(path):
 
 
 class File(h5py.File):
+
+    __doc__ = h5py.File.__doc__
+
     def __init__(self, *args, **kwargs):
          super(File, self).__init__(*args, **kwargs)
          self.wrapped = True
@@ -86,9 +89,11 @@ class File(h5py.File):
                 pass
         return False
         
-File.__doc__ = h5py.File.__doc__
 
 class Group(h5py.Group):
+
+    __doc__ = h5py.Group.__doc__
+
     def __init__(self,arg):
         super(Group, self).__init__(arg)
         self.wrapped = True
@@ -141,10 +146,11 @@ class Group(h5py.Group):
                 pass
         return False
 
-Group.__doc__ = h5py.Group.__doc__
         
         
 class Dataset(h5py.Dataset):
+    __doc__ = h5py.Dataset.__doc__
+
     def __init__(self,arg):
         super(Dataset, self).__init__(arg)
         self.wrapped = True
@@ -158,15 +164,3 @@ class Dataset(h5py.Dataset):
     def parent(self):
         id = super(Dataset,self).parent.id
         return Group(id)
-
-Dataset.__doc__ = h5py.Dataset.__doc__
-        
-        
-if __name__ == '__main__':
-#    for data,header,filename in csv_trial_data('C:\Users\mel\SMIModelOutput', DEBUG= True):
-#        print header
-
-    outvars = ['/Output/Validation/EMG']
-
-    for data, filename in h5_trial_data(outvars):
-        print( data.keys() )
