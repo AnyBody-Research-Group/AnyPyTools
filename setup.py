@@ -37,7 +37,7 @@ setup(
     },
     author='Morten Lund',
     author_email='melund@gmail.com',
-    description='A library of python utilities for the AnyBody Modeling System',
+    description='A library of Python utilities for the AnyBody Modeling System',
     license='MIT',
     keywords=('AnyBody Modeling System ', 'AnyScript'),
     url='https://github.com/AnyBody-Research-Group/AnyPyTools',

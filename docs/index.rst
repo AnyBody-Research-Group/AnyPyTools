@@ -1,16 +1,17 @@
-.. AnyPyTools documentation master file, created by
-   sphinx-quickstart on Thu Oct 29 14:10:34 2015.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 AnyPyTools's documentation!
 ======================================
 
 AnyPyTools is a toolkit for working with the AnyBody Modeling System (AMS) from
-Python. Its main purpose is to launch AnyBody simulations and collect results.
-It has a scheduler to launch multiple instances of AMS utilising computers with
-multiple cores. AnyPyTools makes it possible to run parameter and Monte Carlo
-studies more efficiently than from within AMS.
+Python. 
+
+.. image:: _static/relax.png
+   :alt: Don't panic
+   :align: center
+
+Its main purpose is to launch AnyBody simulations and collect results. It has a
+scheduler to launch multiple instances of AMS utilising computers with multiple
+cores. AnyPyTools makes it easy to do parameter and sensitivity and many other
+things which is not possible directly within the AnyBody Modeling System.
 
 =============
 Installation
@@ -69,11 +70,17 @@ See the `Developer's Guide <devguide.html>`_ for more information about contribu
     changelog
 
 
-==========
-Contact Us
-==========
+=============
+Usefull links
+=============
+
 If you have questions or comments, please contact the author directly, or
-open an issue on GitHub.
+open a [new issue on GitHub](https://github.com/AnyBody-Research-Group/AnyPyTools/issues/new).
 
-
+* `Documentation <anybody-research-group.github.io/anypytools-docs>`_
+* `Gitter <https://gitter.im/AnyBody-Research-Group/AnyPyTools>`_
+* `GitHub Repository <https://github.com/AnyBody-Research-Group/AnyPyTools>`_
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
 
