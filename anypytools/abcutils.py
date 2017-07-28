@@ -1,13 +1,16 @@
 # -*- coding: utf-8 -*-
 """
-Utilities for working with the AnyBody Console applicaiton
+Utilities for working with the AnyBody Console applicaiton.
 
 Created on Fri Oct 19 21:14:59 2012
 @author: Morten
 """
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
-from builtins import *  # nopep8
+from builtins import (ascii, bytes, chr, dict, filter, hex, input,  # noqa
+                      int, map, next, oct, open, pow, range, round,
+                      str, super, zip)
+
 import os
 import sys
 import time
@@ -19,12 +22,12 @@ import atexit
 import logging
 import warnings
 import collections
-import numpy as np
 from subprocess import Popen
 from tempfile import NamedTemporaryFile
 from threading import Thread, RLock
 from queue import Queue
 
+import numpy as np
 from future.utils import text_to_native_str
 from past.builtins import basestring as string_types
 
@@ -34,7 +37,7 @@ from .tools import (make_hash, AnyPyProcessOutputList, parse_anybodycon_output,
 from .macroutils import AnyMacro, MacroCommand
 
 try:
-    from IPython.display import HTML, display 
+    from IPython.display import HTML, display
     import ipywidgets
 except ImportError:
     ipywidgets = HTML = display = None
@@ -47,21 +50,21 @@ _KILLED_BY_ANYPYTOOLS = 10
 
 
 class _SubProcessContainer(object):
-    """ Class to hold a record of process pids from Popen.
+    """Class to hold a record of process pids from Popen.
 
-        Properties
-        ----------
-        stop_all: boolean
-            If set to True all process held by the object will be automatically
-            killed
+    Properties
+    ----------
+    stop_all: boolean
+        If set to True all process held by the object will be automatically
+        killed
 
-        Methods
-        -------
-        add(pid):
-            Add process id to the record of process
+    Methods
+    -------
+    add(pid):
+        Add process id to the record of process
 
-        remove(pid):
-            Remove process id from the record
+    remove(pid):
+        Remove process id from the record
 
     """
 
@@ -96,8 +99,7 @@ class _SubProcessContainer(object):
                 self._stop_all = False
 
     def _kill_running_processes(self):
-        """ Clean up and shut down any running processes
-        """
+        """Clean up and shut down any running processes."""
         # Kill any rouge processes that are still running.
         with _thread_lock:
             killed = []
@@ -127,8 +129,7 @@ def _execute_anybodycon(macro,
                         timeout=3600,
                         keep_macrofile=False,
                         env=None):
-    """ Launches the AnyBodyConsole applicaiton with the specified macro
-        saving the result to logfile """
+    """Launch the AnyBodyConsole applicaiton."""
     if anybodycon_path is None:
         anybodycon_path = get_anybodycon_path()
     if not os.path.isfile(anybodycon_path):
@@ -164,7 +165,8 @@ def _execute_anybodycon(macro,
                 proc.terminate()
                 proc.communicate()
                 logfile.seek(0, 2)
-                logfile.write('\nERROR: AnyPyTools : Timeout after {:d} sec.'.format(int(timeout)))
+                logfile.write(
+                    '\nERROR: AnyPyTools : Timeout after {:d} sec.'.format(int(timeout)))
                 proc.returncode = 0
                 break
             time.sleep(0.05)
@@ -183,19 +185,19 @@ def _execute_anybodycon(macro,
 
 
 class _Task(object):
-    """Class for storing processing jobs
+    """Class for storing processing jobs.
 
     Attributes:
         folder: directory in which the macro is executed
         macro: list of macro commands to execute
         number: id number of the task
         name: name of the task, which is used for printing status informations
+
     """
 
     def __init__(self, folder=None, macro=None,
                  taskname=None, number=1):
-        """ Init the Task class with the class attributes
-        """
+        """Init the Task class with the class attributes."""
         self.folder = folder
         if not folder:
             self.folder = os.getcwd()
@@ -269,7 +271,7 @@ class _Task(object):
 
 
 class _Summery(object):
-    """ class to display the summery of task """
+    """Class to display the summery of task."""
 
     def __init__(self, have_ipython=False, silent=False):
         self._silent = silent
@@ -438,17 +440,17 @@ class AnyPyProcess(object):
         logging.debug('\nAnyPyProcess initialized')
 
     def save_results(self, filename, append=False):
-        """Save resently processed results
-        
-        Save results for later reloading or to continue processing unfished 
-        results at a later time. 
+        """Save resently processed results.
+
+        Save results for later reloading or to continue processing unfished
+        results at a later time.
 
         Parameters
         ----------
         filename : str
             filename of the file where processing was stored.
         append : bool
-            If true append data to what ever is already saved. This allows 
+            If true append data to what ever is already saved. This allows
             for saving data in batches.
 
         Returns
@@ -460,6 +462,7 @@ class AnyPyProcess(object):
         >>> macro = ['load "model1.any"', 'operation Main.RunApplication', 'run']
         >>> app.start_macro(macro)
         >>> app.save_results('saved_data.db')
+
         """
         if self.cached_tasklist:
             savekey = text_to_native_str('processed_tasks')
@@ -472,50 +475,66 @@ class AnyPyProcess(object):
         else:
             raise ValueError('Noting to save')
 
-    def save_to_hdf5(self, filename, batch_name):
+    def save_to_hdf5(self, filename, batch_name=None):
+        """Save cached results to hdf5 file.
+
+        Parameters
+        ----------
+        filename : str
+            filename where data should be stored
+
+        batch_name : str
+            Name of the group in the HDF5 file to
+            save the data within. If not specified
+            the group hash value of the macro will
+            be used.
+
+        Returns
+        -------
+            None
+
+        """
         import h5py
-        if self.cached_tasklist:
-            any_output = [task.get_output() for task in self.cached_tasklist]
-            any_output = AnyPyProcessOutputList(any_output)
-            with h5py.File(filename, "w") as f:  # , compression="gzip" # Not sure how much gzip effects reading speed.
-                group = f.create_group(batch_name)
-                task_names = []
-                for run in any_output:
-                    task_names.append(run['task_name'])
-                # If task names are unique, these will be used as run folder names
-                if len(task_names) == len(set(task_names)):
-                    for run in any_output:
-                            if len(task_names) == len(set(task_names)):
-                                task_name = run['task_name'].replace('/', '|')
-                                new_folder = group.create_group(task_name)
-                                for k, v in run.items():
-                                    if not isinstance(v, np.ndarray):
-                                        if isinstance(v, list):
-                                            new_folder.attrs[str(k)] = str(v)
-                                        else:
-                                            new_folder.attrs[str(k)] = v
-                                    elif isinstance(v, np.ndarray):
-                                        new_folder.create_dataset(str(k), data=v)
-                # If task names are not unique, task id's will be used as run folder names
-                elif len(task_names) != len(set(task_names)):
-                    for run in any_output:
-                        task_id = str(run['task_id'])
-                        new_folder = group.create_group(task_id)
-                        for k, v in run.items():
-                            if not isinstance(v, np.ndarray):
-                                    if isinstance(v, list):
-                                        new_folder.attrs[str(k)] = str(v)
-                                    else:
-                                        new_folder.attrs[str(k)] = v
-                            elif isinstance(v, np.ndarray):
-                                    new_folder.create_dataset(str(k), data=v)
+
+        if not self.cached_tasklist:
+            raise ValueError('No data available for saving')
+
+        if batch_name is None:
+            batch_name = str(self.cached_arg_hash)
+
+        filename = text_to_native_str(filename)
+        batch_name = text_to_native_str(batch_name)
+
+        any_output = AnyPyProcessOutputList([
+            task.get_output()
+            for task in self.cached_tasklist
+        ])
+        task_names = [
+            elem['task_name']
+            for elem in any_output
+        ]
+        unique_names = len(task_names) == len(set(task_names))
+        with h5py.File(filename, "w") as h5file:
+            h5_batch_group = h5file.create_group(batch_name)
+            for run in any_output:
+                task_name = run['task_name'] if unique_names else str(
+                    run['task_id'])
+                task_name = task_name.replace('/', '|')
+                h5_task_group = h5_batch_group.create_group(task_name)
+                for k, v in run.items():
+                    if not isinstance(v, np.ndarray):
+                        if isinstance(v, list):
+                            h5_task_group.attrs[text_to_native_str(k)] = text_to_native_str(str(v))
+                        else:
+                            h5_task_group.attrs[text_to_native_str(k)] = v
+                    elif isinstance(v, np.ndarray):
+                        h5_task_group.create_dataset(text_to_native_str(k), data=v)
 
     def load_results(self, filename):
-        """Load previously saved results
-        
-        Besides reloading results the function can be used to continue
-        a partial finished processing process. 
+        """Load previously saved results.
 
+        Besides reloading results the function can be used to continue
+        a partial finished processing process.
 
         Parameters
         ----------
@@ -530,7 +549,6 @@ class AnyPyProcess(object):
 
         Examples
         --------
-
         Results are easily reloaded:
 
         >>> app = AnyPyProcess()
@@ -540,6 +558,7 @@ class AnyPyProcess(object):
 
         >>> app.load_results('unfinished_results.db')
         >>> results = app.start_macro() # rerun unfinished
+
         """
         loadkey = text_to_native_str('processed_tasks')
         db = shelve.open(text_to_native_str(filename))
@@ -555,7 +574,7 @@ class AnyPyProcess(object):
 
     def start_macro(self, macrolist=None, folderlist=None, search_subdirs=None,
                     **kwargs):
-        """Starts a batch processing job.
+        """Start a batch processing job.
 
         Runs a list of AnyBody Macro commands in
         the current directory, or in the folders specified by `folderlist`. If
@@ -663,22 +682,8 @@ class AnyPyProcess(object):
                        for task in tasklist]
         return AnyPyProcessOutputList(task_output)
 
-    #    def _print_summery(self, tasks, duration):
-    #        unfinished_tasks = [t for t in tasks if t.processtime <= 0]
-    #        failed_tasks = [t for t in tasks if t.has_error and t.processtime > 0]
-    #        if len(failed_tasks):
-    #            _display('Tasks with errors: {:d}'.format(len(failed_tasks)))
-    #            if not run_from_ipython():
-    #                _display('\n'.join([t.summery() for t in failed_tasks]))
-    #        if len(unfinished_tasks):
-    #            _display('Tasks that did not complete: '
-    #                     '{:d}'.format(len(unfinished_tasks)))
-    #        if duration:
-    #            _display('Total time: {:.1f} seconds'.format(duration))
-
     def _worker(self, task, task_queue):
-        """ Handles processing of the tasks.
-        """
+        """Handle processing of the tasks."""
         with _thread_lock:
             task.process_number = self.counter
             self.counter += 1
@@ -722,7 +727,8 @@ class AnyPyProcess(object):
         except Exception as e:
             exc_type, exc_obj, exc_tb = sys.exc_info()
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            task.add_error(str(exc_type) + '\n' + str(fname) + '\n' + str(exc_tb.tb_lineno))
+            task.add_error(str(exc_type) + '\n' + str(fname) +
+                           '\n' + str(exc_tb.tb_lineno))
             logger.debug(str(e))
         finally:
             if not self.keep_logfiles and not task.has_error:
@@ -845,11 +851,10 @@ class _ProgressBar:
             self.bar_widget.bar_style = 'danger'
         elif val == self.iterations:
             self.bar_widget.bar_style = 'success'
-            
-            
+
     def _ascii_animate(self, val, failed):
         self.__update_amount((val / float(self.iterations)) * 100.0)
-        self.prog_bar += '  %d of %s complete' % (val,self.iterations)
+        self.prog_bar += '  %d of %s complete' % (val, self.iterations)
         if failed == 1:
             self.prog_bar += ' ({0} Error)'.format(failed)
         elif failed > 1:
@@ -862,15 +867,12 @@ class _ProgressBar:
         percent_done = int(round((new_amount / 100.0) * 100.0))
         all_full = self.width - 2
         num_hashes = int(round((percent_done / 100.0) * all_full))
-        self.prog_bar = ('[' +
-                         self.fill_char * num_hashes +
-                         ' ' * (all_full - num_hashes) +
-                         ']')
+        self.prog_bar = '[{}{}]'.format(
+            self.fill_char * num_hashes,
+            ' ' * (all_full - num_hashes)
+        )
         pct_place = int(len(self.prog_bar) / 2) - len(str(percent_done))
         pct_string = '%d%%' % percent_done
+
         self.prog_bar = self.prog_bar[0:pct_place] + \
-                        (pct_string + self.prog_bar[pct_place + len(pct_string):])
-
-
-if __name__ == '__main__':
-    pass
+            (pct_string + self.prog_bar[pct_place + len(pct_string):])

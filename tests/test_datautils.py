@@ -9,12 +9,12 @@ from __future__ import (absolute_import, division,
 # TEST_UNICODE_LITERALS
 
 
-from anypytools.datautils import open_anyoutputfile
+from anypytools.datautils import read_anyoutputfile
 
 
 def test_open_anyoutputfile(request):
     testfile = str( request.fspath.new(basename='any_output_file.txt') )
-    data, header, constants = open_anyoutputfile(testfile)
+    data, header, constants = read_anyoutputfile(testfile)
     
     assert constants['Main.Studies.ElbowExtension.Outputfile.SepSign'] == ',' 
     assert constants['Main.Studies.ElbowExtension.Outputfile.'

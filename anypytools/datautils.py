@@ -1,31 +1,31 @@
 # -*- coding: utf-8 -*-
 """
-Created on Mon Jan 16 11:40:42 2012
+Created on Mon Jan 16 11:40:42 2012.
 
 @author: mel
 """
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
-from builtins import *
-
-__all__ = ['anydatah5_generator','anyoutputfile_generator',
-           'read_anyoutputfile']
+from builtins import (ascii, bytes, chr, dict, filter, hex, input,  # noqa
+                      int, map, next, oct, open, pow, range, round,
+                      str, super, zip)
 import os
+import re
 import logging
+import warnings
 import os.path as op
+from ast import literal_eval
 
 import numpy as np
-#from scipy.interpolate import interp1d
-from ast import literal_eval
-import warnings
-import re
 
 logger = logging.getLogger('abt.anypytools')
 
+__all__ = ['anydatah5_generator', 'anyoutputfile_generator',
+           'read_anyoutputfile']
 
 
-def anydatah5_generator(folder=None, match = '.*(\.h5)'):
-    """ Create a generator which opens anydata.h5 files
+def anydatah5_generator(folder=None, match='.*(\.h5)'):
+    r"""Create a generator which opens anydata.h5 files.
 
     Parameters
     ----------
@@ -52,19 +52,21 @@ def anydatah5_generator(folder=None, match = '.*(\.h5)'):
     """
     from . import h5py_wrapper
     if folder is None:
-        folder = str( os.getcwd() )
+        folder = str(os.getcwd())
+
     def func(item):
         return re.match(item, match, flags=re.IGNORECASE)
-    filelist = filter(func,  os.listdir(folder))
+    filelist = filter(func, os.listdir(folder))
     for filename in filelist:
         try:
-            with h5py_wrapper.File(op.join(folder,filename)) as h5file:
+            with h5py_wrapper.File(op.join(folder, filename)) as h5file:
                 yield (h5file, filename)
         except IOError:
             pass
 
-def anyoutputfile_generator(folder = None, match = '.*\.(csv|txt)'):
-    """ Create a generator which opens AnyOutput files
+
+def anyoutputfile_generator(folder=None, match='.*\.(csv|txt)'):
+    """Create a generator which opens AnyOutput files.
 
     Parameters
     ----------
@@ -93,8 +95,8 @@ def anyoutputfile_generator(folder = None, match = '.*\.(csv|txt)'):
             print(fn)
             print(header)
             print(data.shape)
-    """
 
+    """
     if folder is None:
         folder = str(os.getcwd())
 
@@ -103,12 +105,13 @@ def anyoutputfile_generator(folder = None, match = '.*\.(csv|txt)'):
     filelist = filter(func, os.listdir(folder))
 
     for filename in filelist:
-        filepath = op.join(folder,filename)
+        filepath = op.join(folder, filename)
         data, header, const = open_anyoutputfile(filepath)
         if data is None:
             continue
 
         yield (data, header, const, os.path.basename(filepath))
+
 
 def open_anyoutputfile(filepath):
     warnings.warn("Deprecated: open_anyoutputfile is renamed to "
@@ -116,8 +119,17 @@ def open_anyoutputfile(filepath):
     return read_anyoutputfile(filepath)
 
 
+def _is_scinum(str):
+    """Check if a string is a number acording to numpy."""
+    try:
+        np.float(str)
+        return True
+    except ValueError:
+        return False
+
+
 def read_anyoutputfile(filepath):
-    """ Read an AnyOutput file
+    """Read an AnyOutput file.
 
     Parameters
     ----------
@@ -135,31 +147,23 @@ def read_anyoutputfile(filepath):
 
 
     """
-
-    def is_scinum(str):
-        try:
-            np.float(str)
-            return True
-        except ValueError:
-            return False
-
-    with open(filepath,'rU') as anyoutputfile:
+    with open(filepath, 'rU') as anyoutputfile:
         constants = {}
         reader = iter(anyoutputfile.readline, b'')
-        #Check when the header section ends
+        # Check when the header section ends
         fpos1 = 0
         fpos0 = 0
         for row in reader:
-            if is_scinum(row.split(',')[0]):
+            if _is_scinum(row.split(',')[0]):
                 break
-            #Save constant from AnyOutput file
-            const,value= _parse_anyoutputfile_constants(row)
+            # Save constant from AnyOutput file
+            const, value = _parse_anyoutputfile_constants(row)
             if const is not None:
                 constants[const] = value
             fpos1, fpos0 = fpos0, anyoutputfile.tell()
         else:
             warnings.warn("No numeric data in " + os.path.basename(filepath))
-            return (None,None,constants)
+            return (None, None, constants)
         # Read last line of the header section if there is a header
         if fpos0 != 0:
             anyoutputfile.seek(fpos1)
@@ -177,7 +181,6 @@ def read_anyoutputfile(filepath):
     return (data, header, constants)
 
 
-
 def _parse_anyoutputfile_constants(strvar):
     value = None
     varname = None
@@ -189,46 +192,16 @@ def _parse_anyoutputfile_constants(strvar):
         last = last.strip('\n')
         if last.find('{') == -1:
             try:
-                value = str(literal_eval("'''"+last+"'''") )
+                value = str(literal_eval("'''" + last + "'''"))
                 value = str(literal_eval(last))
                 value = float(literal_eval(last))
             except:
                 pass
         else:
-            last = last.replace('{','[').replace('}',']')
+            last = last.replace('{', '[').replace('}', ']')
             try:
-                value = np.array(literal_eval("'''"+last+"'''") )
+                value = np.array(literal_eval("'''" + last + "'''"))
                 value = np.array(literal_eval(last))
             except:
                 pass
     return (varname, value)
-
-
-
-#def interp_percent(data, indices):
-#    data = np.array(data)
-#    data = data.squeeze()
-#    indices = np.array(indices)
-#    x = np.linspace(0,100,len(indices))
-#    xnew = np.arange(0,100)
-#    y = data[indices]
-#    ipolfun = interp1d(x,y)
-#    return ipolfun(xnew)
-
-#def any_eval(string):
-#
-#    string = string.split('//',1)[0]
-#    string  = string.split("=",1)[-1].split(";",1)[0].strip()
-#
-#    string = string.replace('{','[')
-#    string = string.replace('}',']')
-#    return literal_eval(string)
-
-
-
-if __name__ == '__main__':
-#    for data,header,filename in csv_trial_data('C:\Users\mel\SMIModelOutput', DEBUG= True):
-#        print header
-
-    outvars = ['/Output/Validation/EMG']
-

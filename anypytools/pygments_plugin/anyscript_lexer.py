@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
-"""
-    Lexer for the AnyScript modelling langue.
+"""Lexer for the AnyScript modelling langue."""
 
-"""
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
-from builtins import *
-
+from builtins import (ascii, bytes, chr, dict, filter, hex, input,  # noqa
+                      int, map, next, oct, open, pow, range, round,
+                      str, super, zip)
 
 
 import os
@@ -32,6 +31,7 @@ with open(os.path.join(_ROOT, 'statements.txt')) as f:
     ANYSTATEMENTS = f.read().split()
 with open(os.path.join(_ROOT, 'options.txt')) as f:
     ANYOPTIONS = f.read().split()
+
 
 class AnyScriptLexer(RegexLexer):
     """
@@ -64,11 +64,13 @@ class AnyScriptLexer(RegexLexer):
         'statements': [
             # For AnyDoc highlighting
             (r'(§)(/[*])(§)((.|\n)*?)(§)([*]/)(§)',
-            bygroups(Generic.Deleted,Generic.Error, Generic.Deleted, Comment.Multiline, Comment.Multiline, Generic.Deleted, Generic.Error, Generic.Deleted)),
-            (r'(§)(//)(§)',bygroups(Generic.Deleted, Generic.Error, Generic.Deleted), 'multiline-directive'),
-            (r'§',Generic.Deleted, 'new-codes'),
+             bygroups(Generic.Deleted, Generic.Error, Generic.Deleted, Comment.Multiline, Comment.Multiline, Generic.Deleted, Generic.Error, Generic.Deleted)),
+            (r'(§)(//)(§)', bygroups(Generic.Deleted, Generic.Error,
+                                     Generic.Deleted), 'multiline-directive'),
+            (r'§', Generic.Deleted, 'new-codes'),
             ####################
-            (words(('#if', '#ifdef', '#ifndef', '#undef', '#endif', '#include', '#import', '#else', '#elif', '#classtemplate', '#define', '#path', '#var')), Comment.Preproc),
+            (words(('#if', '#ifdef', '#ifndef', '#undef', '#endif', '#include', '#import',
+                    '#else', '#elif', '#classtemplate', '#define', '#path', '#var')), Comment.Preproc),
             (r'[L@]?"', String, 'string'),
             (r'(\d+\.\d*|\.\d+|\d+)[eE][+-]?\d+[lL]?', Number.Float),
             (r'(\d+\.\d*|\.\d+|\d+[fF])[fF]?', Number.Float),
@@ -78,13 +80,13 @@ class AnyScriptLexer(RegexLexer):
             (r'[()\[\],.]', Punctuation),
             # Globals
             (words(ANYGLOBALS,
-                 suffix=r'\b'), Keyword),
+                   suffix=r'\b'), Keyword),
             # BM_Statements
             (words(ANYSTATEMENTS,
-                 suffix=r'\b'), Other.Statements),
+                   suffix=r'\b'), Other.Statements),
             # BM_Options
             (words(ANYOPTIONS,
-                 suffix=r'\b'), Other.Options),
+                   suffix=r'\b'), Other.Options),
             # Functions
             (words(ANYFUNCTIONS, suffix=r'\b'), Name.Builtin),
             # (r'(\.)([a-zA-Z_]\w*)',
@@ -106,39 +108,33 @@ class AnyScriptLexer(RegexLexer):
         ],
         'string': [
             (r'"', String, '#pop'),
-            (r'\\([\\abfnrtv"\']|x[a-fA-F0-9]{2,4}|[0-7]{1,3})', String.Escape),
+            (r'\\([\\abfnrtv"\']|x[a-fA-F0-9]{2,4}|[0-7]{1,3})',
+             String.Escape),
             (r'[^\\"\n]+', String),  # all other characters
             (r'\\\n', String),  # line continuation
             (r'\\', String),  # stray backslash
         ],
         'multiline-directive': [
-            (r'(.*?)(§)', bygroups(Comment.Single,Generic.Deleted), 'new-codes'),
-            (r'.*?\n', Comment.Single,'#pop')
+            (r'(.*?)(§)', bygroups(Comment.Single, Generic.Deleted), 'new-codes'),
+            (r'.*?\n', Comment.Single, '#pop')
         ],
-        'new-codes':[
+        'new-codes': [
             (r'[^§]+', Generic.Error),
             (r'§', Generic.Deleted, '#pop'),
             (r'[§]', Generic.Error)
-        ]        
+        ]
         # 'macro': [
-            # (r'[^/\n]+', Comment.Preproc),
-            # (r'/[*](.|\n)*?[*]/', Comment.Multiline),
-            # (r'//.*?\n', Comment.Single, '#pop'),
-            # (r'/', Comment.Preproc),
-            # (r'(?<=\\)\n', Comment.Preproc),
-            # (r'\n', Comment.Preproc, '#pop'),
+        # (r'[^/\n]+', Comment.Preproc),
+        # (r'/[*](.|\n)*?[*]/', Comment.Multiline),
+        # (r'//.*?\n', Comment.Single, '#pop'),
+        # (r'/', Comment.Preproc),
+        # (r'(?<=\\)\n', Comment.Preproc),
+        # (r'\n', Comment.Preproc, '#pop'),
         # ],
         # 'if0': [
-            # (r'^\s*#if(?:def).*?(?<!\\)\n', Comment.Preproc, '#push'),
-            # (r'^\s*#el(?:se|if).*\n', Comment.Preproc, '#pop'),
-            # (r'^\s*#endif.*?(?<!\\)\n', Comment.Preproc, '#pop'),
-            # (r'.*?\n', Comment),
+        # (r'^\s*#if(?:def).*?(?<!\\)\n', Comment.Preproc, '#push'),
+        # (r'^\s*#el(?:se|if).*\n', Comment.Preproc, '#pop'),
+        # (r'^\s*#endif.*?(?<!\\)\n', Comment.Preproc, '#pop'),
+        # (r'.*?\n', Comment),
         # ]
     }
-
-
-
-
-
-
-

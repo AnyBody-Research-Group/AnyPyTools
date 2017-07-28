@@ -1,44 +1,45 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sun Sep  7 13:25:38 2014
+Created on Sun Sep  7 13:25:38 2014.
 
 @author: Morten
 """
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
-from builtins import *
+from builtins import (ascii, bytes, chr, dict, filter, hex, input,  # noqa
+                      int, map, next, oct, open, pow, range, round,
+                      str, super, zip)
+
+import logging
+import collections
+from copy import deepcopy
 
 import numpy as np
-from copy import deepcopy
-import collections
-import logging
-
 from datashape import discover
-from datashape.coretypes import (Record, var,Option)
-try: 
-    from odo import convert 
+from datashape.coretypes import (Record, var, Option)
+try:
+    from odo import convert
 except ImportError:
     from into import convert
-    
+
 from dynd import nd
 
+from anypytools.tools import AnyPyProcessOutputList
 
-
-from ..tools import AnyPyProcessOutputList
 logger = logging.getLogger('abt.anypytools')
 
 
 @convert.register(nd.array, AnyPyProcessOutputList, cost=1.0)
 def convert(res, **kwargs):
     # Hack to ensure values are always interpreted as floats
-    # This is necessary because the dump command in AnyBody 
-    # may cause whole number float to look like int. 
+    # This is necessary because the dump command in AnyBody
+    # may cause whole number float to look like int.
     res = deepcopy(res)
     for elem in res:
         for key in elem:
             if key.startswith('Main') and isinstance(elem[key], np.ndarray):
                 try:
-                    elem[key] = elem[key].astype('float')    
+                    elem[key] = elem[key].astype('float')
                 except ValueError:
                     pass
     ###
@@ -56,10 +57,12 @@ def convert_to_nested_structure(obj):
             obj[first][last] = obj.pop(key)
             convert_to_nested_structure(obj[first])
 
-def remove_dots_in_key_names(obj):    
+
+def remove_dots_in_key_names(obj):
     assert isinstance(obj, collections.Mapping)
-    for key in list( obj.keys() ):
-        obj[key.replace('.','_')] = obj.pop(key)
+    for key in list(obj.keys()):
+        obj[key.replace('.', '_')] = obj.pop(key)
+
 
 def convert_items_to_python_types(obj):
     assert isinstance(obj, collections.Mapping)
@@ -72,15 +75,17 @@ def convert_items_to_python_types(obj):
             if not obj[k] and isinstance(obj[k], collections.Iterable):
                 obj[k] = None
 
-def update_dict_if(d, u, condition = True ):
-    """ Update one nested dictionary 'd' with the keys from another 'u'
-        If the keys already exist, then values are only if condition
-        function returns true
-    """       
+
+def update_dict_if(d, u, condition=True):
+    """Update one nested dictionary 'd' with the keys from another 'u'.
+
+    If the keys already exist, then values are only if condition
+    function returns true
+    """
     if condition is True:
-        condition = lambda old_val, new_val: True
+        condition = lambda old_val, new_val: True  # noqa
     elif condition is False:
-        condition = lambda old_val, new_val: False
+        condition = lambda old_val, new_val: False # noqa
     for k in u:
         if isinstance(u[k], collections.Mapping):
             r = update_dict_if(d.get(k, {}), u[k], condition)
@@ -90,27 +95,32 @@ def update_dict_if(d, u, condition = True ):
                 d[k] = u[k]
         else:
             d[k] = u[k]
-    return d        
+    return d
 
 
 def build_datashape(sample_data):
-    """ Build a datashape from sample_data 
-        In case of multiple dimensions, the firt is replace by 'var' to 
-        handle varing time samples in models
+    """Build a datashape from sample_data.
+
+    In case of multiple dimensions, the firt is replace by 'var' to
+    handle varing time samples in models
     """
     if isinstance(sample_data, collections.Mapping):
-        return Record((k,build_datashape(v)) for k,v in sample_data.items() )
+        return Record((k, build_datashape(v)) for k, v in sample_data.items())
     else:
         ds = discover(sample_data)
         if len(ds) > 1:
-            ds = var *  ds.subarray(1)
+            ds = var * ds.subarray(1)
         else:
-            ds = Option( ds )
+            ds = Option(ds)
         return ds
 
+
 def clean_sample(mapping, key):
-    """ Scrubs the values of a nested data structure, leaving the prototype
-        empty values. List are replaced by [] and values by None """
+    """Scrubs the values of a nested data structure.
+
+    The function leaves the prototype
+    empty values. List are replaced by [] and values by None
+    """
     if isinstance(mapping[key], collections.Mapping):
         for subkey in mapping[key]:
             clean_sample(mapping[key], subkey)
@@ -120,23 +130,20 @@ def clean_sample(mapping, key):
         mapping[key] = None
 
 
-
-def convert_and_extract_dshape(result_list, create_nested_structure = False, **kwargs):
+def convert_and_extract_dshape(result_list, create_nested_structure=False, **kwargs):
 
     result_list = deepcopy(result_list)
-    
+
     if create_nested_structure:
         for elem in result_list:
             convert_to_nested_structure(elem)
     else:
         for elem in result_list:
-            #pass            
+            # pass
             remove_dots_in_key_names(elem)
-                        
+
     for elem in result_list:
         convert_items_to_python_types(elem)
-
-
 
     def update_check(old_value, new_value):
         if isinstance(old_value, collections.Iterable):
@@ -144,16 +151,16 @@ def convert_and_extract_dshape(result_list, create_nested_structure = False, **k
                 return True
         elif not old_value:
             return True
-        else: 
+        else:
             return False
 
-    # Create a sample data structure with the keys from all the results.         
+    # Create a sample data structure with the keys from all the results.
     sample_data = collections.OrderedDict()
     for data_structure in result_list:
         update_dict_if(sample_data, data_structure, update_check)
-    
+
     # If some task info is present set this data so the discover function
-    # will always find the correct data type. 
+    # will always find the correct data type.
     if 'task_id' in sample_data:
         sample_data['task_macro_hash'] = 42
         sample_data['task_id'] = 42
@@ -162,25 +169,16 @@ def convert_and_extract_dshape(result_list, create_nested_structure = False, **k
         sample_data['task_processtime'] = 10.1
         sample_data['task_macro'] = ['string', 'string']
         sample_data['task_logfile'] = 'string'
-        
-        
-    
-    dshape = build_datashape(sample_data)        
-        
-      
-    
-    empty_sample_data = deepcopy( sample_data )
+
+    dshape = build_datashape(sample_data)
+
+    empty_sample_data = deepcopy(sample_data)
     for key in sample_data:
         clean_sample(empty_sample_data, key)
-        
-        
+
     for elem in result_list:
-        ## Update_dict_if( ) with a always False condition, will
-        ## only add missing keys
-        update_dict_if(elem, empty_sample_data, condition=False)        
-        
-        
-    
-    return (result_list, dshape)  
+        # Update_dict_if( ) with a always False condition, will
+        # only add missing keys
+        update_dict_if(elem, empty_sample_data, condition=False)
 
-
+    return (result_list, dshape)
