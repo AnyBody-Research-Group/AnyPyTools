@@ -1,37 +1,39 @@
 # -*- coding: utf-8 -*-
 """
-Created on Mon Mar 23 21:14:59 2015
+Created on Mon Mar 23 21:14:59 2015.
 
 @author: Morten
 """
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
-from builtins import *
-from past.builtins import basestring as string_types
 
+from builtins import (ascii, bytes, chr, dict, filter, hex, input,  # noqa
+                      int, map, next, oct, open, pow, range, round,
+                      str, super, zip)
 
 import sys
+import types
 import logging
 from copy import deepcopy
 from collections import MutableSequence
 
 import numpy as np
-
-
 from scipy.stats import distributions
 
+
 def is_python2():
-    return (sys.version_info[0]==2)
+    return (sys.version_info[0] == 2)
+
 
 def is_python34():
-    return (sys.version_info[0]==3 and sys.version_info[1]==4)
+    return (sys.version_info[0] == 3 and sys.version_info[1] == 4)
 
 
 if sys.platform.startswith("win") and (is_python2() or is_python34()):
     # This is a horrible hack to work around a bug in
-    # scipy http://stackoverflow.com/questions/15457786/ctrl-c-crashes-python-after-importing-scipy-stats
+    # scipy http://stackoverflow.com/questions/15457786/ctrl-c-crashes-python-after-importing-scipy-stats # noqa
     try:
-        import thread  #, imp, ctypes, os
+        import thread
     except ImportError:
         import _thread as thread
     import win32api
@@ -44,26 +46,27 @@ if sys.platform.startswith("win") and (is_python2() or is_python34()):
 
 logger = logging.getLogger('abt.anypytools')
 
-#pprint is used in the doc tests
-from .tools import define2str, path2str, array2anyscript, pprint
-from .tools import Py3kPrettyPrinter
+# pprint is used in the doc tests
+from anypytools.tools import define2str, path2str, array2anyscript, pprint  # noqa
+from anypytools.tools import Py3kPrettyPrinter  # noqa
 
 __all__ = ['MacroCommand', 'Load', 'SetValue', 'SetValue_random', 'Dump',
-           'SaveDesign', 'LoadDesign', 'SaveValues', 'LoadValues', 'UpdateValues',
-           'OperationRun']
+           'SaveDesign', 'LoadDesign', 'SaveValues', 'LoadValues',
+           'UpdateValues', 'OperationRun', 'SaveData']
 
 
 def _isgenerator(x):
     return isinstance(x, types.GeneratorType)
 
-def _batch(iterable, n = 1):
-   l = len(iterable)
-   for ndx in range(0, l, n):
-       yield iterable[ndx:min(ndx+n, l)]
+
+def _batch(iterable, n=1):
+    l = len(iterable)
+    for ndx in range(0, l, n):
+        yield iterable[ndx:min(ndx + n, l)]
 
 
 class MacroCommand(object):
-    """ Class for custom macro commands
+    """Class for custom macro commands.
 
     This class also serves as base class for other macro commands.
 
@@ -74,6 +77,7 @@ class MacroCommand(object):
     operation "Main.MyStudy.InverseDynamics"
 
     """
+
     def __init__(self, command):
         if not isinstance(command, list):
             self.cmd = [command]
@@ -84,11 +88,26 @@ class MacroCommand(object):
         return self.get_macro(0)
 
     def get_macro(self, index, **kwarg):
+        """Create a string representation of the macro.
+
+        Parameters
+        ----------
+        index : int
+            The index for the macro beeing generated. Some child classes
+            use the index to generate different macros depending on the
+            index.
+
+        Returns
+        -------
+        string
+            A string with the AnyScript macro
+
+        """
         return '\n'.join(self.cmd)
 
 
 class Load(MacroCommand):
-    """ Create a load macro command
+    """Create a load macro command.
 
     Parameters
     ----------
@@ -116,6 +135,7 @@ class Load(MacroCommand):
      [u'load "model_2.main.any"']]
 
     """
+
     def __init__(self, filename, defs={}, paths={}):
         self.filename = filename
         self.defs = defs.copy()
@@ -135,7 +155,7 @@ class Load(MacroCommand):
 
 
 class SetValue(MacroCommand):
-    """ Create 'Set Value' classoperation macro command.
+    """Create 'Set Value' classoperation macro command.
 
     Parameters
     ----------
@@ -212,15 +232,14 @@ class SetValue(MacroCommand):
 
         return '\n'.join([self.get_macro(i) for i in range(n_elem)])
 
-
     def get_macro(self, index, **kwarg):
         if isinstance(self.value, list):
             val = self.value[index % len(self.value)]
         else:
             val = self.value
-        return self.format_macro(val)
+        return self._format_macro(val)
 
-    def format_macro(self, val):
+    def _format_macro(self, val):
         if isinstance(val, np.ndarray):
             val = array2anyscript(val)
         elif isinstance(val, float):
@@ -232,8 +251,9 @@ class SetValue(MacroCommand):
 
 
 class SetValue_random(SetValue):
-    """ Create a 'Set Value' macro command where the value is chosen from a
-    distibution in scipy.stats.distributions.
+    """Create a 'Set Value' macro command from a distribution.
+
+    The value is connected to a distibution in scipy.stats.distributions.
 
     Parameters
     ----------
@@ -286,9 +306,9 @@ class SetValue_random(SetValue):
      ['classoperation Main.MyVar1 "Set Value" --value="{-0.20265197275,0.114947152258,0.924796936287}"',
       'classoperation Main.MyVar2 "Set Value" --value="{0.806864877696,4.4114188826,2.93941843565}"']]
 
-   """
+    """
 
-    def __init__(self, var, frozen_distribution, default_lower_tail_probability = 0.5):
+    def __init__(self, var, frozen_distribution, default_lower_tail_probability=0.5):
         self.var = var
         if not isinstance(frozen_distribution, distributions.rv_frozen):
             raise TypeError(
@@ -301,24 +321,22 @@ class SetValue_random(SetValue):
         if isinstance(self.meanvalue, np.ndarray):
             self.shape = self.meanvalue.shape
             self.n_factors = np.prod(self.shape)
-            self.default_lower_tail_probability = default_lower_tail_probability * np.ones(self.shape)
+            self.default_lower_tail_probability = default_lower_tail_probability * \
+                np.ones(self.shape)
         else:
             self.shape = None
             self.n_factors = 1
             self.default_lower_tail_probability = default_lower_tail_probability
 
-
-
     def __repr__(self):
         return self.get_macro(0)
-
 
     def get_macro(self, index, lower_tail_probability=None, **kwarg):
         if lower_tail_probability is None:
             lower_tail_probability = self.default_lower_tail_probability
 
         if self.shape is None and isinstance(lower_tail_probability, np.ndarray):
-                lower_tail_probability = lower_tail_probability[0]
+            lower_tail_probability = lower_tail_probability[0]
 
         val = self.rv.ppf(lower_tail_probability).reshape(self.shape)
         # Replace any nan from ppf function with actual sampled values.
@@ -329,7 +347,7 @@ class SetValue_random(SetValue):
 
 
 class Dump(MacroCommand):
-    """ Create a Dump classoperation macro command.
+    """Create a Dump classoperation macro command.
 
     Parameters
     ----------
@@ -356,9 +374,10 @@ class Dump(MacroCommand):
      ['load "mymodel.main.any"'],
      ['load "mymodel.main.any"'],
      ['load "mymodel.main.any"']]
+
     """
 
-    def __init__(self, var, include_in_macro = None):
+    def __init__(self, var, include_in_macro=None):
         if not isinstance(var, list):
             self.var_list = [var]
         else:
@@ -374,7 +393,7 @@ class Dump(MacroCommand):
 
 
 class SaveDesign(MacroCommand):
-    """ Create a Save Design classoperation macro command.
+    """Create a Save Design classoperation macro command.
 
     Parameters
     ----------
@@ -387,6 +406,7 @@ class SaveDesign(MacroCommand):
     --------
     >>> SaveDesign('Main.MyStudy.Kinematics', 'c:/design.txt')
     classoperation Main.MyStudy.Kinematics "Save design" --file="c:/design.txt"
+
     """
 
     def __init__(self, operation, filename):
@@ -399,7 +419,7 @@ class SaveDesign(MacroCommand):
 
 
 class LoadDesign(MacroCommand):
-    """ Create a Load Design classoperation macro command.
+    """Create a Load Design classoperation macro command.
 
     Parameters
     ----------
@@ -412,7 +432,9 @@ class LoadDesign(MacroCommand):
     --------
     >>> LoadDesign('Main.MyStudy.Kinematics', 'c:/design.txt')
     classoperation Main.MyStudy.Kinematics "Load design" --file="c:/design.txt"
+
     """
+
     def __init__(self, operation, filename):
         self.filename = filename
         self.operation = operation
@@ -423,7 +445,7 @@ class LoadDesign(MacroCommand):
 
 
 class SaveValues(MacroCommand):
-    """ Create a Save Values classoperation macro command.
+    """Create a Save Values classoperation macro command.
 
     Parameters
     ----------
@@ -434,7 +456,9 @@ class SaveValues(MacroCommand):
     --------
     >>> SaveValues('c:/values.anyset')
     classoperation Main "Save Values" --file="c:/values.anyset"
+
     """
+
     def __init__(self, filename):
         self.filename = filename
 
@@ -444,9 +468,9 @@ class SaveValues(MacroCommand):
 
 
 class SaveData(MacroCommand):
-    """ Create a Save Data classoperation macro command.
+    """Create a Save Data classoperation macro command.
 
-    This macro operation will save all data from a study to a 
+    This macro operation will save all data from a study to a
     HDF5 file.
 
     Parameters
@@ -460,7 +484,9 @@ class SaveData(MacroCommand):
     --------
     >>> SaveData('Main.Study', 'output.anydata.h5')
     classoperation Main.Study.Output "Save data" --type="Deep" --file="output.anydata.h5"
+
     """
+
     def __init__(self, operation, filename):
         self.filename = filename
         self.opeation = operation
@@ -470,9 +496,8 @@ class SaveData(MacroCommand):
         return macro_str.format(self.opeation, self.filename)
 
 
-
 class LoadValues(MacroCommand):
-    """ Create a Load Values classoperation macro command.
+    """Create a Load Values classoperation macro command.
 
     Parameters
     ----------
@@ -483,7 +508,9 @@ class LoadValues(MacroCommand):
     --------
     >>> LoadValues('c:/values.anyset')
     classoperation Main "Load Values" --file="c:/values.anyset"
+
     """
+
     def __init__(self, filename):
         self.filename = filename
 
@@ -493,13 +520,15 @@ class LoadValues(MacroCommand):
 
 
 class UpdateValues(MacroCommand):
-    """ Create an 'Update Values' classoperation macro command.
+    """Create an 'Update Values' classoperation macro command.
 
     Examples
     --------
     >>> UpdateValues()
     classoperation Main "Update Values"
+
     """
+
     def __init__(self):
         pass
 
@@ -508,7 +537,7 @@ class UpdateValues(MacroCommand):
 
 
 class OperationRun(MacroCommand):
-    """ Create a macro command to select and run an operation
+    """Create a macro command to select and run an operation.
 
     Examples
     --------
@@ -521,7 +550,9 @@ class OperationRun(MacroCommand):
                    OperationRun('Main.MyStudy.Kinematics'))
     >>> mg.create_macros()
     [[u'load "my_model.main.any"', u'operation Main.MyStudy.Kinematics', u'run']]
+
     """
+
     def __init__(self, operation):
         self.operation = operation
 
@@ -534,6 +565,7 @@ class AnyMacro(MutableSequence):
     Class to generate multiple macros.
 
     Use the class to contruct multiple anyscript macros from a single macro.
+    E.g. for parameter studies, Monte Carlo, Latin Hyper Cube studies.
 
     Parameters
     ----------
@@ -610,7 +642,7 @@ class AnyMacro(MutableSequence):
         if not isinstance(other, (int, float)):
             raise NotImplementedError('operator must be integer')
         mg = deepcopy(self)
-        mg.number_of_macros = mg.number_of_macros*round(other)
+        mg.number_of_macros = mg.number_of_macros * round(other)
         return mg
 
     __rmul__ = __mul__
@@ -642,12 +674,59 @@ class AnyMacro(MutableSequence):
         list_idx = len(self._list)
         self.insert(list_idx, val)
 
+    def create_macros(self, number_of_macros=None, batch_size=None):
+        """Generate a given number of macros.
+
+        The function return its output either as list (batch_size = None) or in batches
+        as generator object (memory efficient when generating many macros)
+
+        Parameters
+        ----------
+        number_of_macros : int (Optional)
+            The number of macro to create.
+        batch_size : int (Optional)
+            If specified the function will return a generator which creates macros in
+            batches.
+
+        Returns
+        -------
+        list or generator
+            A list macros or a generator which creates macros in batches
+
+        Examples
+        --------
+        >>> from anypytools import AnyMacro
+        >>> from anypytools.macro_commands import *
+        >>> macro = [
+        ...     Load('c:/Model.main.any'),
+        ...     OperationRun('Main.study.Kinematics'),
+        ... ]
+        >>> mg = AnyMacro(macro, number_of_macros=4)
+        >>> macrolist = mg.create_macros()
+        >>> pprint(macrolist)
+        [['load "c:/Model.main.any"', 'operation Main.study.Kinematics', 'run'],
+         ['load "c:/Model.main.any"', 'operation Main.study.Kinematics', 'run'],
+         ['load "c:/Model.main.any"', 'operation Main.study.Kinematics', 'run'],
+         ['load "c:/Model.main.any"', 'operation Main.study.Kinematics', 'run']]
 
 
+        Generate macros in batches
 
-    def create_macros(self, number_of_macros=None, batch_size = None):
+        >>> mg = AnyMacro([Load('c:/Model.main.any')], number_of_macros = 6)
+        >>> macro_gen =  mg.create_macros(batch_size=2)
+        >>> for i, macros in enumerate( macro_gen ):
+        ...     print('Batch ', i)
+        ...     pprint(macros)
+        Batch 0
+        [['load "c:/Model.main.any"'], ['load "c:/Model.main.any"']]
+        Batch 1
+        [['load "c:/Model.main.any"'], ['load "c:/Model.main.any"']]
+        Batch 2
+        [['load "c:/Model.main.any"'], ['load "c:/Model.main.any"']]
+
+        """
         if batch_size is not None:
-            return _batch(self.create_macros(number_of_macros), n = batch_size)
+            return _batch(self.create_macros(number_of_macros), n=batch_size)
 
         if number_of_macros is None:
             number_of_macros = self.number_of_macros
@@ -665,9 +744,47 @@ class AnyMacro(MutableSequence):
             macro_list.append(macro)
         return macro_list
 
+    def create_macros_MonteCarlo(self, number_of_macros=None, batch_size=None): # noqa
+        """Generate AnyScript macros for monte carlos studies.
 
-    def create_macros_MonteCarlo(self, number_of_macros=None, batch_size = None):
+        The function returns macros for Monte Carlo parameter studies. This methods
+        extends the `create_macros` methods with functionality to randomly vary
+        parameters across macros.
 
+        Values added with `SetValue_random` class are sampled randomly in a
+        'Monte Carlo' fashion. Note that the values of the first macro
+        is the defaut mean value.
+
+        Parameters
+        ----------
+        number_of_macros : int (Optional)
+            The number of macro to create.
+        batch_size : int (Optional)
+            If specified the function will return a generator which creates macros in
+            batches.
+
+        Returns
+        -------
+        list or generator
+            A list macros or a generator which creates macros in batches
+
+        Examples
+        --------
+        >>> np.random.seed(1)
+        >>> from scipy.stats.distributions import logistic, norm
+        >>> log_dist = logistic( loc= [1,3,4],scale = [0.1,0.5,1] )
+        >>> norm_dist = norm( loc= [0,0,0],scale = [0.1,0.5,1] )
+        >>> cmd = [SetValue_random('Main.MyVar1', log_dist), SetValue_random('Main.MyVar2', norm_dist) ]
+        >>> mg = AnyMacro(cmd, number_of_macros = 3)
+        >>> mg.create_macros_MonteCarlo()
+        [['classoperation Main.MyVar1 "Set Value" --value="{0,0,0}"',
+        'classoperation Main.MyVar2 "Set Value" --value="{1,3,4}"'],
+        ['classoperation Main.MyVar1 "Set Value" --value="{-0.0209517840916,0.291902872134,-3.68494766954}"',
+        'classoperation Main.MyVar2 "Set Value" --value="{0.916378512121,2.11986245798,1.71459079162}"'],
+        ['classoperation Main.MyVar1 "Set Value" --value="{-0.0891762169545,-0.198666812922,-0.261723075945}"',
+        'classoperation Main.MyVar2 "Set Value" --value="{1.01555799978,2.83695956934,4.7778636562}"']]
+
+        """
         if batch_size is not None:
             return _batch(self.create_macros_MonteCarlo(number_of_macros), batch_size)
 
@@ -677,7 +794,6 @@ class AnyMacro(MutableSequence):
         if self.seed is not None:
             np.random.seed(self.seed)
 
-
         macro_list = []
         for macro_idx in range(number_of_macros):
             macro = []
@@ -685,9 +801,10 @@ class AnyMacro(MutableSequence):
             for elem in self:
                 if isinstance(elem, SetValue_random):
                     if macro_idx == 0:
-                        lower_tail_probability = None # First macro get the default values
+                        lower_tail_probability = None  # First macro get the default values
                     else:
-                        lower_tail_probability = np.random.random(elem.n_factors)
+                        lower_tail_probability = np.random.random(
+                            elem.n_factors)
                     mcr = elem.get_macro(macro_idx, lower_tail_probability)
                     lhs_idx += elem.n_factors
                 else:
@@ -700,15 +817,63 @@ class AnyMacro(MutableSequence):
             macro_list.append(macro)
         return macro_list
 
+    def create_macros_LHS(self, number_of_macros=None, criterion=None, # noqa
+                          iterations=None, batch_size=None, append_default=False):
+        """Generate AnyScript macros for Latin Hyper Cube Studies studies.
+
+        Generates AnyScript macros for parameter studies using Latin hyper cube
+        sampling. The macros added with the `SetValue_random` are created with
+        with Latin Hypercube Sampling (LHS) of the parameter space. The number
+        of generated macros determines the number of LHS samples.
+
+        The method uses the pyDOE package to generate the LHS data.
 
 
+        Parameters
+        ----------
+        number_of_macros : int (Optional)
+            The number of macro to create.
+        batch_size : int (Optional)
+            If specified the function will return a generator which creates macros in
+            batches.
+        criterion : {None, 'c', 'm', 'cm', 'corr'}
+            A a string that specifies how points are sampled
+            (see: http://pythonhosted.org/pyDOE/randomized.html)
+            `None` (Default) points are randomizes within the intervals.
+            "center" or "c" center the points within the sampling intervals
+            "maximin" or "m": maximize the minimum distance between points, but place
+            the point in a randomized location within its interval
+            "centermaximin" or "cm": same as “maximin”, but centered within the intervals
+            "corr" minimize the maximum correlation coefficient
+        iterations : int
+            Specifies how many iterations are used to accomplished the selected criterion
+        append_default : bool
+            If True a macro with default (mean) values is appended to the returned list
+            of returned macros
 
-    def create_macros_LHS(self,
-                          number_of_macros=None,
-                          criterion=None,
-                          iterations=None,
-                          batch_size = None,
-                          append_default=False):
+
+        Returns
+        -------
+        list or generator
+            A list macros or a generator which creates macros in batches
+
+        Examples
+        --------
+        >>> np.random.seed(1)
+        >>> from scipy.stats.distributions import logistic, norm
+        >>> log_dist = logistic( loc= [1,3,4],scale = [0.1,0.5,1] )
+        >>> norm_dist = norm( loc= [0,0,0],scale = [0.1,0.5,1] )
+        >>> cmd = [SetValue_random('Main.MyVar1', log_dist), SetValue_random('Main.MyVar2', norm_dist) ]
+        >>> mg = AnyMacro(cmd, number_of_macros = 3)
+        >>> mg.create_macros_LHS()
+        [['classoperation Main.MyVar1 "Set Value" --value="{0.0928967116493,-0.591418725401,-0.484696993931}"',
+        'classoperation Main.MyVar2 "Set Value" --value="{1.01049414425,2.46211329129,5.73806916203}"'],
+        ['classoperation Main.MyVar1 "Set Value" --value="{-0.0166741228961,0.707722119582,-0.294180629253}"',
+        'classoperation Main.MyVar2 "Set Value" --value="{1.11326829265,2.66016732923,4.28054911097}"'],
+        ['classoperation Main.MyVar1 "Set Value" --value="{-0.20265197275,0.114947152258,0.924796936287}"',
+        'classoperation Main.MyVar2 "Set Value" --value="{0.806864877696,4.4114188826,2.93941843565}"']]
+
+        """# noqa
         try:
             import pyDOE
         except ImportError:
@@ -718,7 +883,7 @@ class AnyMacro(MutableSequence):
         if batch_size is not None:
             return _batch(self.create_macros_LHS(number_of_macros,
                                                  criterion,
-                                                 iterations), n = batch_size)
+                                                 iterations), n=batch_size)
 
         if number_of_macros is None:
             number_of_macros = self.number_of_macros
@@ -752,12 +917,13 @@ class AnyMacro(MutableSequence):
                 if len(mcr) > 0:
                     macro.extend(mcr.split('\n'))
             macro_list.append(macro)
-        if append_default is not None:
+        if append_default:
             macro = []
             for elem in self:
                 mcr = elem.get_macro(number_of_macros)
                 if self.counter_token:
-                   mcr = mcr.replace(self.counter_token, str(number_of_macros))
+                    mcr = mcr.replace(self.counter_token,
+                                      str(number_of_macros))
                 if len(mcr) > 0:
                     macro.extend(mcr.split('\n'))
             macro_list.append(macro)

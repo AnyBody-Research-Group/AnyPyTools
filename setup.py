@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sat Sep 24 12:29:53 2011
+Created on Sat Sep 24 12:29:53 2011.
 
 @author: melund
 """
 
-#from distutils.core import setup
+# from distutils.core import setup
 from setuptools import setup
 
 setup(
@@ -22,9 +22,10 @@ setup(
         'anypytools.pygments_plugin.anyscript_lexer',
         'anypytools.pygments_plugin.anyscript_style'],
     packages=['anypytools'],
-    package_data={'anypytools': ['test_models/Demo.Arm2D.any', 'pygments_plugin/*.txt']},
+    package_data={'anypytools': [
+        'test_models/Demo.Arm2D.any', 'pygments_plugin/*.txt']},
     # the following makes a plugin available to pytest
-    entry_points = {
+    entry_points={
         'pytest11': [
             'anypytools = anypytools.pytest_plugin',
         ],
@@ -50,5 +51,5 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Operating System :: Windows',
         'Topic :: Scientific/Engineering'
-        ]
-    )
+    ]
+)

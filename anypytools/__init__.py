@@ -1,21 +1,29 @@
+# -*- coding: utf-8 -*-
+"""AnyPyTools library."""
+
+import sys
+import platform
 import logging
+
+from anypytools.abcutils import AnyPyProcess
+from anypytools.macroutils import AnyMacro
+from anypytools import macro_commands
+
+
 logger = logging.getLogger('abt.anypytools')
 logger.addHandler(logging.NullHandler())
 
 
-from .abcutils import AnyPyProcess
-from .macroutils import AnyMacro
-from . import macro_commands
-
-__all__ = ['datautils', 'h5py_wrapper', 'AnyPyProcess',
-           'AnyMacro', 'macro_commands', 'print_versions']
+__all__ = [
+    'datautils', 'h5py_wrapper', 'AnyPyProcess', 'AnyMacro', 'macro_commands',
+    'print_versions'
+]
 
 __version__ = '0.9.7'
 
 
 def print_versions():
-    """ Print all the versions of software that AnyPyTools relies on."""
-    import sys, platform
+    """Print all the versions of software that AnyPyTools relies on."""
     import numpy as np
     import scipy as sp
     print("-=" * 38)
@@ -33,5 +41,3 @@ def print_versions():
     print("Processor: %s" % processor)
     print("Byte-ordering: %s" % sys.byteorder)
     print("-=" * 38)
-
-

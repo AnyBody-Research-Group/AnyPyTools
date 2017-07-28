@@ -8,7 +8,12 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import __future__
-import os, sys, io, ast, re, types
+
+import io
+import re
+import sys
+import ast
+import types
 
 import future
 from future.utils import text_to_native_str, exec_
