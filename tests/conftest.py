@@ -9,6 +9,7 @@ from __future__ import (absolute_import, division, print_function,
 
 import __future__
 
+import os
 import io
 import re
 import sys

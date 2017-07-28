@@ -500,7 +500,10 @@ class AnyPyProcess(object):
             raise ValueError('No data available for saving')
 
         if batch_name is None:
-            batch_name = self.cached_arg_hash
+            batch_name = str(self.cached_arg_hash)
+
+        filename = text_to_native_str(filename)
+        batch_name = text_to_native_str(batch_name)
 
         any_output = AnyPyProcessOutputList([
             task.get_output()
@@ -521,11 +524,11 @@ class AnyPyProcess(object):
                 for k, v in run.items():
                     if not isinstance(v, np.ndarray):
                         if isinstance(v, list):
-                            h5_task_group.attrs[str(k)] = str(v)
+                            h5_task_group.attrs[text_to_native_str(k)] = text_to_native_str(str(v))
                         else:
-                            h5_task_group.attrs[str(k)] = v
+                            h5_task_group.attrs[text_to_native_str(k)] = v
                     elif isinstance(v, np.ndarray):
-                        h5_task_group.create_dataset(str(k), data=v)
+                        h5_task_group.create_dataset(text_to_native_str(k), data=v)
 
     def load_results(self, filename):
         """Load previously saved results.

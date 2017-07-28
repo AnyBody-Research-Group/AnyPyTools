@@ -5,13 +5,28 @@ Created on Sat Sep 24 12:29:53 2011.
 @author: melund
 """
 
-# from distutils.core import setup
+import sys
 from setuptools import setup
+
+
+def is_python2():
+    return (sys.version_info[0] == 2)
+
+
+def is_python34():
+    return (sys.version_info[0] == 3 and sys.version_info[1] == 4)
+
+
+require_list = ['future', 'numpy']
+
+if sys.platform.startswith("win") and (is_python2() or is_python34()):
+    require_list.extend(['pywin32'])
+
 
 setup(
     name='AnyPyTools',
     version='0.9.7',
-    install_requires=['future', 'numpy'],
+    install_requires=require_list,
     py_modules=[
         'anypytools.abcutils',
         'anypytools.h5py_wrapper',
