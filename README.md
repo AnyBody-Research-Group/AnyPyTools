@@ -25,12 +25,14 @@ The simplest case:
 >``` py
 > from anypytools import AnyPyProcess
 > app = AnyPyProcess()
-> macro = [['load "Model.main.any"',
->           'operation Main.Study.InverseDynamics',
->           'run' ]]
+> macro = [
+    'load "Model.main.any"',
+>   'operation Main.Study.InverseDynamics',
+>   'run',
+ ]
 > app.start_macro(macro)
 > ```
 
 Please see this [tutorial](http://nbviewer.ipython.org/github/AnyBody-Research-Group/AnyPyTools/blob/master/Tutorial/00_AnyPyTools_tutorial.ipynb) on how to use the library. 
 
-<img src="https://dl.dropboxusercontent.com/u/1683635/store/relax.png" alt="" align="left"  style="height: 100px;"/>
+<img src="docs/_static/relax.png" alt="" align="left"  style="height: 100px;"/>

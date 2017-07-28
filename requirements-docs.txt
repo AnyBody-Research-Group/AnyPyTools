@@ -1,7 +1,0 @@
-cloud_sptheme
-nbsphinx
-numpydoc
-Sphinx
-recommonmark
-ipython
-pypandoc
