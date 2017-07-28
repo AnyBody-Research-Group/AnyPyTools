@@ -443,6 +443,34 @@ class SaveValues(MacroCommand):
             self.filename)
 
 
+class SaveData(MacroCommand):
+    """ Create a Save Data classoperation macro command.
+
+    This macro operation will save all data from a study to a 
+    HDF5 file.
+
+    Parameters
+    ----------
+    operation : str
+        Operation to save the h5 from
+    filename : str
+        The anyset file to save the values to
+
+    Examples
+    --------
+    >>> SaveData('Main.Study', 'output.anydata.h5')
+    classoperation Main.Study.Output "Save data" --type="Deep" --file="output.anydata.h5"
+    """
+    def __init__(self, operation, filename):
+        self.filename = filename
+        self.opeation = operation
+
+    def get_macro(self, index, **kwarg):
+        macro_str = 'classoperation {}.Output "Save data" --type="Deep" --file="{}"'
+        return macro_str.format(self.opeation, self.filename)
+
+
+
 class LoadValues(MacroCommand):
     """ Create a Load Values classoperation macro command.
 
