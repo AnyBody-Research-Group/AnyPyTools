@@ -17,7 +17,8 @@ long_description = (
     "and collect results. It has a scheduler to launch multiple instances of "
     "AMS utilising computers with multiple cores. AnyPyTools makes it easy to "
     "do parameter and sensitivity and many other things which is not possible "
-    "directly within the AnyBody Modeling System"
+    "directly within the AnyBody Modeling System\n\n"
+    "Please visit https://github.com/AnyBody-Research-Group/AnyPyTools for more information."
 )
 
 

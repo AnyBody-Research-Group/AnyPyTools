@@ -4,7 +4,35 @@ AnyPyTools Change Log
 
 .. current developments
 
-[Current development](https://github.com/AnyBody-Research-Group/AnyPyTools/compare/0.9.7...master)
+v0.10.0
+=============
+
+**Merged pull requests:**
+
+-  Fix PEP8 issues and remaining pytest issues
+   `#21 <https://github.com/AnyBody-Research-Group/AnyPyTools/pull/21>`__
+   (`melund <https://github.com/melund>`__)
+-  Update Documentaion and tutorials
+   `#20 <https://github.com/AnyBody-Research-Group/AnyPyTools/pull/20>`__
+   (`melund <https://github.com/melund>`__)
+-  Add SaveData MacroCommand for saving hdf5 files
+   `#19 <https://github.com/AnyBody-Research-Group/AnyPyTools/pull/19>`__
+   (`melund <https://github.com/melund>`__)
+-  Fix Crash on Python 2.7 when using h5py_wrapper
+   `#18 <https://github.com/AnyBody-Research-Group/AnyPyTools/pull/18>`__
+   (`melund <https://github.com/melund>`__)
+-  Setup Travis-CI for building documentation for publishing on github.io
+   `#13 <https://github.com/AnyBody-Research-Group/AnyPyTools/pull/13>`__
+   (`melund <https://github.com/melund>`__)
+-  Refactor the library for the new library documention.
+   `#12 <https://github.com/AnyBody-Research-Group/AnyPyTools/pull/12>`__
+   (`melund <https://github.com/melund>`__)
+-  Added ``AnyPyProcessOutputList.tolist()`` converting results to native Python 
+   `#11 <https://github.com/AnyBody-Research-Group/AnyPyTools/pull/11>`__
+   (`KasperPRasmussen <https://github.com/KasperPRasmussen>`__)
+
+
+[Full Changelog](https://github.com/AnyBody-Research-Group/AnyPyTools/compare/0.9.7...master)
 
 v0.9.7
 =============

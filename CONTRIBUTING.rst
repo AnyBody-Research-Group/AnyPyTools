@@ -179,13 +179,15 @@ created by unit testing by running::
 Performing the Release
 -----------------------
 
-    1. Update and push the release log
-    2. Update version number in ``anypytools.__init__.py``
-    3. Ensure test pass on python2 and python 3
-    4. Make PR on GitHub, and check docs compile correctly on travis
-    5. Create a tag with the version number and push it.
-    6. Run ``python setup.py sdist``?
-    6. Update the conda forge package on https://github.com/conda-forge/anypytools-feedstock
+    - [ ] Update and push the release log
+    - [ ] Update version number in ``anypytools.__init__.py``
+    - [ ] Ensure test pass on python2 and python 3
+    - [ ] Make PR on GitHub, and check docs compile correctly on travis
+    - [ ] Create a tag with the version number and push it.
+    - [ ] Crate PYPI pckage 
+        - [ ] Run ``python setup.py sdist``
+        - [ ] Run ``twine upload dist/*``
+    - [ ] Update the conda forge package on https://github.com/conda-forge/anypytools-feedstock
 
 
 Document History
