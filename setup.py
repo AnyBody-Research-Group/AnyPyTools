@@ -18,7 +18,7 @@ long_description = (
     "AMS utilising computers with multiple cores. AnyPyTools makes it easy to "
     "do parameter and sensitivity and many other things which is not possible "
     "directly within the AnyBody Modeling System\n\n"
-    "Please visit https://github.com/AnyBody-Research-Group/AnyPyTools for more information."
+    "Please visit https://anybody-research-group.github.io/anypytools-docs for more information."
 )
 
 
@@ -78,19 +78,19 @@ setup(
     author='Morten Lund',
     author_email='melund@gmail.com',
     description='AnyPyTools is a toolkit for working with the AnyBody Modeling System '
-                '(AMS) from Python',
+                'from Python',
     long_description=long_description,
     license='MIT',
     keywords=('AnyBody Modeling System', 'AnyScript'),
     url='https://github.com/AnyBody-Research-Group/AnyPyTools',
     classifiers=[
-        'Development Status :: 5 - Stable',
+        'Development Status :: 5 - Production/Stable',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: MIT License',
-        'Operating System :: Windows',
+        'Environment :: Win32 (MS Windows)',
         'Topic :: Scientific/Engineering'
     ]
 )
