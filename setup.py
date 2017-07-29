@@ -5,38 +5,61 @@ Created on Sat Sep 24 12:29:53 2011.
 @author: melund
 """
 
+import os
+import io
+import re
 import sys
-from setuptools import setup
+
+from setuptools import setup, find_packages
+
+long_description = (
+    "AnyPyTools' main purpose is to launch AnyBody simulations "
+    "and collect results. It has a scheduler to launch multiple instances of "
+    "AMS utilising computers with multiple cores. AnyPyTools makes it easy to "
+    "do parameter and sensitivity and many other things which is not possible "
+    "directly within the AnyBody Modeling System"
+)
 
 
-def is_python2():
+def _on_py2():
     return (sys.version_info[0] == 2)
 
 
-def is_python34():
+def _on_py34():
     return (sys.version_info[0] == 3 and sys.version_info[1] == 4)
+
+
+def read(*names, **kwargs):
+    """Read content of file."""
+    with io.open(
+        os.path.join(os.path.dirname(__file__), *names),
+        encoding=kwargs.get("encoding", "utf8")
+    ) as fp:
+        return fp.read()
+
+
+def find_version(*file_paths):
+    """Parse the __version__ string from a file."""
+    version_file = read(*file_paths)
+    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]",
+                              version_file, re.M)
+    if version_match:
+        return version_match.group(1)
+    raise RuntimeError("Unable to find version string.")
 
 
 require_list = ['future', 'numpy']
 
-if sys.platform.startswith("win") and (is_python2() or is_python34()):
+if sys.platform.startswith("win") and (_on_py2() or _on_py34()):
     require_list.extend(['pywin32'])
 
 
 setup(
     name='AnyPyTools',
-    version='0.9.7',
+    version=find_version("anypytools", "__init__.py"),
     install_requires=require_list,
-    py_modules=[
-        'anypytools.abcutils',
-        'anypytools.h5py_wrapper',
-        'anypytools.datautils',
-        'anypytools.pytest_plugin',
-        'anypytools.tools',
-        'anypytools.blaze_converter',
-        'anypytools.pygments_plugin.anyscript_lexer',
-        'anypytools.pygments_plugin.anyscript_style'],
-    packages=['anypytools'],
+    python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, <4',
+    packages=find_packages(exclude=['docs', 'tests*']),
     package_data={'anypytools': [
         'test_models/Demo.Arm2D.any', 'pygments_plugin/*.txt']},
     # the following makes a plugin available to pytest
@@ -53,12 +76,14 @@ setup(
     },
     author='Morten Lund',
     author_email='melund@gmail.com',
-    description='A library of Python utilities for the AnyBody Modeling System',
+    description='AnyPyTools is a toolkit for working with the AnyBody Modeling System '
+                '(AMS) from Python',
+    long_description=long_description,
     license='MIT',
-    keywords=('AnyBody Modeling System ', 'AnyScript'),
+    keywords=('AnyBody Modeling System', 'AnyScript'),
     url='https://github.com/AnyBody-Research-Group/AnyPyTools',
     classifiers=[
-        'Development Status :: 1 - Alpha',
+        'Development Status :: 5 - Stable',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',

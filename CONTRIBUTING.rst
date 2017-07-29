@@ -38,7 +38,7 @@ Running the Tests
 
 Run all the tests using pytest::
 
-    $ pytest
+    $ pytest --flake8
 
 
 If you want to run specific tests you can specify the test names to
@@ -130,6 +130,9 @@ Building the website/documentation requires the following dependencies:
 #. `Sphinx <http://sphinx-doc.org/>`_
 #. `Cloud Sphinx Theme <https://pythonhosted.org/cloud_sptheme/cloud_theme.html>`_
 #. `recommonmark <https://recommonmark.readthedocs.io/en/latest/>`_
+#. `pandoc <https://pandoc.org/>`_
+#. `ipykernel <http://ipython.readthedocs.io/en/stable/install/kernel_install.html>`_ 
+#. `nbsphinx <https://nbsphinx.readthedocs.io>`_ 
 
 -----------------------------------
 Procedure for modifying the website
@@ -176,7 +179,13 @@ created by unit testing by running::
 Performing the Release
 -----------------------
 
-   TODO
+    1. Update and push the release log
+    2. Update version number in ``anypytools.__init__.py``
+    3. Ensure test pass on python2 and python 3
+    4. Make PR on GitHub, and check docs compile correctly on travis
+    5. Create a tag with the version number and push it.
+    6. Run ``python setup.py sdist``?
+    6. Update the conda forge package on https://github.com/conda-forge/anypytools-feedstock
 
 
 Document History
