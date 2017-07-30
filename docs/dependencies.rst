@@ -4,7 +4,7 @@ AnyPyTools currently has the following external dependencies,
 
 *Run Time:*
 
-    - `Python v2.7+/3.4+ https://www.python.org/>`_
+    - `Python v2.7+/3.4+ <https://www.python.org/>`_
     - `Numpy <http://www.numpy.org/>`_
     - `Python-Future <http://python-future.org/>`_ 
     - `SciPy* <https://www.scipy.org/>`_
