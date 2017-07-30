@@ -25,6 +25,7 @@ import pprint as _pprint
 import logging
 import datetime
 import warnings
+import platform
 import subprocess
 import collections
 from ast import literal_eval
@@ -71,11 +72,14 @@ def run_from_ipython():
 ANYBODYCON_VERSION_RE = re.compile(r'.*version\s:\s(?P<version>(?P<v1>\d)\.\s(?P<v2>\d)'
                                    r'\.\s(?P<v3>\d)\.\s(?P<build>\d+)\s\((?P<arc>.*)\))')
 
+ON_WINDOWS = (platform.system() == 'Windows')
+
 
 def anybodycon_version(anybodyconpath):
     """Return the AnyBodyCon version."""
+    anybodyconpath = anybodyconpath or get_anybodycon_path()
     if anybodyconpath is None:
-        anybodyconpath = get_anybodycon_path()
+        return '0.0.0'
     out = subprocess.check_output(
         [anybodyconpath, '-ni'], universal_newlines=True)
     m = ANYBODYCON_VERSION_RE.search(out)
@@ -361,6 +365,8 @@ def _expand_short_path_name(short_path_name):
 
 def get_anybodycon_path():
     """Return the path to default AnyBody console application."""
+    if not ON_WINDOWS:
+        return None
     try:
         import winreg
     except ImportError:

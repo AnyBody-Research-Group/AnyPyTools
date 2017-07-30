@@ -67,7 +67,7 @@ class AnyTestSession(object):
             "--anytest-save") or config.getoption("--anytest-autosave")
         ammr_path = config.getoption("--ammr") or config.rootdir.strpath
         self.ammr_version = find_ammr_version(ammr_path)
-        self.ams_path = anybodycon_path(config)
+        self.ams_path = config.getoption("--anybodycon") or get_anybodycon_path()
         self.ams_version = anybodycon_version(self.ams_path)
         self.compare_session = self.get_compare_session(config)
         self.run_compare_test = bool(self.save or self.compare_session)
@@ -307,14 +307,6 @@ def write_macro_file(path, name, macro):
     return filename
 
 
-def anybodycon_path(config):
-    """Return the path to AnyBodyCon used in test."""
-    path = config.getoption("--anybodycon")
-    if path is None:
-        path = get_anybodycon_path()
-    return path
-
-
 class AnyFile(pytest.File):
     """pytest.File subclass for AnyScript files."""
 
@@ -360,7 +352,7 @@ class AnyItem(pytest.Item):
                                           self.defs, self.paths)]
         self.compare_filename = None
         self.macro_file = None
-        self.anybodycon_path = anybodycon_path(self.config)
+        self.anybodycon_path = pytest.anytest.ams_path
         self.apt_opts = {
             'return_task_info': True,
             'silent': True,
@@ -448,7 +440,7 @@ class AnyItem(pytest.Item):
             rtn += "\nMain file:\n"
             rtn += "  {}\n".format(self.fspath.strpath.replace(os.sep, os.altsep))
             rtn += "AnyBody Console:\n"
-            rtn += "  {}\n".format(self.app.anybodycon_path.replace(os.sep, os.altsep))
+            rtn += "  {}\n".format(self.anybodycon_path.replace(os.sep, os.altsep))
             rtn += "Special model configuration:\n"
             for k, v in self.defs.items():
                 rtn += "  #define {} {}\n".format(k, v)
