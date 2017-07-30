@@ -161,7 +161,7 @@ def get_git_project_name():
     cmd = 'git config --local remote.origin.url'.split()
     try:
         output = subprocess.check_output(cmd, universal_newlines=True)
-    except subprocess.CalledProcessError:
+    except (subprocess.CalledProcessError, FileNotFoundError):
         name = None
     else:
         name = re.findall(r'/([^/]*)\.git', output)[0]
@@ -173,7 +173,7 @@ def get_git_branch_info():
     cmd = 'git rev-parse --abbrev-ref HEAD'
     try:
         branch = subprocess.check_output(cmd, universal_newlines=True).strip()
-    except subprocess.CalledProcessError as e:
+    except (subprocess.CalledProcessError, FileNotFoundError) as e:
         branch = 'unknown'
     else:
         if branch == 'HEAD':
@@ -189,7 +189,7 @@ def get_git_commit_info(project_name=None):
     cmd = 'git describe --dirty --always --long --abbrev=6'.split()
     try:
         output = subprocess.check_output(cmd, universal_newlines=True).strip()
-    except subprocess.CalledProcessError as e:
+    except (subprocess.CalledProcessError, FileNotFoundError) as e:
         pass
     else:
         try:
