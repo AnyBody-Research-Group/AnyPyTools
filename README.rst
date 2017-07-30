@@ -30,6 +30,8 @@ Installation
     conda config --add channels conda-forge
     conda install anypytools
 
+The library is also available on `PyPi <https://pypi.python.org/pypi/AnyPyTools>`_ for installing using ``pip``.
+
 
 .. _Anaconda Python distribution: https://store.continuum.io/cshop/anaconda/
 
