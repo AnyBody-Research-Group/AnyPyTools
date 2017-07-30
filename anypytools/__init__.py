@@ -16,7 +16,7 @@ logger.addHandler(logging.NullHandler())
 
 __all__ = [
     'datautils', 'h5py_wrapper', 'AnyPyProcess', 'AnyMacro', 'macro_commands',
-    'print_versions'
+    'print_versions',
 ]
 
 __version__ = '0.10.0'

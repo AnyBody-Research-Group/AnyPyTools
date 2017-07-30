@@ -13,11 +13,12 @@ import sys
 from setuptools import setup, find_packages
 
 long_description = (
-    "AnyPyTools' main purpose is to launch AnyBody simulations "
-    "and collect results. It has a scheduler to launch multiple instances of "
-    "AMS utilising computers with multiple cores. AnyPyTools makes it easy to "
-    "do parameter and sensitivity and many other things which is not possible "
-    "directly within the AnyBody Modeling System\n\n"
+    "AnyPyTools is a toolkit for working with the AnyBody Modeling System "
+    "from Python. Its main purpose is to launch AnyBody simulations and collect "
+    "results. It has a scheduler to launch multiple instances of AMS utilising "
+    "computers with multiple cores. AnyPyTools makes it possible to run parameter "
+    "and Monte Carlo studies more efficiently than from within the AnyBody Modeling "
+    "System.\n\n"
     "Please visit https://anybody-research-group.github.io/anypytools-docs for more information."
 )
 
@@ -77,8 +78,7 @@ setup(
     },
     author='Morten Lund',
     author_email='melund@gmail.com',
-    description='AnyPyTools is a toolkit for working with the AnyBody Modeling System '
-                'from Python',
+    description='Python tools and utilities for working with the AnyBody Modeling System',
     long_description=long_description,
     license='MIT',
     keywords=('AnyBody Modeling System', 'AnyScript'),

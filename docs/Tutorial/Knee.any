@@ -216,15 +216,20 @@ AnyViaPointMuscle Quadriceps = {
     tEnd = 2.4;
     AnyVar MomentArm = Main.MyModel.Quadriceps.LmtDot/(Main.MyModel.Knee.Vel[0]+1.0e-10);
     
-    AnyMessage WarningTest = 
+    #ifdef CREATE_OUTPUT_FILE 
+    AnyOutputFile FileOutput = 
     {
-      TriggerPreProcess = On;
-      //TriggerConst = Off;
-      //TriggerRuntime = Off;
-      Type = MSG_Warning;
-      Message = "This is a test warning";
+       ConstSectionSaveOptionsOnOff = Off;
+       FileName = "TestOutput.csv";
+       AnyStringVar ConstName = "HelloWorld";
+       Values = {
+          &.nStep,
+          &.MomentArm,
+          &Main.MyModel.Femur.Knee.sRel
+       };
+    
     };
-
+    #endif
     
     
   };

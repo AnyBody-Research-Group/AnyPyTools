@@ -2,6 +2,10 @@
 AnyPyTools
 ----------
 
+.. image:: https://img.shields.io/badge/License-MIT-yellow.svg
+    :target: https://opensource.org/licenses/MIT
+    :alt: MIT License
+
 .. image:: https://badges.gitter.im/Join%20Chat.svg
    :alt: Join the chat at https://gitter.im/xonsh/xonsh
    :target: https://gitter.im/AnyBody-Research-Group/AnyPyTools?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
@@ -23,8 +27,8 @@ Installation
 
 .. code-block:: bash
 
-    > conda config --add channels conda-forge
-    > conda install anypytools
+    conda config --add channels conda-forge
+    conda install anypytools
 
 
 .. _Anaconda Python distribution: https://store.continuum.io/cshop/anaconda/
@@ -37,21 +41,20 @@ The simplest case:
 
 .. code-block:: python
 
-    > from anypytools import AnyPyProcess
-    > app = AnyPyProcess()
-    > macro = [
+    from anypytools import AnyPyProcess
+    app = AnyPyProcess()
+    macro = [
         'load "Model.main.any"',
-    >   'operation Main.Study.InverseDynamics',
-    >   'run',
+        'operation Main.Study.InverseDynamics',
+        'run',
     ]
-    > app.start_macro(macro)
+    app.start_macro(macro)
 
 
-Please see the `Jupyter Notebook based tutorial`_, or check the documentation for more information.
+Please see the `Jupyter Notebook based tutorial`_, or check the the following for more information:
 
-* `Documentation <https://anybody-research-group.github.io/anypytools-docs>`_
+* `AnyPyTools's Documentation <https://anybody-research-group.github.io/anypytools-docs>`_
 * `Gitter channel <https://gitter.im/AnyBody-Research-Group/AnyPyTools>`_
-* `Open source MIT License <LICENSE.txt>`_
 
 .. _Jupyter Notebook based tutorial: http://nbviewer.ipython.org/github/AnyBody-Research-Group/AnyPyTools/blob/master/Tutorial/00_AnyPyTools_tutorial.ipynb
 

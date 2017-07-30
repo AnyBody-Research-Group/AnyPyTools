@@ -75,7 +75,7 @@ Usefull links
 =============
 
 If you have questions or comments, please contact the author directly, or
-open a [new issue on GitHub](https://github.com/AnyBody-Research-Group/AnyPyTools/issues/new).
+open a `new issue on GitHub <https://github.com/AnyBody-Research-Group/AnyPyTools/issues/new>`_
 
 * `Jupyter Notebook tutorial <http://nbviewer.ipython.org/github/AnyBody-Research-Group/AnyPyTools/blob/master/Tutorial/00_AnyPyTools_tutorial.ipynb>`_
 * `Documentation <anybody-research-group.github.io/anypytools-docs>`_

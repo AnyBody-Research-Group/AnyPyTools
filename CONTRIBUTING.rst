@@ -179,22 +179,23 @@ created by unit testing by running::
 Performing the Release
 -----------------------
 
-    - [ ] Update and push the release log
-    - [ ] Update version number in ``anypytools.__init__.py``
-    - [ ] Ensure test pass on python2 and python 3
-    - [ ] Make PR on GitHub, and check docs compile correctly on travis
-    - [ ] Create a tag with the version number and push it.
-    - [ ] Crate PYPI pckage 
-        - [ ] Run ``python setup.py sdist``
-        - [ ] Run ``twine upload dist/*``
-    - [ ] Update the conda forge package on https://github.com/conda-forge/anypytools-feedstock
+    1. Update and push the release log
+    2. Update version number in ``anypytools.__init__.py``
+    3. Ensure test pass on python2 and python 3
+    4. Make PR on GitHub, and check docs compile correctly on travis
+    5. Create a tag with the version number and push it.
+    6. Crate PYPI pckage 
+        a. Run ``python setup.py sdist``
+        b. Run ``twine upload dist/*``
+    7. Update the conda forge package on https://github.com/conda-forge/anypytools-feedstock
 
 
 Document History
 ===================
 Portions of this page have been forked from
-* Xonsh documentation, Copyright 2014-2017, the Xonsh Development Team. All rights reserved.
-* PyNE documentation,Copyright 2011-2015, the PyNE Development Team. All rights reserved.
+
+  - Xonsh documentation, Copyright 2014-2017, the Xonsh Development Team. All rights reserved.
+  - PyNE documentation,Copyright 2011-2015, the PyNE Development Team. All rights reserved.
 
 .. _PEP8: https://www.python.org/dev/peps/pep-0008/
 .. _numpydoc: https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt
