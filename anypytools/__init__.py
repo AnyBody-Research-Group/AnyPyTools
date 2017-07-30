@@ -19,7 +19,7 @@ __all__ = [
     'print_versions',
 ]
 
-__version__ = '0.10.0'
+__version__ = '0.10.1'
 
 
 def print_versions():

@@ -4,6 +4,15 @@ AnyPyTools Change Log
 
 .. current developments
 
+v0.10.1
+=============
+
+**Changed:**
+
+- Updates and fixes to the documentation website.
+- Added flake8 testing on Travis CI
+
+
 v0.10.0
 =============
 
