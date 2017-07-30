@@ -39,9 +39,7 @@ The library is also available on `PyPi <https://pypi.python.org/pypi/AnyPyTools>
 Usage
 ============
 
-The simplest case:
-
-.. code-block:: python
+The simplest case::
 
     from anypytools import AnyPyProcess
     app = AnyPyProcess()
