@@ -20,7 +20,6 @@ import ctypes
 import shelve
 import atexit
 import logging
-import warnings
 import collections
 from subprocess import Popen
 from tempfile import NamedTemporaryFile
@@ -352,19 +351,32 @@ class AnyPyProcess(object):
         registry.
     timeout : int, optional
         Maximum time (i seconds) a model can run until it is terminated.
-        Defaults to 1 hour (3600 sec)-
+        Defaults to 3600 sec (1 hour).
+    silent : bool, optional
+        Set to True to suppress any output such as progress bar and error
+        messages. (Defaults to False).
     ignore_errors : list of str, optional
         List of AnyBody Errors substrings to ignore when running the models.
-    return_task_info : bool, optional
-        Return the task status information when running macros. Defaults to False
-    disp
-        Set to False to suppress output (deprecated)
-    silent : bool, optional
-        Set to True to suppres any output (progress bar and error messages).
+        (Defaults to None)
     warnings_to_include : list of str, optional
         List of strings that are matched to warnings in the model
         output. If a warning with that string is found the warning
-        is returned in the output.
+        is returned in the output. (Defaults to None)
+    return_task_info : bool, optional
+        Return the task status information when running macros. Defaults to False.
+    keep_logfiles : bool, optional
+        If True logfile will never be removed. Even if a simulations successeds
+        without error. (Defautls to False)
+    logfile_prefix : str, option
+        String which will be prefixed to the generated log files. This can be used
+        to assign a more meaningfull name to a batch of logfiles.
+        (Defaults to None)
+    python_env : pathlike, optional
+        Path to a python environment/installation that the AnyBody Modeling System
+        should use for Python Hooks. This will added the ``PYTHONHOME`` environment variable and
+        prepended to the ``PATH`` before starting the AnyBody Console application.
+        (Defaults to None, which will use the default Python installation on the computer.)
+
 
     Returns
     -------
@@ -374,7 +386,12 @@ class AnyPyProcess(object):
 
     Example
     -------
+    The following example shows how to instantiate a AnyPyProcess object.
+
     >>> app = AnyPyProcess(num_processes=8, return_task_info=True)
+
+    The `app` object has methods for launching macros, saving results etc.
+
     >>> macro = ['load "MyModel.any"', 'operation Main.MyStudy.Kinematics', 'run']
     >>> app.start_macro(macro)
 
@@ -390,9 +407,7 @@ class AnyPyProcess(object):
                  return_task_info=False,
                  keep_logfiles=False,
                  logfile_prefix=None,
-                 python_env=None,
-                 **kwargs):
-
+                 python_env=None):
         if not isinstance(ignore_errors, (list, type(None))):
             raise ValueError('ignore_errors must be a list of strings')
 
@@ -407,14 +422,6 @@ class AnyPyProcess(object):
             raise FileNotFoundError("Can't find " + anybodycon_path)
         self.num_processes = num_processes
         self.silent = silent
-        if 'disp' in kwargs:
-            warnings.warn("Using 'disp' is deprecated. Use "
-                          "AnyPyProcess(silent=True) instead.",
-                          DeprecationWarning)
-            if kwargs.pop('disp') is False:
-                self.silent = True
-            else:
-                self.silent = False
         self.timeout = timeout
         self.counter = 0
         self.return_task_info = return_task_info
