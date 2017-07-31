@@ -35,6 +35,7 @@ The library is also available on `PyPi <https://pypi.python.org/pypi/AnyPyTools>
 
 .. _Anaconda Python distribution: https://store.continuum.io/cshop/anaconda/
 
+.. highlight:: python
 
 Usage
 ============
