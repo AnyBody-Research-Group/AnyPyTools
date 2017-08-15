@@ -666,8 +666,14 @@ _BM_CONSTANTS = {
     'CONST_SCALING_LENGTHMASSFAT_MULTIDOFS': '7',
 }
 
+for key in list(_BM_CONSTANTS.keys()):
+    _, _, last = key.partition('CONST')
+    if last.startswith('_'):
+        _BM_CONSTANTS[last + '_'] = _BM_CONSTANTS[key]
+
 
 def replace_bm_constants(d):
+    """Replace BM constants with value represenation."""
     for k, v in d.items():
         if v in _BM_CONSTANTS:
             d[k] = _BM_CONSTANTS[v]
