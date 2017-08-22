@@ -4,6 +4,17 @@ AnyPyTools Change Log
 
 .. current developments
 
+**New:**
+
+- Support new BodyModel statements, which starts and end with a underscore. 
+
+
+**Changed:**
+
+ - Improved exception handling when trying to access data which 
+   is not avaible in the output.
+
+
 v0.10.1
 =============
 
@@ -11,6 +22,7 @@ v0.10.1
 
 - Updates and fixes to the documentation website.
 - Added flake8 testing on Travis CI
+- Fix crash using pytest on systems where git is not installed.
 
 
 v0.10.0
