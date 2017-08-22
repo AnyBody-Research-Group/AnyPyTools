@@ -61,14 +61,6 @@ def py3k_pprint(s):
 pprint = py3k_pprint
 
 
-def run_from_ipython():
-    try:
-        __IPYTHON__
-        return True
-    except NameError:
-        return False
-
-
 ANYBODYCON_VERSION_RE = re.compile(r'.*version\s:\s(?P<version>(?P<v1>\d)\.\s(?P<v2>\d)'
                                    r'\.\s(?P<v3>\d)\.\s(?P<build>\d+)\s\((?P<arc>.*)\))')
 
@@ -604,15 +596,6 @@ def silentremove(filename):
         if e.errno != errno.ENOENT:  # errno.ENOENT : no such file or directory
             logging.debug('Error removing file: ' + filename)
             raise  # re-raise exception if a different error occured
-
-
-def _run_from_ipython():
-    """Return True if run from IPython."""
-    try:
-        __IPYTHON__
-        return True
-    except NameError:
-        return False
 
 
 def make_hash(o):

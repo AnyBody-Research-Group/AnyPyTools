@@ -33,14 +33,26 @@ from past.builtins import basestring as string_types
 
 from .tools import (make_hash, AnyPyProcessOutputList, parse_anybodycon_output,
                     getsubdirs, get_anybodycon_path,
-                    AnyPyProcessOutput, run_from_ipython, get_ncpu, silentremove)
+                    AnyPyProcessOutput, get_ncpu, silentremove)
 from .macroutils import AnyMacro, MacroCommand
 
 try:
     from IPython.display import HTML, display
     import ipywidgets
-except ImportError:
+    ipywidgets.HTML()
+    __IPYTHON__  # noqa
+
+    def run_from_ipython():
+        """Is IPython availble"""
+        return True
+
+except Exception:
     ipywidgets = HTML = display = None
+
+    def run_from_ipython():
+        """Is IPython availble"""
+
+        return True
 
 
 logger = logging.getLogger('abt.anypytools')
