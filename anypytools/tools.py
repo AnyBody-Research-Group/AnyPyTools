@@ -207,12 +207,17 @@ def get_git_commit_info(project_name=None):
     return dict(id=commit, dirty=dirty, project=project_name, branch=branch)
 
 
-def get_first_key_match(key, names):
+def _get_first_key_match(key, names):
+    """Find the first partial match key match.
+
+    If No match if found then key is returned unmodified.
+    """
     if key in names:
         return key
     matching = [v for v in names if key in v]
     if not matching:
-        raise KeyError('The key "{}" could not be found'.format(key))
+        # No match return original key.
+        return key
 
     if len(matching) > 1:
         print('WARNING: "{}" key is not unique.'
@@ -249,20 +254,20 @@ class AnyPyProcessOutputList(collections.MutableSequence):
     def __getitem__(self, i):
         if isinstance(i, string_types):
             # Find the entries where i matches the keys
-            key = get_first_key_match(i, self.list[0])
+            key = _get_first_key_match(i, self.list[0])
             try:
                 data = np.array(
                     [super(AnyPyProcessOutput, e).__getitem__(key)
                      for e in self.list]
                 )
-            except KeyError:
-                raise KeyError(" The key '{}' is not present "
-                               "in all elements of the output.".format(key))
+            except KeyError as e:
+                msg = " The key: '{}' is not present in all elements of the output."
+                raise KeyError(msg.format(key)) from None
             if data.dtype == np.dtype('O'):
-                # Data will be stacked as an array of objects, if the
-                # time dimension is not consistant. Warn that some numpy
+                # Data will be stacked as an array of objects, if the length of the
+                # time dimension is not consistant across simulations. Warn that some numpy
                 # featurs will not be avaiable.
-                warnings.warn('\n\The time varies across macros. '
+                warnings.warn('\n\The length of the time variable varies across macros. '
                               'Numpy does not support ragged arrays. Data is returned  '
                               'as an array of array objects')
             return data
@@ -324,9 +329,10 @@ class AnyPyProcessOutputList(collections.MutableSequence):
         try:
             from anypytools.blaze_converter import convert
             return convert(self.list, **kwargs)
-        except ImportError:
-            raise ImportError('The packages libdynd, dynd-python, datashape, '
-                              'odo/into must be installed to convert data ')
+        except ImportError as e:
+            msg = ('The packages libdynd, dynd-python, datashape, '
+                   'odo/into must be installed to convert data')
+            raise ImportError(msg) from None
 
     def shelve(self, filename, key='results'):
         import shelve
@@ -467,10 +473,14 @@ class AnyPyProcessOutput(collections.OrderedDict):
     def __getitem__(self, key):
         try:
             return super(AnyPyProcessOutput, self).__getitem__(key)
-        except KeyError:
-            first_key_match = get_first_key_match(key,
-                                                  super(AnyPyProcessOutput, self).keys())
-            return super(AnyPyProcessOutput, self).__getitem__(first_key_match)
+        except KeyError as e:
+            key = _get_first_key_match(key, super(AnyPyProcessOutput, self).keys())
+
+        try:
+            return super(AnyPyProcessOutput, self).__getitem__(key)
+        except KeyError as e:
+            msg = 'The key {} could not be found in the data'.format(key)
+            raise KeyError(msg) from None
 
     def _repr_gen(self, prefix):
         items = self.items()

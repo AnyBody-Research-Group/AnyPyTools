@@ -9,6 +9,12 @@ AnyPyTools Change Log
 - Support new BodyModel statements, which starts and end with a underscore. 
 
 
+**Changed:**
+
+ - Improved exception handling when trying to access data which 
+   is not avaible in the output.
+
+
 v0.10.1
 =============
 
