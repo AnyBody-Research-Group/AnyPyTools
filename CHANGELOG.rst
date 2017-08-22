@@ -14,6 +14,9 @@ AnyPyTools Change Log
  - Improved exception handling when trying to access data which 
    is not avaible in the output.
 
+- Detect if AnyBodyCon exited from a license problem and report
+  that in the log files.
+
 
 v0.10.1
 =============
