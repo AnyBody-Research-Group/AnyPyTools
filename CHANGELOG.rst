@@ -4,6 +4,11 @@ AnyPyTools Change Log
 
 .. current developments
 
+**Changed:**
+
+- Detect if AnyBodyCon exited from a license problem and report
+  that in the log files.
+
 v0.10.1
 =============
 
