@@ -4,6 +4,12 @@ AnyPyTools Change Log
 
 .. current developments
 
+**Changed:**
+
+ - Improved exception handling when trying to access data which 
+   is not avaible in the output.
+
+
 v0.10.1
 =============
 
