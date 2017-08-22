@@ -48,6 +48,7 @@ logger = logging.getLogger('abt.anypytools')
 
 _thread_lock = RLock()
 _KILLED_BY_ANYPYTOOLS = 10
+_NO_LICENSES_AVAILABLE = -22
 
 
 class _SubProcessContainer(object):
@@ -213,6 +214,11 @@ def execute_anybodycon(macro, logfile=None, anybodycon_path=None, timeout=3600,
     retcode = ctypes.c_int32(proc.returncode).value
     if retcode == _KILLED_BY_ANYPYTOOLS:
         logfile.write('\nAnybodycon.exe was interrupted by AnyPyTools')
+        elif retcode == _NO_LICENSES_AVAILABLE:
+            logfile.write('\nERROR: anybodycon.exe existed unexpectedly. '
+                          'Return code: '
+                          + str(_NO_LICENSES_AVAILABLE)
+                          + ' : No license available.')
     elif retcode:
         logfile.write('\nERROR: AnyPyTools : anybodycon.exe exited unexpectedly.'
                       ' Return code: ' + str(retcode))
@@ -756,9 +762,7 @@ class AnyPyProcess(object):
                         endtime = time.clock()
                         logfile.seek(0)
                         task.processtime = endtime - starttime
-
-                    if retcode == _KILLED_BY_ANYPYTOOLS:
-                        task.processtime = 0
+                    if retcode in (_KILLED_BY_ANYPYTOOLS, _NO_LICENSES_AVAILABLE):                        task.processtime = 0
                         return
                     task.output = parse_anybodycon_output(
                         logfile.read(),
