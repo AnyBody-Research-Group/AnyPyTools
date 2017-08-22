@@ -10,4 +10,5 @@ loading and running, the framework considers it a failed test.
 
 .. automodule:: anypytools.pytest_plugin
     :members:
+    :noindex:
 
