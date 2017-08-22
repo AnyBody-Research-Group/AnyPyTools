@@ -213,11 +213,11 @@ def execute_anybodycon(macro, logfile=None, anybodycon_path=None, timeout=3600,
     retcode = ctypes.c_int32(proc.returncode).value
     if retcode == _KILLED_BY_ANYPYTOOLS:
         logfile.write('\nAnybodycon.exe was interrupted by AnyPyTools')
-        elif retcode == _NO_LICENSES_AVAILABLE:
-            logfile.write('\nERROR: anybodycon.exe existed unexpectedly. '
-                          'Return code: '
-                          + str(_NO_LICENSES_AVAILABLE)
-                          + ' : No license available.')
+    elif retcode == _NO_LICENSES_AVAILABLE:
+        logfile.write('\nERROR: anybodycon.exe existed unexpectedly. '
+                      'Return code: '
+                      + str(_NO_LICENSES_AVAILABLE)
+                      + ' : No license available.')
     elif retcode:
         logfile.write('\nERROR: AnyPyTools : anybodycon.exe exited unexpectedly.'
                       ' Return code: ' + str(retcode))
@@ -462,7 +462,7 @@ class AnyPyProcess(object):
         elif os.path.exists(anybodycon_path):
             self.anybodycon_path = anybodycon_path
         else:
-            raise FileNotFoundError("Can't find " + anybodycon_path)
+            raise IOError("Can't find " + anybodycon_path)
         self.num_processes = num_processes
         self.silent = silent
         self.timeout = timeout
@@ -479,7 +479,7 @@ class AnyPyProcess(object):
         self.cached_tasklist = None
         if python_env is not None:
             if not os.path.isdir(python_env):
-                raise FileNotFoundError('Python environment does'
+                raise IOError('Python environment does'
                                         ' not exist:' + python_env)
             env = dict(os.environ)
             env['PYTHONHOME'] = python_env
@@ -769,7 +769,8 @@ class AnyPyProcess(object):
                         endtime = time.clock()
                         logfile.seek(0)
                         task.processtime = endtime - starttime
-                    if retcode in (_KILLED_BY_ANYPYTOOLS, _NO_LICENSES_AVAILABLE):                        task.processtime = 0
+                    if retcode in (_KILLED_BY_ANYPYTOOLS, _NO_LICENSES_AVAILABLE):
+                        task.processtime = 0
                         return
                     task.output = parse_anybodycon_output(
                         logfile.read(),
