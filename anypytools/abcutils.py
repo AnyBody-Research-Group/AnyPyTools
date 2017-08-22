@@ -178,7 +178,7 @@ def _execute_anybodycon(macro,
         elif retcode == _NO_LICENSES_AVAILABLE:
             logfile.write('\nERROR: anybodycon.exe existed unexpectedly. '
                           'Return code: '
-                          + str(_NO_LICENSES_AVAILABLE) 
+                          + str(_NO_LICENSES_AVAILABLE)
                           + ' : No license available.')
         elif retcode:
             logfile.write('\nERROR: AnyPyTools : anybodycon.exe exited unexpectedly.'
