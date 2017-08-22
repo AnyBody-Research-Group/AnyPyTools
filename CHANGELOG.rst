@@ -17,6 +17,10 @@ AnyPyTools Change Log
 - Detect if AnyBodyCon exited from a license problem and report
   that in the log files.
 
+**Removed:**
+ 
+ - Remove the deprecated ``disp`` argument to the ``AnyPyProcess`` class. 
+
 
 v0.10.1
 =============

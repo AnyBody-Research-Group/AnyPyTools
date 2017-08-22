@@ -1,4 +1,4 @@
-AnyPyTools's documentation!
+AnyPyTools' documentation!
 ======================================
 
 AnyPyTools is a toolkit for working with the AnyBody Modeling System (AMS) from
@@ -27,6 +27,9 @@ Installation
 =============
 Guides
 =============
+
+The tutorials below are also available as a set of 
+`Jupyter Notebooks <http://nbviewer.jupyter.org/github/AnyBody-Research-Group/AnyPyTools/blob/master/docs/Tutorial/00_AnyPyTools_tutorial.ipynb>`_
 
 .. toctree::
     :titlesonly:
