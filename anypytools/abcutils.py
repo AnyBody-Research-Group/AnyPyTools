@@ -479,8 +479,7 @@ class AnyPyProcess(object):
         self.cached_tasklist = None
         if python_env is not None:
             if not os.path.isdir(python_env):
-                raise IOError('Python environment does'
-                                        ' not exist:' + python_env)
+                raise IOError('Python environment does not exist:' + python_env)
             env = dict(os.environ)
             env['PYTHONHOME'] = python_env
             env['PATH'] = env['PYTHONHOME'] + ';' + env['PATH']
