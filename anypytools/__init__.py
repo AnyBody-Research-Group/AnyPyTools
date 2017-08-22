@@ -5,7 +5,7 @@ import sys
 import platform
 import logging
 
-from anypytools.abcutils import AnyPyProcess
+from anypytools.abcutils import AnyPyProcess, execute_anybodycon
 from anypytools.macroutils import AnyMacro
 from anypytools import macro_commands
 
@@ -16,7 +16,7 @@ logger.addHandler(logging.NullHandler())
 
 __all__ = [
     'datautils', 'h5py_wrapper', 'AnyPyProcess', 'AnyMacro', 'macro_commands',
-    'print_versions',
+    'print_versions', 'execute_anybodycon',
 ]
 
 __version__ = '0.10.2'
