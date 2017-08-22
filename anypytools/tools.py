@@ -33,6 +33,7 @@ from _thread import get_ident as _get_ident
 
 # external imports
 import numpy as np
+from future.utils import raise_from
 
 
 logger = logging.getLogger('abt.anypytools')
@@ -262,7 +263,7 @@ class AnyPyProcessOutputList(collections.MutableSequence):
                 )
             except KeyError as e:
                 msg = " The key: '{}' is not present in all elements of the output."
-                raise KeyError(msg.format(key)) from None
+                raise_from(KeyError(msg.format(key)), None)
             if data.dtype == np.dtype('O'):
                 # Data will be stacked as an array of objects, if the length of the
                 # time dimension is not consistant across simulations. Warn that some numpy
@@ -332,7 +333,7 @@ class AnyPyProcessOutputList(collections.MutableSequence):
         except ImportError as e:
             msg = ('The packages libdynd, dynd-python, datashape, '
                    'odo/into must be installed to convert data')
-            raise ImportError(msg) from None
+            raise raise_from(ImportError(msg), None)
 
     def shelve(self, filename, key='results'):
         import shelve
@@ -480,7 +481,7 @@ class AnyPyProcessOutput(collections.OrderedDict):
             return super(AnyPyProcessOutput, self).__getitem__(key)
         except KeyError as e:
             msg = 'The key {} could not be found in the data'.format(key)
-            raise KeyError(msg) from None
+            raise raise_from(KeyError(msg), None)
 
     def _repr_gen(self, prefix):
         items = self.items()
