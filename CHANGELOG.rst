@@ -14,6 +14,10 @@ AnyPyTools Change Log
  - Improved exception handling when trying to access data which 
    is not avaible in the output.
 
+**Removed:**
+ 
+ - Remove the deprecated ``disp`` argument to the ``AnyPyProcess`` class. 
+
 
 v0.10.1
 =============
