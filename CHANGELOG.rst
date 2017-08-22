@@ -4,12 +4,9 @@ AnyPyTools Change Log
 
 .. current developments
 
-v0.10.1
-=============
-
 **New:**
-- Support new BodyModel statements, which stats and end with
-  a underscore. 
+
+- Support new BodyModel statements, which starts and end with a underscore. 
 
 
 v0.10.1
