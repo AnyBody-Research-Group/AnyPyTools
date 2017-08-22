@@ -12,6 +12,7 @@ from builtins import (ascii, bytes, chr, dict, filter, hex, input,  # noqa
                       str, super, zip)
 
 import os
+import io
 import sys
 import time
 import copy
@@ -123,18 +124,54 @@ def _display(line, *args, **kwargs):
         print(line, *args, **kwargs)
 
 
-def _execute_anybodycon(macro,
-                        logfile,
-                        anybodycon_path=None,
-                        timeout=3600,
-                        keep_macrofile=False,
-                        env=None):
-    """Launch the AnyBodyConsole applicaiton."""
+def execute_anybodycon(macro, logfile=None, anybodycon_path=None, timeout=3600,
+                       keep_macrofile=False, env=None):
+    """Launch a single AnyBodyConsole applicaiton.
+
+    This is a low level function to start a AnyBody Console process
+    with a given list macros.
+
+    Parameters
+    ----------
+    macro : list of str
+        List of macros strings to pass to the AnyBody Console Application
+    logfile : file like object, optional
+        An open file like object to write to pipe the output of AnyBody
+        into. (Defaults to None, in which case it will use sys.stdout)
+    anybodycon_path : str, optional
+        Path to the AnyBodyConsole application. Default to None, in which
+        case the default installed AnyBody installation will be looked up
+        in the Windows registry.
+    timeout : int, optional
+        Timeout before the process is killed autmotically. Defaults to
+        3600 seconds (1 hour).
+    keep_macrofile : bool, optional
+        Set to True to prevent the temporary macro file from beeing deleted.
+        (Defaults to False)
+    env: dict
+        Environment varaibles which are passed to the started AnyBody console
+        application.
+
+    Returns
+    -------
+    int
+        The return code from the AnyBody Console application.
+
+    """
+    if logfile is None:
+        logfile = sys.stdout
+
+    try:
+        macro_filename = os.path.splitext(logfile.name)[0] + '.anymcr'
+    except AttributeError:
+        macro_filename = 'macrofile.anymcr'
+
     if anybodycon_path is None:
         anybodycon_path = get_anybodycon_path()
+
     if not os.path.isfile(anybodycon_path):
         raise IOError("Can not find anybodycon.exe: " + anybodycon_path)
-    macro_filename = os.path.splitext(logfile.name)[0] + '.anymcr'
+
     with open(macro_filename, 'w+b') as macro_file:
         macro_file.write('\n'.join(macro).encode('UTF-8'))
         macro_file.flush()
@@ -150,42 +187,42 @@ def _execute_anybodycon(macro,
         subprocess_flags = 0x8000000  # win32con.CREATE_NO_WINDOW?
     else:
         subprocess_flags = 0
-    try:
-        # Check global module flag to avoid starting processes after
-        # the user cancelled the processes
-        timeout_time = time.clock() + timeout
-        proc = Popen(anybodycmd,
-                     stdout=logfile,
-                     stderr=logfile,
-                     creationflags=subprocess_flags,
-                     env=env)
-        _subprocess_container.add(proc.pid)
-        while proc.poll() is None:
-            if time.clock() > timeout_time:
-                proc.terminate()
-                proc.communicate()
-                logfile.seek(0, 2)
-                logfile.write(
-                    '\nERROR: AnyPyTools : Timeout after {:d} sec.'.format(int(timeout)))
-                proc.returncode = 0
-                break
-            time.sleep(0.05)
-        _subprocess_container.remove(proc.pid)
-        retcode = ctypes.c_int32(proc.returncode).value
-        if retcode == _KILLED_BY_ANYPYTOOLS:
-            logfile.write('\nAnybodycon.exe was interrupted by AnyPyTools')
-        elif retcode == _NO_LICENSES_AVAILABLE:
-            logfile.write('\nERROR: anybodycon.exe existed unexpectedly. '
-                          'Return code: '
-                          + str(_NO_LICENSES_AVAILABLE)
-                          + ' : No license available.')
-        elif retcode:
-            logfile.write('\nERROR: AnyPyTools : anybodycon.exe exited unexpectedly.'
-                          ' Return code: ' + str(proc.returncode))
-        if not keep_macrofile:
-            silentremove(macro_file.name)
-    finally:
-        logfile.seek(0)
+    # Check global module flag to avoid starting processes after
+    # the user cancelled the processes
+    timeout_time = time.clock() + timeout
+    proc = Popen(anybodycmd,
+                 stdout=logfile,
+                 stderr=logfile,
+                 creationflags=subprocess_flags,
+                 env=env)
+    _subprocess_container.add(proc.pid)
+    while proc.poll() is None:
+        if time.clock() > timeout_time:
+            proc.terminate()
+            proc.communicate()
+            try:
+                logfile.seek(0, os.SEEK_END)
+            except io.UnsupportedOperation:
+                pass
+            logfile.write(
+                '\nERROR: AnyPyTools : Timeout after {:d} sec.'.format(int(timeout)))
+            proc.returncode = 0
+            break
+        time.sleep(0.05)
+    _subprocess_container.remove(proc.pid)
+    retcode = ctypes.c_int32(proc.returncode).value
+    if retcode == _KILLED_BY_ANYPYTOOLS:
+        logfile.write('\nAnybodycon.exe was interrupted by AnyPyTools')
+    elif retcode == _NO_LICENSES_AVAILABLE:
+        logfile.write('\nERROR: anybodycon.exe existed unexpectedly. '
+                      'Return code: '
+                      + str(_NO_LICENSES_AVAILABLE)
+                      + ' : No license available.')
+    elif retcode:
+        logfile.write('\nERROR: AnyPyTools : anybodycon.exe exited unexpectedly.'
+                      ' Return code: ' + str(retcode))
+    if not keep_macrofile:
+        silentremove(macro_file.name)
     return retcode
 
 
@@ -425,7 +462,7 @@ class AnyPyProcess(object):
         elif os.path.exists(anybodycon_path):
             self.anybodycon_path = anybodycon_path
         else:
-            raise FileNotFoundError("Can't find " + anybodycon_path)
+            raise IOError("Can't find " + anybodycon_path)
         self.num_processes = num_processes
         self.silent = silent
         self.timeout = timeout
@@ -442,8 +479,7 @@ class AnyPyProcess(object):
         self.cached_tasklist = None
         if python_env is not None:
             if not os.path.isdir(python_env):
-                raise FileNotFoundError('Python environment does'
-                                        ' not exist:' + python_env)
+                raise IOError('Python environment does not exist:' + python_env)
             env = dict(os.environ)
             env['PYTHONHOME'] = python_env
             env['PATH'] = env['PYTHONHOME'] + ';' + env['PATH']
@@ -726,13 +762,15 @@ class AnyPyProcess(object):
                                     timeout=self.timeout,
                                     keep_macrofile=self.keep_logfiles,
                                     env=self.env)
-                    retcode = _execute_anybodycon(**exe_args)
-                    endtime = time.clock()
-                    logfile.seek(0)
+                    try:
+                        retcode = execute_anybodycon(**exe_args)
+                    finally:
+                        endtime = time.clock()
+                        logfile.seek(0)
+                        task.processtime = endtime - starttime
                     if retcode in (_KILLED_BY_ANYPYTOOLS, _NO_LICENSES_AVAILABLE):
                         task.processtime = 0
                         return
-                    task.processtime = endtime - starttime
                     task.output = parse_anybodycon_output(
                         logfile.read(),
                         self.ignore_errors,

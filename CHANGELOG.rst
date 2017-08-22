@@ -29,6 +29,8 @@ v0.10.2
 - Detect if AnyBodyCon exited from a license problem and report
   that in the log files.
 
+- Refactor ``_execute_anybodycon()`` into a public function.
+
 **Removed:**
  
  - Remove the deprecated ``disp`` argument to the ``AnyPyProcess`` class. 
