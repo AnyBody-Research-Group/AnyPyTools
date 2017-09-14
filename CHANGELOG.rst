@@ -13,6 +13,15 @@ AnyPyTools Change Log
 **Removed:**
 
 
+v0.10.3
+=============
+
+** New: ** 
+
+- Update pytest plugin to support AMMR 2.0 Parameters. AMMR 1 parameters 
+  are still supported using ``--ammr-version`` argument to pytest.
+
+
 v0.10.2
 =============
 
