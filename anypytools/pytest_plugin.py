@@ -316,7 +316,10 @@ class AnyFile(pytest.File):
         strheader = _read_header(self.fspath.strpath)
         header = _parse_header(strheader)
         def_list = _format_switches(header.pop('define', {}))
-        def_list = [replace_bm_constants(d) for d in def_list]
+        def_list = [
+            replace_bm_constants(d, ammr_version=self.config.getoption("--ammr-version"))
+            for d in def_list
+        ]
         path_list = _format_switches(header.pop('path', {}))
         combinations = itertools.product(def_list, path_list)
         # Run though the defines an create a test case for each
@@ -483,6 +486,9 @@ def pytest_addoption(parser):
                     help="Can be used to specify which AnyBody Managed Model "
                     "Repository (AMMR) to use. Setting this will pass a "
                     "'AMMR_PATH' path statement for all models")
+    group.addoption("--ammr-version", type=float, default=2,
+                    help="Specify AMMR version. This affect how AnyPyTools "
+                    "interprets it BM parameters. Defaults to AMMR version 2.")
     group.addoption("--only-load", action="store_true",
                     help="Only run a load test. I.e. do not run the "
                     "'RunTest' macro")
