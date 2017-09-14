@@ -686,7 +686,7 @@ def replace_bm_constants(d, ammr_version=2):
     """Replace BM constants with value represenation."""
     bm_const = _BM_CONSTANTS.deepcopy()
 
-    if not ammr_version<1:
+    if not ammr_version < 1:
         bm_const['_LEG_MODEL_OFF_'] = bm_const['CONST_LEG_MODEL_OFF'] = "OFF"
         bm_const['_LEG_MODEL_Leg_'] = bm_const['CONST_LEG_MODEL_Leg'] = "Leg"
         bm_const['_LEG_MODEL_TLEM_'] = bm_const['CONST_LEG_MODEL_TLEM'] = "TLEM"
