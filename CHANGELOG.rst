@@ -13,6 +13,16 @@ AnyPyTools Change Log
 **Removed:**
 
 
+v0.10.4
+=============
+
+** Changed: ** 
+
+- The pytest plugin can now get the BM configurations directly from the 
+  AMMR if they are availble. The will be for AMMR 2. This will eliminate
+  the problem of keeping AnyPyTools in sync with the AMMR.
+
+
 v0.10.3
 =============
 
