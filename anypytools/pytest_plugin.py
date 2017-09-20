@@ -70,7 +70,7 @@ class AnyTestSession(object):
         self.ams_path = config.getoption("--anybodycon") or get_anybodycon_path()
         self.ams_version = anybodycon_version(self.ams_path)
         major_ammr_ver = 1 if self.ammr_version.startswith("1") else 2
-        self.bm_constants_map = get_bm_constants(folder=ammr_path, ammr_version=major_ammr_ver)
+        self.bm_constants_map = get_bm_constants(ammr_path=ammr_path, ammr_version=major_ammr_ver)
         self.compare_session = self.get_compare_session(config)
         self.run_compare_test = bool(self.save or self.compare_session)
 
