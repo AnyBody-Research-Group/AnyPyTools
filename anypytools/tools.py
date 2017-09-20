@@ -113,19 +113,35 @@ def amm_xml_version(fpath):
     return vstring
 
 
-def find_ammr_version(folder):
+def find_ammr_path(folder=None):
+    """Return the root AMMR path if possible .
+
+    The function will walk up a directory tree looking
+    for a ammr_verion.any file to parse.
+    """
+    folder = folder or os.getcwd()
+    version_files = ('AMMR.version.any', 'AMMR.version.xml')
+    for basedir, dirs, files in walk_up(folder):
+        if any(fn in files for fn in version_files):
+            return basedir
+    else:
+        return None
+
+
+def get_ammr_version(folder=None):
     """Return the AMMR version if possible.
 
     The function will walk up a directory tree looking
     for a ammr_verion.any file to parse.
     """
+    folder = folder or os.getcwd()
     any_version_file = 'AMMR.version.any'
     xml_version_file = 'AMMR.version.xml'
-    for basedir, dirs, files in walk_up(folder):
-        if any_version_file in files:
-            return ammr_any_version(os.path.join(basedir, any_version_file))
-        elif xml_version_file in files:
-            return amm_xml_version(os.path.join(basedir, xml_version_file))
+    files = os.listdir(folder)
+    if any_version_file in files:
+        return ammr_any_version(os.path.join(folder, any_version_file))
+    elif xml_version_file in files:
+        return amm_xml_version(os.path.join(folder, xml_version_file))
     else:
         return ""
 
@@ -649,7 +665,7 @@ def make_hash(o):
     return hash(tuple(frozenset(sorted(new_o.items()))))
 
 
-_BM_CONSTANTS = {
+_BM_CONSTANTS_AMMR1 = {
     'ON': '1',
     'OFF': '0',
     '_MUSCLES_NONE_': '0',
@@ -657,9 +673,9 @@ _BM_CONSTANTS = {
     '_MUSCLES_3E_HILL_': '2',
     '_HAND_SIMPLE_': '0',
     '_HAND_DETAILED_': '1',
-    '_LEG_MODEL_OFF_': '0',
-    '_LEG_MODEL_Leg_': '2',
-    '_LEG_MODEL_TLEM_': '1',
+    '_LEG_MODEL_OFF_': '"OFF"',
+    '_LEG_MODEL_Leg_': '"Leg"',
+    '_LEG_MODEL_TLEM_': '"TLEM"',
     '_MORPH_NONE_': '0',
     '_MORPH_TRUNK_TO_LEG_': '1',
     '_MORPH_LEG_TO_TRUNK_': '2',
@@ -677,21 +693,94 @@ _BM_CONSTANTS = {
     '_SCALING_LENGTHMASSFAT_MULTIDOFS_': '7',
 }
 
-for key in list(_BM_CONSTANTS.keys()):
-    if key.startswith('_') and key.endswith('_'):
-        _BM_CONSTANTS['CONST' + key.rstrip('_')] = _BM_CONSTANTS[key]
+_BM_CONSTANTS = {
+    'ON': '1',
+    'OFF': '0',
+    '_MUSCLES_NONE_': '0',
+    '_MUSCLES_SIMPLE_': '1',
+    '_MUSCLES_3E_HILL_': '2',
+    '_LEG_MODEL_OFF_': '0',
+    '_LEG_MODEL_TLEM_': '1',
+    '_LEG_MODEL_TLEM1_': '1',
+    '_LEG_MODEL_TLEM2_': '2',
+    '_LEG_MODEL_Leg_': '3',
+    '_LEG_MODEL_LEG_': '3',
+    '_MORPH_NONE_': '0',
+    '_MORPH_TRUNK_TO_LEG_': '1',
+    '_MORPH_LEG_TO_TRUNK_': '2',
+    '_PELVIS_DISPLAY_NONE_': '0',
+    '_PELVIS_DISPLAY_LEGPELVIS_ONLY_': '1',
+    '_PELVIS_DISPLAY_LEGANDTRUNKPELVIS_': '2',
+    '_DISC_STIFFNESS_NONE_': '0',
+    '_DISC_STIFFNESS_LINEAR_': '1',
+    '_DISC_STIFFNESS_NONLINEAR_': '2',
+    '_SCALING_CUSTOM_': '-1',
+    '_SCALING_STANDARD_': '0',
+    '_SCALING_UNIFORM_': '1',
+    '_SCALING_LENGTHMASS_': '2',
+    '_SCALING_LENGTHMASSFAT_': '3',
+    '_SCALING_UNIFORM_EXTMEASUREMENTS_': '4',
+    '_SCALING_LENGTHMASS_EXTMEASUREMENTS_': '5',
+    '_SCALING_LENGTHMASSFAT_EXTMEASUREMENTS_': '6',
+    '_SCALING_LENGTHMASSFAT_MULTIDOFS_': '7',
+    'CONST_MUSCLES_NONE': '0',
+    'CONST_MUSCLES_SIMPLE': '1',
+    'CONST_MUSCLES_3E_HILL': '2',
+    'CONST_HAND_SIMPLE': '0',
+    'CONST_HAND_DETAILED': '1',
+    'CONST_LEG_MODEL_OFF': '0',
+    'CONST_LEG_MODEL_TLEM': '1',
+    'CONST_LEG_MODEL_TLEM2': '2',
+    'CONST_LEG_MODEL_Leg': '3',
+    'CONST_MORPH_NONE': '0',
+    'CONST_MORPH_TRUNK_TO_LEG': '1',
+    'CONST_MORPH_LEG_TO_TRUNK': '2',
+    'CONST_PELVIS_DISPLAY_NONE': '0',
+    'CONST_PELVIS_DISPLAY_LEGPELVIS_ONLY': '1',
+    'CONST_PELVIS_DISPLAY_LEGANDTRUNKPELVIS': '2',
+    'CONST_DISC_STIFFNESS_NONE': '0',
+    'CONST_DISC_STIFFNESS_LINEAR': '1',
+    'CONST_DISC_STIFFNESS_NONLINEAR ': '2',
+    'CONST_SCALING_CUSTOM': '-1',
+    'CONST_SCALING_STANDARD': '0',
+    'CONST_SCALING_UNIFORM': '1',
+    'CONST_SCALING_LENGTHMASS': '2',
+    'CONST_SCALING_LENGTHMASSFAT': '3',
+    'CONST_SCALING_UNIFORM_EXTMEASUREMENTS': '4',
+    'CONST_SCALING_LENGTHMASS_EXTMEASUREMENTS': '5',
+    'CONST_SCALING_LENGTHMASSFAT_EXTMEASUREMENTS': '6',
+    'CONST_SCALING_LENGTHMASSFAT_MULTIDOFS': '7',
+}
 
 
-def replace_bm_constants(d, ammr_version=2):
+def get_bm_constants(ammr_path=None, ammr_version=2):
+    """Return the BM_CONSTANT mapping.
+
+    It will try to locate the mapping in the AMMR:
+    Body/AAUHuman/Documentation/bm_constants.py
+
+    If that fails it will use the ammr_version
+    specification to select a value.
+    """
+    bm_constants = None
+    if ammr_path is not None:
+        filename = os.path.join(ammr_path, "Body/AAUHuman/Documentation/bm_constants.py")
+        try:
+            with open(filename) as fh:
+                bm_constants = literal_eval(fh.read())
+        except IOError:
+            pass
+    if not isinstance(bm_constants, dict):
+        bm_constants = _BM_CONSTANTS if ammr_version >= 2 else _BM_CONSTANTS_AMMR1
+    return bm_constants
+
+
+def replace_bm_constants(d, bm_constants=None):
     """Replace BM constants with value represenation."""
-    bm_const = _BM_CONSTANTS.copy()
-
-    if ammr_version < 1:
-        bm_const['_LEG_MODEL_OFF_'] = bm_const['CONST_LEG_MODEL_OFF'] = '"OFF"'
-        bm_const['_LEG_MODEL_Leg_'] = bm_const['CONST_LEG_MODEL_Leg'] = '"Leg"'
-        bm_const['_LEG_MODEL_TLEM_'] = bm_const['CONST_LEG_MODEL_TLEM'] = '"TLEM"'
+    if not bm_constants:
+        bm_constants = _BM_CONSTANTS
 
     for k, v in d.items():
-        if v in bm_const:
-            d[k] = bm_const[v]
+        if v in bm_constants:
+            d[k] = bm_constants[v]
     return d

@@ -24,8 +24,8 @@ import pytest
 
 from anypytools import AnyPyProcess, macro_commands
 from anypytools.tools import (
-    get_anybodycon_path, replace_bm_constants,
-    anybodycon_version, find_ammr_version, get_tag
+    get_anybodycon_path, replace_bm_constants, get_bm_constants,
+    anybodycon_version, find_ammr_path, get_tag, get_ammr_version,
 )
 
 
@@ -65,10 +65,12 @@ class AnyTestSession(object):
             os.makedirs(self.basefolder)
         self.save = config.getoption(
             "--anytest-save") or config.getoption("--anytest-autosave")
-        ammr_path = config.getoption("--ammr") or config.rootdir.strpath
-        self.ammr_version = find_ammr_version(ammr_path)
+        ammr_path = find_ammr_path(config.getoption("--ammr") or config.rootdir.strpath)
+        self.ammr_version = get_ammr_version(ammr_path)
         self.ams_path = config.getoption("--anybodycon") or get_anybodycon_path()
         self.ams_version = anybodycon_version(self.ams_path)
+        major_ammr_ver = 1 if self.ammr_version.startswith("1") else 2
+        self.bm_constants_map = get_bm_constants(folder=ammr_path, ammr_version=major_ammr_ver)
         self.compare_session = self.get_compare_session(config)
         self.run_compare_test = bool(self.save or self.compare_session)
 
@@ -317,7 +319,7 @@ class AnyFile(pytest.File):
         header = _parse_header(strheader)
         def_list = _format_switches(header.pop('define', {}))
         def_list = [
-            replace_bm_constants(d, ammr_version=self.config.getoption("--ammr-version"))
+            replace_bm_constants(d, pytest.anytest.bm_constants_map)
             for d in def_list
         ]
         path_list = _format_switches(header.pop('path', {}))
@@ -486,9 +488,6 @@ def pytest_addoption(parser):
                     help="Can be used to specify which AnyBody Managed Model "
                     "Repository (AMMR) to use. Setting this will pass a "
                     "'AMMR_PATH' path statement for all models")
-    group.addoption("--ammr-version", type=float, default=2,
-                    help="Specify AMMR version. This affect how AnyPyTools "
-                    "interprets it BM parameters. Defaults to AMMR version 2.")
     group.addoption("--only-load", action="store_true",
                     help="Only run a load test. I.e. do not run the "
                     "'RunTest' macro")
