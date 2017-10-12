@@ -12,6 +12,19 @@ AnyPyTools Change Log
 
 **Removed:**
 
+v0.10.5
+=============
+
+** Fixed: ** 
+
+- Crash when the starting pytest plug-in when no AnyBody licenses are available
+
+**New:**
+
+- Pytest plugin support for the ``ANYBODY_PATH_AMMR`` path statement which will be
+  used in the AMS 7.1
+
+
 
 v0.10.4
 =============
