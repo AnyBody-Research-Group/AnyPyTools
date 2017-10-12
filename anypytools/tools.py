@@ -81,8 +81,11 @@ def anybodycon_version(anybodyconpath):
     anybodyconpath = anybodyconpath or get_anybodycon_path()
     if anybodyconpath is None:
         return '0.0.0'
-    out = subprocess.check_output(
-        [anybodyconpath, '-ni'], universal_newlines=True)
+    try:
+        out = subprocess.check_output(
+            [anybodyconpath, '-ni'], universal_newlines=True)
+    except subprocess.CalledProcessError:
+        return None
     m = ANYBODYCON_VERSION_RE.search(out)
     if m is not None:
         return m.groupdict()['version']
