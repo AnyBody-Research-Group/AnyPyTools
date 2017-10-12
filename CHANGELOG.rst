@@ -12,6 +12,15 @@ AnyPyTools Change Log
 
 **Removed:**
 
+
+v0.10.6
+=============
+
+** Fixed: ** 
+
+- Bug where no AMS license was not detected as a failed macro.
+
+
 v0.10.5
 =============
 
