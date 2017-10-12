@@ -10,6 +10,9 @@ AnyPyTools
    :alt: Join the chat at https://gitter.im/xonsh/xonsh
    :target: https://gitter.im/AnyBody-Research-Group/AnyPyTools?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
 
+.. image:: https://travis-ci.org/AnyBody-Research-Group/AnyPyTools.svg?branch=master
+    :target: https://travis-ci.org/AnyBody-Research-Group/AnyPyTools
+
 AnyPyTools is a toolkit for working with the `AnyBody Modeling System (AMS)`_
 from Python. Its main purpose is to launch AnyBody simulations and collect results. It has a scheduler 
 to launch multiple instances of AMS utilizing computers with multiple cores. AnyPyTools makes it 
