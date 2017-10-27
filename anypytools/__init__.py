@@ -19,7 +19,7 @@ __all__ = [
     'print_versions', 'execute_anybodycon',
 ]
 
-__version__ = '0.10.6'
+__version__ = '0.10.7'
 
 
 def print_versions():

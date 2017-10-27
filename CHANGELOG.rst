@@ -12,6 +12,15 @@ AnyPyTools Change Log
 
 **Removed:**
 
+v0.10.7
+=============
+
+** Changed: ** 
+
+- Always append 'exit' command to all macros. Seems to solve problem with AMS not shutting down correctly.
+
+- Only enable pytest plugin on Windows platform
+
 
 v0.10.6
 =============
