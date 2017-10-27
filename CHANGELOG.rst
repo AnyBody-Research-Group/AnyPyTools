@@ -19,6 +19,9 @@ v0.10.7
 
 - Always append 'exit' command to all macros. Seems to solve problem with AMS not shutting down correctly.
 
+** Fixed: ** 
+
+- Crash when using PyTest plugin on linux.
 
 
 v0.10.6
