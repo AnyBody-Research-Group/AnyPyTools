@@ -55,6 +55,18 @@ require_list = ['future', 'numpy']
 if sys.platform.startswith("win") and (_on_py2() or _on_py34()):
     require_list.extend(['pywin32'])
 
+entry_points = {
+    'pygments.lexers':
+        ['anyscript = anypytools.pygments_plugin.anyscript_lexer:AnyScriptLexer',
+            '/.any = anypytools.pygments_plugin.anyscript_lexer:AnyScriptLexer'],
+    'pygments.styles':
+        ['anyscript = anypytools.pygments_plugin.anyscript_style:AnyScriptStyle',
+            '/.any = anypytools.pygments_plugin.anyscript_style:AnyScriptStyle']
+}
+
+if sys.platform.startswith("win"):
+    entry_points['pytest11'] = ['anypytools = anypytools.pytest_plugin']
+
 
 setup(
     name='AnyPyTools',
@@ -65,17 +77,7 @@ setup(
     package_data={'anypytools': [
         'test_models/Demo.Arm2D.any', 'pygments_plugin/*.txt']},
     # the following makes a plugin available to pytest
-    entry_points={
-        'pytest11': [
-            'anypytools = anypytools.pytest_plugin',
-        ],
-        'pygments.lexers':
-            ['anyscript = anypytools.pygments_plugin.anyscript_lexer:AnyScriptLexer',
-             '/.any = anypytools.pygments_plugin.anyscript_lexer:AnyScriptLexer'],
-        'pygments.styles':
-            ['anyscript = anypytools.pygments_plugin.anyscript_style:AnyScriptStyle',
-             '/.any = anypytools.pygments_plugin.anyscript_style:AnyScriptStyle']
-    },
+    entry_points=entry_points,
     author='Morten Lund',
     author_email='melund@gmail.com',
     description='Python tools and utilities for working with the AnyBody Modeling System',

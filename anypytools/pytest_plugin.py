@@ -68,7 +68,7 @@ class AnyTestSession(object):
         ammr_path = find_ammr_path(config.getoption("--ammr") or config.rootdir.strpath)
         self.ammr_version = get_ammr_version(ammr_path)
         self.ams_path = config.getoption("--anybodycon") or get_anybodycon_path()
-        self.ams_path = os.path.abspath(self.ams_path) if self.ams_path else None
+        self.ams_path = os.path.abspath(self.ams_path) if self.ams_path else ''
         self.ams_version = anybodycon_version(self.ams_path)
         major_ammr_ver = 1 if self.ammr_version.startswith("1") else 2
         self.bm_constants_map = get_bm_constants(ammr_path=ammr_path, ammr_version=major_ammr_ver)
