@@ -773,7 +773,7 @@ class AnyPyProcess(object):
                         task.processtime = endtime - starttime
                     if retcode in (_KILLED_BY_ANYPYTOOLS, _NO_LICENSES_AVAILABLE):
                         task.processtime = 0
-                        task.has_error = True
+                        task.add_error('Error: Non zero return code: {}'.format(retcode))
                         return
                     task.output = parse_anybodycon_output(
                         logfile.read(),

@@ -12,6 +12,16 @@ AnyPyTools Change Log
 
 **Removed:**
 
+
+v0.10.8
+=============
+
+** Fixed: ** 
+
+- Wrong error report when AnyBody exists abnormally during batch processing.
+
+
+
 v0.10.7
 =============
 
