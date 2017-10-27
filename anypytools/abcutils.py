@@ -169,6 +169,9 @@ def execute_anybodycon(macro, logfile=None, anybodycon_path=None, timeout=3600,
     if anybodycon_path is None:
         anybodycon_path = get_anybodycon_path()
 
+    if macro and macro[-1] != 'exit':
+        macro.append('exit')
+
     if not os.path.isfile(anybodycon_path):
         raise IOError("Can not find anybodycon.exe: " + anybodycon_path)
 
