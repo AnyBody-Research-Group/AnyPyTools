@@ -12,6 +12,15 @@ AnyPyTools Change Log
 
 **Removed:**
 
+v0.10.10
+=============
+
+** fixed: ** 
+
+-  Fix crash when ``--define`` option was not provided.
+
+
+
 v0.10.9
 =============
 

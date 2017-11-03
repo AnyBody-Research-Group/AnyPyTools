@@ -341,7 +341,7 @@ class AnyItem(pytest.Item):
         test_name = '{}_{}'.format(name, id)
         super().__init__(test_name, parent)
         self.defs = defs
-        for k, v in self.config.getoption("define_kw"):
+        for k, v in (self.config.getoption("define_kw") or {}):
             self.defs[k] = v
         self.defs['TEST_NAME'] = '"{}"'.format(test_name)
         if self.config.getoption("--ammr"):
