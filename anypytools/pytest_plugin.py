@@ -341,6 +341,8 @@ class AnyItem(pytest.Item):
         test_name = '{}_{}'.format(name, id)
         super().__init__(test_name, parent)
         self.defs = defs
+        for k, v in self.config.getoption("define_kw"):
+            self.defs[k] = v
         self.defs['TEST_NAME'] = '"{}"'.format(test_name)
         if self.config.getoption("--ammr"):
             paths['AMMR_PATH'] = self.config.getoption("--ammr")
@@ -493,6 +495,10 @@ def pytest_addoption(parser):
     group.addoption("--only-load", action="store_true",
                     help="Only run a load test. I.e. do not run the "
                     "'RunTest' macro")
+    group.addoption("--define", action='append',
+                    type=lambda kv: kv.split("=", 1), dest='define_kw',
+                    help="Add custom define statements parse to all AnyScript models. "
+                    "Must be given in the form: --define MYDEF=6")
     group._addoption("--timeout", default=3600, type=int,
                      help="terminate tests after a certain timeout period")
     tag = get_tag()

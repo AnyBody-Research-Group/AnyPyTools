@@ -12,6 +12,13 @@ AnyPyTools Change Log
 
 **Removed:**
 
+v0.10.9
+=============
+
+** New: ** 
+
+-  Add option to the pytest plugin, to set the define statements with an argument to pytest.
+
 
 v0.10.8
 =============
