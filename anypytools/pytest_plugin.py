@@ -495,7 +495,7 @@ def pytest_addoption(parser):
     group.addoption("--only-load", action="store_true",
                     help="Only run a load test. I.e. do not run the "
                     "'RunTest' macro")
-    group.addoption("--define", action='append', 
+    group.addoption("--define", action='append',
                     type=lambda kv: kv.split("=", 1), dest='define_kw',
                     help="Add custom define statements parse to all AnyScript models. "
                     "Must be given in the form: --define MYDEF=6")
