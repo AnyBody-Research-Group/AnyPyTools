@@ -2,6 +2,9 @@
 AnyPyTools
 ----------
 
+.. image:: https://anaconda.org/conda-forge/anypytools/badges/downloads.svg 
+   :target: https://anaconda.org/conda-forge/anypytools
+
 .. image:: https://img.shields.io/badge/License-MIT-yellow.svg
     :target: https://opensource.org/licenses/MIT
     :alt: MIT License
@@ -12,6 +15,10 @@ AnyPyTools
 
 .. image:: https://travis-ci.org/AnyBody-Research-Group/AnyPyTools.svg?branch=master
     :target: https://travis-ci.org/AnyBody-Research-Group/AnyPyTools
+
+.. image:: https://anaconda.org/conda-forge/anypytools/badges/installer/conda.svg
+   :target: https://conda.anaconda.org/conda-forge
+
 
 AnyPyTools is a toolkit for working with the `AnyBody Modeling System (AMS)`_
 from Python. Its main purpose is to launch AnyBody simulations and collect results. It has a scheduler 
