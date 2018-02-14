@@ -55,14 +55,7 @@ require_list = ['future', 'numpy']
 if sys.platform.startswith("win") and (_on_py2() or _on_py34()):
     require_list.extend(['pywin32'])
 
-entry_points = {
-    'pygments.lexers':
-        ['anyscript = anypytools.pygments_plugin.anyscript_lexer:AnyScriptLexer',
-            '/.any = anypytools.pygments_plugin.anyscript_lexer:AnyScriptLexer'],
-    'pygments.styles':
-        ['anyscript = anypytools.pygments_plugin.anyscript_style:AnyScriptStyle',
-            '/.any = anypytools.pygments_plugin.anyscript_style:AnyScriptStyle']
-}
+entry_points = {}
 
 if sys.platform.startswith("win"):
     entry_points['pytest11'] = ['anypytools = anypytools.pytest_plugin']
@@ -74,8 +67,7 @@ setup(
     install_requires=require_list,
     python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, <4',
     packages=find_packages(exclude=['docs', 'tests*']),
-    package_data={'anypytools': [
-        'test_models/Demo.Arm2D.any', 'pygments_plugin/*.txt']},
+    package_data={'anypytools': ['test_models/Demo.Arm2D.any']},
     # the following makes a plugin available to pytest
     entry_points=entry_points,
     author='Morten Lund',

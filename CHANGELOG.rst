@@ -18,11 +18,29 @@ AnyPyTools Change Log
   ``NORMAL_PRIORITY_CLASS``, ``ABOVE_NORMAL_PRIORITY_CLASS``.
   Previously, the priority was set to normal the new default is ``BELOW_NORMAL_PRIORITY_CLASS``.
 
+- Added argument ``fatal_warnings`` to treat warnings as errors when running macros.
+
+  ..code-block:: 
+    
+    app = AnyPyProces(warnings_to_include=['OBJ.MCH.KIN9'], fatal_warnings=True)
+
+  The argument will only triggers for specific warnings given 
+  by ``warnings_to_include`` argument. 
+
 **Changed:**
 
 **Fixed:**
 
+- Fixed a bug preventing really large variables to be read by AnyPyTools. The AnyBody Modeling System 
+  could split really large data matrixes across several lines in the log files which meant they 
+  were not picked up. The function :func:`anypytools.tools.parse_anybodycon_output` has been 
+  rewritten to fix this. 
+
 **Removed:**
+
+- The AnyScript Pygments plugin is no longer part of AnyPyTools. It now has its own library 
+  `pygments_anyscript <https://pypi.python.org/pypi/pygments-anyscript>`__. 
+
 
 v0.10.10
 =============

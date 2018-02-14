@@ -2,22 +2,18 @@
 AnyPyTools
 ----------
 
-.. image:: https://anaconda.org/conda-forge/anypytools/badges/downloads.svg 
-   :target: https://anaconda.org/conda-forge/anypytools
-
 .. image:: https://img.shields.io/badge/License-MIT-yellow.svg
     :target: https://opensource.org/licenses/MIT
     :alt: MIT License
-
-.. image:: https://badges.gitter.im/Join%20Chat.svg
-   :alt: Join the chat at https://gitter.im/xonsh/xonsh
-   :target: https://gitter.im/AnyBody-Research-Group/AnyPyTools?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
 
 .. image:: https://travis-ci.org/AnyBody-Research-Group/AnyPyTools.svg?branch=master
     :target: https://travis-ci.org/AnyBody-Research-Group/AnyPyTools
 
 .. image:: https://anaconda.org/conda-forge/anypytools/badges/installer/conda.svg
    :target: https://conda.anaconda.org/conda-forge
+
+.. image:: https://anaconda.org/conda-forge/anypytools/badges/downloads.svg 
+   :target: https://anaconda.org/conda-forge/anypytools
 
 
 AnyPyTools is a toolkit for working with the `AnyBody Modeling System (AMS)`_
