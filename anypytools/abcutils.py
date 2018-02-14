@@ -269,7 +269,7 @@ class _Task(object):
             self.output['ERROR'].append(error_msg)
         except KeyError:
             self.output['ERROR'] = [error_msg]
-    
+
     def add_warnings_to_error_list(self):
         if 'WARNING' in self.output:
             if self.has_error():
@@ -416,8 +416,8 @@ class AnyPyProcess(object):
         output. If a warning with that string is found the warning
         is returned in the output. (Defaults to None)
     fatal_warnings: bool, optional
-        Treat warnings as errors. This only triggers for specific warnings given 
-        by ``warnings_to_include`` argument. 
+        Treat warnings as errors. This only triggers for specific warnings given
+        by ``warnings_to_include`` argument.
     return_task_info : bool, optional
         Return the task status information when running macros. Defaults to False.
     keep_logfiles : bool, optional

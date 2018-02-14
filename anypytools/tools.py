@@ -563,8 +563,8 @@ def _parse_data(val):
     return out
 
 
-ERROR_PATTERN = re.compile(r'^((ERROR)|(Model loading skipped)).*$', flags=re.IGNORECASE|re.M)
-WARNING_PATTERN = re.compile(r'^(WARNING).*$', flags=re.IGNORECASE|re.M)
+ERROR_PATTERN = re.compile(r'^((ERROR)|(Model loading skipped)).*$', flags=re.IGNORECASE | re.M)
+WARNING_PATTERN = re.compile(r'^(WARNING).*$', flags=re.IGNORECASE | re.M)
 DUMP_PATTERN = re.compile(r'^(Main.*?)\s=\s(.*?(?:\n\s\s.*?)*);', flags=re.M)
 
 
