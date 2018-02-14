@@ -620,6 +620,12 @@ def parse_anybodycon_output(strvar, errors_to_ignore=None,
     return out
 
 
+ABOVE_NORMAL_PRIORITY_CLASS = 0x8000
+BELOW_NORMAL_PRIORITY_CLASS = 0x4000
+IDLE_PRIORITY_CLASS = 0x0040
+NORMAL_PRIORITY_CLASS = 0x0020
+
+
 def get_ncpu():
     """Return the number of CPUs in the computer."""
     from multiprocessing import cpu_count

@@ -6,6 +6,17 @@ AnyPyTools Change Log
 
 **New:**
 
+- Added option to the set the priority of the macro operations. 
+
+  .. code-block:: Python
+    from anypytools import IDLE_PRIORITY_CLASS
+
+    app = AnyPyProcess(priority = IDLE_PRIORITY_CLASS) 
+
+  Possible values are ``IDLE_PRIORITY_CLASS``, ``BELOW_NORMAL_PRIORITY_CLASS``,
+  ``NORMAL_PRIORITY_CLASS``, ``ABOVE_NORMAL_PRIORITY_CLASS``.
+  Previously, the priority was set to normal the new default is ``BELOW_NORMAL_PRIORITY_CLASS``.
+
 **Changed:**
 
 **Fixed:**
