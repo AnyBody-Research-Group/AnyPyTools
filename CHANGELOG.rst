@@ -54,7 +54,7 @@ v0.11.0
 v0.10.10
 =============
 
-** fixed: ** 
+**fixed:** 
 
 -  Fix crash when ``--define`` option was not provided.
 
@@ -63,7 +63,7 @@ v0.10.10
 v0.10.9
 =============
 
-** New: ** 
+**New:** 
 
 -  Add option to the pytest plugin, to set the define statements with an argument to pytest.
 
@@ -71,7 +71,7 @@ v0.10.9
 v0.10.8
 =============
 
-** Fixed: ** 
+**Fixed:** 
 
 - Wrong error report when AnyBody exists abnormally during batch processing.
 
@@ -80,7 +80,7 @@ v0.10.8
 v0.10.7
 =============
 
-** Changed: ** 
+**Changed:** 
 
 - Always append 'exit' command to all macros. Seems to solve problem with AMS not shutting down correctly.
 
@@ -90,7 +90,7 @@ v0.10.7
 v0.10.6
 =============
 
-** Fixed: ** 
+**Fixed:** 
 
 - Bug where no AMS license was not detected as a failed macro.
 
@@ -98,7 +98,7 @@ v0.10.6
 v0.10.5
 =============
 
-** Fixed: ** 
+**Fixed:** 
 
 - Crash when the starting pytest plug-in when no AnyBody licenses are available
 
@@ -112,7 +112,7 @@ v0.10.5
 v0.10.4
 =============
 
-** Changed: ** 
+**Changed:** 
 
 - The pytest plugin can now get the BM configurations directly from the 
   AMMR if they are availble. The will be for AMMR 2. This will eliminate
@@ -122,7 +122,7 @@ v0.10.4
 v0.10.3
 =============
 
-** New: ** 
+**New:** 
 
 - Update pytest plugin to support AMMR 2.0 Parameters. AMMR 1 parameters 
   are still supported using ``--ammr-version`` argument to pytest.
