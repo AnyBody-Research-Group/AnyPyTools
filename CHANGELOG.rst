@@ -4,15 +4,6 @@ AnyPyTools Change Log
 
 .. current developments
 
-**New:**
-
-**Changed:**
-
-**Fixed:**
-
-**Removed:**
-
-
 v0.11.0
 =============
 
@@ -26,13 +17,16 @@ v0.11.0
 
     app = AnyPyProcess(priority = IDLE_PRIORITY_CLASS) 
 
-  Possible values are ``IDLE_PRIORITY_CLASS``, ``BELOW_NORMAL_PRIORITY_CLASS``,
-  ``NORMAL_PRIORITY_CLASS``, ``ABOVE_NORMAL_PRIORITY_CLASS``. Default is 
-  ``BELOW_NORMAL_PRIORITY_CLASS``.
-
+  Default is ``BELOW_NORMAL_PRIORITY_CLASS``, and possible values are 
+  
+  * ``IDLE_PRIORITY_CLASS``
+  * ``BELOW_NORMAL_PRIORITY_CLASS``
+  * ``NORMAL_PRIORITY_CLASS``
+  * ``ABOVE_NORMAL_PRIORITY_CLASS``.
+  
 - Added argument ``fatal_warnings`` to treat warnings as errors when running macros.
 
-  ..code-block:: 
+  .. code-block:: python
     
     app = AnyPyProces(warnings_to_include=['OBJ.MCH.KIN9'], fatal_warnings=True)
 
