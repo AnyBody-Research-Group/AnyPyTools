@@ -6,6 +6,16 @@ AnyPyTools Change Log
 
 **New:**
 
+- Added argument ``fatal_warnings`` to treat warnings as errors when running macros.
+
+  ..code-block:: 
+    
+    app = AnyPyProces(warnings_to_include=['OBJ.MCH.KIN9'], fatal_warnings=True)
+
+  The argument will only triggers for specific warnings given 
+  by ``warnings_to_include`` argument. 
+
+
 **Changed:**
 
 **Fixed:**
