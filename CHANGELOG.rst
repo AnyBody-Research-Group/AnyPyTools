@@ -8,7 +8,8 @@ AnyPyTools Change Log
 
 - Added option to the set the priority of the macro operations. 
 
-  .. code-block:: Python
+  .. code-block:: python
+  
     from anypytools import IDLE_PRIORITY_CLASS
 
     app = AnyPyProcess(priority = IDLE_PRIORITY_CLASS) 
