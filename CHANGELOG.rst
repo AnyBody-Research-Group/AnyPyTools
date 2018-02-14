@@ -12,6 +12,10 @@ AnyPyTools Change Log
 
 **Removed:**
 
+- The AnyScript Pygments plugin is no longer part of AnyPyTools. It now has its own library 
+  `pygments_anyscript <https://pypi.python.org/pypi/pygments-anyscript>`__. 
+
+
 v0.10.10
 =============
 
