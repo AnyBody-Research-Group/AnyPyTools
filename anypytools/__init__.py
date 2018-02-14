@@ -8,7 +8,7 @@ import logging
 from anypytools.abcutils import AnyPyProcess, execute_anybodycon
 from anypytools.macroutils import AnyMacro
 from anypytools import macro_commands
-from anypytools import (ABOVE_NORMAL_PRIORITY_CLASS, BELOW_NORMAL_PRIORITY_CLASS,
+from anypytools.tools import (ABOVE_NORMAL_PRIORITY_CLASS, BELOW_NORMAL_PRIORITY_CLASS,
                         IDLE_PRIORITY_CLASS, NORMAL_PRIORITY_CLASS)
 
 
