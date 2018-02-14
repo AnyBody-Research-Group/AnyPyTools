@@ -1,10 +1,15 @@
 *.log
 *.py[c]
-Tutorial/.ipynb_checkpoints
+*.ipynb_checkpoints
 *.anymcr
+.cache
 *egg-info
 *.bak
 dist/*
 build/*
 docs/_build/*
-
+.vscode/*
+docs/Tutorial/Tutorial files/BatchProcess/Output/*
+docs/Tutorial/data.db.dat
+docs/Tutorial/data.db.dir
+docs/Tutorial/TestOutput.csv
