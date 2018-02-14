@@ -540,84 +540,70 @@ class AnyPyProcessOutput(collections.OrderedDict):
             del _repr_running[call_key]
 
 
-dump_pattern = re.compile(r'Main.*=.*;$')
+TRIPEL_QUOTE_WRAP = re.compile(r'([^\[\]",\s]+)')
 
 
-def parse_anybodycon_output(strvar, errors_to_ignore=None,
-                            warnings_to_include=None):
-    if errors_to_ignore is None:
-        errors_to_ignore = []
-    if warnings_to_include is None:
-        warnings_to_include = []
-
-    out = AnyPyProcessOutput()
-    out['ERROR'] = []
-    out['WARNING'] = []
-
-    dump_path = None
-    for line in strvar.splitlines():
-        if '#### Macro command' in line and "Dump" in line:
-            me = re.search('Main[^ \"]*', line)
-            if me:
-                dump_path = me.group(0)
-        if dump_pattern.match(line):
-            (first, last) = line.split('=', 1)
-            last = last.strip(' ;')
-            var_name = first.strip()
-            value_str = last
-            if value_str.startswith('{') and value_str.endswith('}'):
-                value_str = value_str.replace('{', '[').replace('}', ']')
-            if dump_path:
-                var_name = dump_path
-                dump_path = None
-            try:
-                out[var_name.strip()] = literal_eval(value_str)
-            except (SyntaxError, ValueError):
-                if value_str == '[...]':
-                    value_str = '...'
-                value_str, nrep = re.subn(
-                    r'([^\[\]",\s]+)', r"'''\1'''", value_str)
-                if value_str == '':
-                    value_str = 'None'
-                if value_str.startswith('"') and value_str.endswith('"'):
-                    value_str = "'''" + value_str[1:-1] + r"'''"
-                try:
-                    out[var_name.strip()] = literal_eval(value_str)
-                except (SyntaxError, ValueError):
-                    out[var_name.strip()] = last
-                    warnings.warn(
-                        '\n\nCould not parse console output:\n' + line)
-        line_has_errors = (line.startswith('ERROR') or line.startswith('Error') or
-                           line.startswith('Model loading skipped'))
-        if line_has_errors:
-            for err_str in errors_to_ignore:
-                if err_str in line:
-                    break
-            else:
-                # This is run if we never break,
-                # i.e. err was not in the list of errors_to_ignore
-                out['ERROR'].append(line)
-        line_has_warning = line.startswith(('WARNING', 'Failed'))
-        if line_has_warning:
-            for warn_str in warnings_to_include:
-                if warn_str in line:
-                    out['WARNING'].append(line)
-                    break
-    # Convert all list object to numpy arrays
-    for k, v in out.items():
-        if isinstance(v, list):
-            out[k] = np.array(v)
-
-    # Move 'ERROR' and 'WARNING' entry to the last position in the ordered dict
-    out['WARNING'] = out.pop('WARNING').tolist()
-    out['ERROR'] = out.pop('ERROR').tolist()
-
-    # Remove the ERROR/WARNING key if it does not have any entries
-    if len(out['ERROR']) == 0:
-        del out['ERROR']
-    if len(out['WARNING']) == 0:
-        del out['WARNING']
+def _parse_data(val):
+    """Convert a str AnyBody data repr into Numpy array."""
+    if val.startswith('{') and val.endswith('}'):
+        val = val.replace('{', '[').replace('}', ']')
+    try:
+        out = literal_eval(val)
+    except (SyntaxError, ValueError):
+        if val == '[...]':
+            val = '...'
+        val, _ = TRIPEL_QUOTE_WRAP.subn(r"'''\1'''", val)
+        if val == '':
+            val = 'None'
+        if val.startswith('"') and val.endswith('"'):
+            val = "'''" + val[1:-1] + r"'''"
+        out = literal_eval(val)
+    if isinstance(out, list):
+        out = np.array(out)
     return out
+
+
+ERROR_PATTERN = re.compile(r'^((ERROR)|(Model loading skipped)).*$', flags=re.IGNORECASE | re.M)
+WARNING_PATTERN = re.compile(r'^(WARNING).*$', flags=re.IGNORECASE | re.M)
+DUMP_PATTERN = re.compile(r'^(Main.*?)\s=\s(.*?(?:\n\s\s.*?)*);', flags=re.M)
+
+
+def parse_anybodycon_output(raw, errors_to_ignore=None,
+                            warnings_to_include=None):
+    """ Parse the output log file from AnyBodyConsole to
+        for data, errors and warnings
+    """
+    warnings_to_include = warnings_to_include or []
+    errors_to_ignore = errors_to_ignore or []
+    output = AnyPyProcessOutput()
+    # Find all data in logfile
+    for dump in DUMP_PATTERN.finditer(raw):
+        name, val = dump.group(1), dump.group(2)
+        try:
+            val = _parse_data(dump.group(2))
+        except (SyntaxError, ValueError):
+            warnings.warn('\n\nCould not parse console output:\n' + name)
+        output[name] = val
+    error_list = []
+    # Find all errors in logfile
+    for match in ERROR_PATTERN.finditer(raw):
+        for case in errors_to_ignore:
+            if case in match.group(0):
+                break
+        else:
+            error_list.append(match.group(0))
+    if error_list:
+        output['ERROR'] = error_list
+    # Find all warnings in logfile
+    warning_list = []
+    for match in WARNING_PATTERN.finditer(raw):
+        for case in warnings_to_include:
+            if case in match.group(0):
+                warning_list.append(match.group(0))
+                break
+    if warning_list:
+        output['WARNING'] = warning_list
+    return output
 
 
 def get_ncpu():

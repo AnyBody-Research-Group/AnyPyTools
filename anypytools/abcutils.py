@@ -270,6 +270,13 @@ class _Task(object):
         except KeyError:
             self.output['ERROR'] = [error_msg]
 
+    def add_warnings_to_error_list(self):
+        if 'WARNING' in self.output:
+            if self.has_error():
+                self.output['ERROR'].extend(self.output['WARNING'])
+            else:
+                self.output['ERROR'] = self.output['WARNING']
+
     def get_output(self, include_task_info=True):
         out = self.output
         if include_task_info:
@@ -408,6 +415,9 @@ class AnyPyProcess(object):
         List of strings that are matched to warnings in the model
         output. If a warning with that string is found the warning
         is returned in the output. (Defaults to None)
+    fatal_warnings: bool, optional
+        Treat warnings as errors. This only triggers for specific warnings given
+        by ``warnings_to_include`` argument.
     return_task_info : bool, optional
         Return the task status information when running macros. Defaults to False.
     keep_logfiles : bool, optional
@@ -450,6 +460,7 @@ class AnyPyProcess(object):
                  silent=False,
                  ignore_errors=None,
                  warnings_to_include=None,
+                 fatal_warnings=False,
                  return_task_info=False,
                  keep_logfiles=False,
                  logfile_prefix=None,
@@ -470,6 +481,7 @@ class AnyPyProcess(object):
         self.silent = silent
         self.timeout = timeout
         self.counter = 0
+        self.fatal_warnings = fatal_warnings
         self.return_task_info = return_task_info
         self.ignore_errors = ignore_errors
         self.warnings_to_include = warnings_to_include
@@ -786,6 +798,8 @@ class AnyPyProcess(object):
                            '\n' + str(exc_tb.tb_lineno))
             logger.debug(str(e))
         finally:
+            if self.fatal_warnings:
+                task.add_warnings_to_error_list()
             if not self.keep_logfiles and not task.has_error:
                 try:
                     silentremove(logfile.name)
