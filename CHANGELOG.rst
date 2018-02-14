@@ -10,6 +10,11 @@ AnyPyTools Change Log
 
 **Fixed:**
 
+- Fixed a bug preventing really large variables to be read by AnyPyTools. The AnyBody Modeling System 
+  could split really large data matrixes across several lines in the log files which meant they 
+  were not picked up. The function :func:`anypytools.tools.parse_anybodycon_output` has been 
+  rewritten to fix this. 
+
 **Removed:**
 
 v0.10.10
