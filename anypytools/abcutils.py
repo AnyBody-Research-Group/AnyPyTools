@@ -32,7 +32,7 @@ from future.utils import text_to_native_str
 from past.builtins import basestring as string_types
 
 from .tools import (make_hash, AnyPyProcessOutputList, parse_anybodycon_output,
-                    getsubdirs, get_anybodycon_path,
+                    getsubdirs, get_anybodycon_path, BELOW_NORMAL_PRIORITY_CLASS,
                     AnyPyProcessOutput, run_from_ipython, get_ncpu, silentremove)
 from .macroutils import AnyMacro, MacroCommand
 
@@ -125,7 +125,7 @@ def _display(line, *args, **kwargs):
 
 
 def execute_anybodycon(macro, logfile=None, anybodycon_path=None, timeout=3600,
-                       keep_macrofile=False, env=None):
+                       keep_macrofile=False, env=None, priority=BELOW_NORMAL_PRIORITY_CLASS):
     """Launch a single AnyBodyConsole applicaiton.
 
     This is a low level function to start a AnyBody Console process
@@ -151,6 +151,11 @@ def execute_anybodycon(macro, logfile=None, anybodycon_path=None, timeout=3600,
     env: dict
         Environment varaibles which are passed to the started AnyBody console
         application.
+    priority : int, optional
+        The priority of the subprocesses. This can be on of the following:
+        ``anypytools.IDLE_PRIORITY_CLASS``, ``anypytools.BELOW_NORMAL_PRIORITY_CLASS``,
+        ``anypytools.NORMAL_PRIORITY_CLASS``, ``anypytools.HIGH_PRIORITY_CLASS``
+        Default is BELOW_NORMAL_PRIORITY_CLASS.
 
     Returns
     -------
@@ -190,6 +195,7 @@ def execute_anybodycon(macro, logfile=None, anybodycon_path=None, timeout=3600,
         subprocess_flags = 0x8000000  # win32con.CREATE_NO_WINDOW?
     else:
         subprocess_flags = 0
+    subprocess_flags |= priority
     # Check global module flag to avoid starting processes after
     # the user cancelled the processes
     timeout_time = time.clock() + timeout
@@ -423,7 +429,7 @@ class AnyPyProcess(object):
     keep_logfiles : bool, optional
         If True logfile will never be removed. Even if a simulations successeds
         without error. (Defautls to False)
-    logfile_prefix : str, option
+    logfile_prefix : str, optional
         String which will be prefixed to the generated log files. This can be used
         to assign a more meaningfull name to a batch of logfiles.
         (Defaults to None)
@@ -432,6 +438,11 @@ class AnyPyProcess(object):
         should use for Python Hooks. This will added the ``PYTHONHOME`` environment variable and
         prepended to the ``PATH`` before starting the AnyBody Console application.
         (Defaults to None, which will use the default Python installation on the computer.)
+    priority : int, optional
+        The priority of the subprocesses. This can be on of the following:
+        ``anypytools.IDLE_PRIORITY_CLASS``, ``anypytools.BELOW_NORMAL_PRIORITY_CLASS``,
+        ``anypytools.NORMAL_PRIORITY_CLASS``, ``anypytools.HIGH_PRIORITY_CLASS``
+        Default is BELOW_NORMAL_PRIORITY_CLASS.
 
 
     Returns
@@ -464,7 +475,8 @@ class AnyPyProcess(object):
                  return_task_info=False,
                  keep_logfiles=False,
                  logfile_prefix=None,
-                 python_env=None):
+                 python_env=None,
+                 priority=BELOW_NORMAL_PRIORITY_CLASS):
         if not isinstance(ignore_errors, (list, type(None))):
             raise ValueError('ignore_errors must be a list of strings')
 
@@ -478,6 +490,7 @@ class AnyPyProcess(object):
         else:
             raise IOError("Can't find " + anybodycon_path)
         self.num_processes = num_processes
+        self.priority = priority
         self.silent = silent
         self.timeout = timeout
         self.counter = 0
@@ -776,7 +789,8 @@ class AnyPyProcess(object):
                                     anybodycon_path=self.anybodycon_path,
                                     timeout=self.timeout,
                                     keep_macrofile=self.keep_logfiles,
-                                    env=self.env)
+                                    env=self.env,
+                                    priority=self.priority)
                     try:
                         retcode = execute_anybodycon(**exe_args)
                     finally:

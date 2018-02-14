@@ -6,6 +6,18 @@ AnyPyTools Change Log
 
 **New:**
 
+- Added option to the set the priority of the macro operations. 
+
+  .. code-block:: python
+  
+    from anypytools import IDLE_PRIORITY_CLASS
+
+    app = AnyPyProcess(priority = IDLE_PRIORITY_CLASS) 
+
+  Possible values are ``IDLE_PRIORITY_CLASS``, ``BELOW_NORMAL_PRIORITY_CLASS``,
+  ``NORMAL_PRIORITY_CLASS``, ``ABOVE_NORMAL_PRIORITY_CLASS``.
+  Previously, the priority was set to normal the new default is ``BELOW_NORMAL_PRIORITY_CLASS``.
+
 - Added argument ``fatal_warnings`` to treat warnings as errors when running macros.
 
   ..code-block:: 
@@ -14,7 +26,6 @@ AnyPyTools Change Log
 
   The argument will only triggers for specific warnings given 
   by ``warnings_to_include`` argument. 
-
 
 **Changed:**
 

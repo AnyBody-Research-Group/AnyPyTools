@@ -563,6 +563,12 @@ def _parse_data(val):
     return out
 
 
+ABOVE_NORMAL_PRIORITY_CLASS = 0x8000
+BELOW_NORMAL_PRIORITY_CLASS = 0x4000
+IDLE_PRIORITY_CLASS = 0x0040
+NORMAL_PRIORITY_CLASS = 0x0020
+
+
 ERROR_PATTERN = re.compile(r'^((ERROR)|(Model loading skipped)).*$', flags=re.IGNORECASE | re.M)
 WARNING_PATTERN = re.compile(r'^(WARNING).*$', flags=re.IGNORECASE | re.M)
 DUMP_PATTERN = re.compile(r'^(Main.*?)\s=\s(.*?(?:\n\s\s.*?)*);', flags=re.M)
