@@ -445,13 +445,7 @@ class AnyItem(pytest.Item):
     def repr_failure(self, excinfo):
         """Print a representation when a test failes."""
         if isinstance(excinfo.value, AnyException):
-            rtn = 'Execution failed:\n'
-            for elem in self.errors:
-                rtn += textwrap.fill(elem, 80,
-                                     initial_indent='  *',
-                                     subsequent_indent='   ')
-                rtn += '\n'
-            rtn += "\nMain file:\n"
+            rtn = "Main file:\n"
             rtn += "  {}\n".format(self.fspath.strpath.replace(os.sep, os.altsep))
             rtn += "AnyBody Console:\n"
             rtn += "  {}\n".format(self.anybodycon_path.replace(os.sep, os.altsep))
@@ -464,6 +458,10 @@ class AnyItem(pytest.Item):
                 macro_file = self.macro_file.replace(os.sep, os.altsep)
                 rtn += 'Macro:\n'
                 rtn += '  anybody.exe -m "{}" &\n'.format(macro_file)
+            rtn += 'Errors:\n'
+            for elem in self.errors:
+                rtn += textwrap.fill(elem, 160, initial_indent='> ', subsequent_indent='  ')
+                rtn += '\n'
             return rtn
         else:
             return str(excinfo.value)
