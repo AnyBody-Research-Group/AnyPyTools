@@ -29,7 +29,7 @@ install:
   - conda config --add channels conda-forge # For sphinxcontrib.autoprogram
   - conda update -q conda 
   - conda info -a
-  - conda create -q -n doc-build-environment python=3.6 sphinx pandoc cloud_sptheme nbconvert ipykernel nbsphinx numpy scipy future doctr h5py pytest pytest-flake8 flake8=3.3
+  - conda create -q -n doc-build-environment python=3.6 sphinx pandoc cloud_sptheme nbconvert ipykernel nbsphinx numpy scipy future doctr h5py pytest pytest-flake8 flake8
   - source activate doc-build-environment
   - pip install recommonmark
   - python setup.py install

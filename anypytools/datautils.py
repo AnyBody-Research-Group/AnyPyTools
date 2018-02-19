@@ -195,13 +195,13 @@ def _parse_anyoutputfile_constants(strvar):
                 value = str(literal_eval("'''" + last + "'''"))
                 value = str(literal_eval(last))
                 value = float(literal_eval(last))
-            except:
+            except Exception:
                 pass
         else:
             last = last.replace('{', '[').replace('}', ']')
             try:
                 value = np.array(literal_eval("'''" + last + "'''"))
                 value = np.array(literal_eval(last))
-            except:
+            except Exception:
                 pass
     return (varname, value)

@@ -62,7 +62,7 @@ class File(h5py.File): # noqa
                     try:
                         elem = _follow_reftarget(elem)
                         elem = elem.__getitem__(level)
-                    except:
+                    except Exception:
                         raise KeyError('Entry not found: ' + path)
         if isinstance(elem, h5py.Group):
             return Group(elem.id)
@@ -119,7 +119,7 @@ class Group(h5py.Group): # noqa
                     try:
                         elem = _follow_reftarget(elem)
                         elem = elem.__getitem__(level)
-                    except:
+                    except Exception:
                         raise KeyError('Entry not found: ' + path)
         if isinstance(elem, h5py.Group):
             return Group(elem.id)

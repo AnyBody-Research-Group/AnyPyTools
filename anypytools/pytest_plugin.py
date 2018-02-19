@@ -14,7 +14,6 @@ import ast
 import glob
 import shutil
 import argparse
-import textwrap
 import itertools
 import contextlib
 from traceback import format_list, extract_tb
@@ -26,6 +25,7 @@ from anypytools import AnyPyProcess, macro_commands
 from anypytools.tools import (
     get_anybodycon_path, replace_bm_constants, get_bm_constants,
     anybodycon_version, find_ammr_path, get_tag, get_ammr_version,
+    wraptext
 )
 
 
@@ -243,6 +243,10 @@ HEADER_ENSURES = (
     ('define', (dict, list, tuple)),
     ('path', (dict, list, tuple)),
     ('ignore_errors', (list, )),
+    ('warnings_to_include', (list, )),
+    ('fatal_warnings', (bool, )),
+    ('keep_logfiles', (bool, )),
+    ('logfile_prefix', (str, )),
     ('expect_errors', (list, )),
 )
 
@@ -347,27 +351,28 @@ class AnyItem(pytest.Item):
         if self.config.getoption("--ammr"):
             paths['AMMR_PATH'] = self.config.getoption("--ammr")
             paths['ANYBODY_PATH_AMMR'] = self.config.getoption("--ammr")
-        self.paths = _as_absolute_paths(
-            paths, start=self.config.rootdir.strpath)
+        self.paths = _as_absolute_paths(paths, start=self.config.rootdir.strpath)
         self.name = test_name
         self.expect_errors = kwargs.get('expect_errors', [])
-        self.ignore_errors = kwargs.get('ignore_errors', [])
         self.compare_study = kwargs.get('compare_study', None)
         if self.compare_study:
             self.add_marker('stores_h5')
         self.timeout = self.config.getoption("--timeout")
         self.errors = []
-        self.macro = [macro_commands.Load(self.fspath.strpath,
-                                          self.defs, self.paths)]
+        self.macro = [macro_commands.Load(self.fspath.strpath, self.defs, self.paths)]
         self.compare_filename = None
         self.macro_file = None
         self.anybodycon_path = pytest.anytest.ams_path
-        self.apt_opts = {
+        self.app_opts = {
             'return_task_info': True,
             'silent': True,
             'anybodycon_path': self.anybodycon_path,
-            'ignore_errors': self.ignore_errors,
-            'timeout': self.timeout
+            'timeout': self.timeout,
+            'ignore_errors': kwargs.get('ignore_errors', []),
+            'warnings_to_include': kwargs.get('warnings_to_include', []),
+            'fatal_warnings': kwargs.get('fatal_warnings', False),
+            'keep_logfiles': kwargs.get('keep_logfiles', False),
+            'logfile_prefix': kwargs.get('logfile_prefix', None),
         }
         if not self.config.getoption("--only-load"):
             self.macro.append(macro_commands.OperationRun('Main.RunTest'))
@@ -386,7 +391,7 @@ class AnyItem(pytest.Item):
         if self.compare_filename:
             os.makedirs(os.path.dirname(self.compare_filename))
         with change_dir(tmpdir.strpath):
-            app = AnyPyProcess(**self.apt_opts)
+            app = AnyPyProcess(**self.app_opts)
             result = app.start_macro(self.macro)[0]
             self.app = app
         # Ignore error due to missing Main.RunTest
@@ -440,16 +445,10 @@ class AnyItem(pytest.Item):
     def repr_failure(self, excinfo):
         """Print a representation when a test failes."""
         if isinstance(excinfo.value, AnyException):
-            rtn = 'Execution failed:\n'
-            for elem in self.errors:
-                rtn += textwrap.fill(elem, 80,
-                                     initial_indent='  *',
-                                     subsequent_indent='   ')
-                rtn += '\n'
-            rtn += "\nMain file:\n"
-            rtn += "  {}\n".format(self.fspath.strpath.replace(os.sep, os.altsep))
+            rtn = "Main file:\n"
+            rtn += wraptext(self.fspath.strpath + '\n', initial_indent='  ')
             rtn += "AnyBody Console:\n"
-            rtn += "  {}\n".format(self.anybodycon_path.replace(os.sep, os.altsep))
+            rtn += wraptext(self.anybodycon_path + '\n', initial_indent='  ')
             rtn += "Special model configuration:\n"
             for k, v in self.defs.items():
                 rtn += "  #define {} {}\n".format(k, v)
@@ -458,7 +457,11 @@ class AnyItem(pytest.Item):
             if self.macro_file is not None:
                 macro_file = self.macro_file.replace(os.sep, os.altsep)
                 rtn += 'Macro:\n'
-                rtn += '  anybody.exe -m "{}" &\n'.format(macro_file)
+                rtn += wraptext('  anybody.exe -m "{}" &\n'.format(macro_file), initial_indent='  ')
+            rtn += 'Errors:\n'
+            for elem in self.errors:
+                rtn += wraptext(elem, initial_indent='> ', subsequent_indent='  ')
+                rtn += '\n'
             return rtn
         else:
             return str(excinfo.value)

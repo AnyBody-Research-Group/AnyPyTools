@@ -21,8 +21,10 @@ import sys
 import xml
 import copy
 import errno
+import shutil
 import pprint as _pprint
 import logging
+import textwrap
 import datetime
 import warnings
 import platform
@@ -104,6 +106,17 @@ def ammr_any_version(fpath):
         return "Unknown AMMR version"
 
 
+def wraptext(elem, initial_indent='', subsequent_indent=None):
+    """Wraps text to fit the terminal window."""
+    width = 120
+    if sys.version_info.major == 3:
+        width = max(width, shutil.get_terminal_size().columns)
+    subsequent_indent = subsequent_indent or initial_indent
+    return textwrap.fill(elem, width,
+                         initial_indent=initial_indent,
+                         subsequent_indent=subsequent_indent)
+
+
 def amm_xml_version(fpath):
     try:
         tree = xml.etree.ElementTree.parse(fpath)
@@ -111,7 +124,7 @@ def amm_xml_version(fpath):
         v1, v2, v3 = version.find('v1').text, version.find(
             'v2').text, version.find('v3').text
         return "{}.{}.{}".format(v1, v2, v3)
-    except:
+    except Exception:
         vstring = "Unknown AMMR version"
     return vstring
 
