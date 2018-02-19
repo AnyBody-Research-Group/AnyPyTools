@@ -14,7 +14,6 @@ import ast
 import glob
 import shutil
 import argparse
-import textwrap
 import itertools
 import contextlib
 from traceback import format_list, extract_tb
@@ -26,6 +25,7 @@ from anypytools import AnyPyProcess, macro_commands
 from anypytools.tools import (
     get_anybodycon_path, replace_bm_constants, get_bm_constants,
     anybodycon_version, find_ammr_path, get_tag, get_ammr_version,
+    wraptext
 )
 
 
@@ -446,9 +446,9 @@ class AnyItem(pytest.Item):
         """Print a representation when a test failes."""
         if isinstance(excinfo.value, AnyException):
             rtn = "Main file:\n"
-            rtn += "  {}\n".format(self.fspath.strpath.replace(os.sep, os.altsep))
+            rtn += wraptext(self.fspath.strpath + '\n', initial_indent='  ')
             rtn += "AnyBody Console:\n"
-            rtn += "  {}\n".format(self.anybodycon_path.replace(os.sep, os.altsep))
+            rtn += wraptext(self.anybodycon_path + '\n', initial_indent='  ')
             rtn += "Special model configuration:\n"
             for k, v in self.defs.items():
                 rtn += "  #define {} {}\n".format(k, v)
@@ -457,10 +457,10 @@ class AnyItem(pytest.Item):
             if self.macro_file is not None:
                 macro_file = self.macro_file.replace(os.sep, os.altsep)
                 rtn += 'Macro:\n'
-                rtn += '  anybody.exe -m "{}" &\n'.format(macro_file)
+                rtn += wraptext('  anybody.exe -m "{}" &\n'.format(macro_file), initial_indent='  ')
             rtn += 'Errors:\n'
             for elem in self.errors:
-                rtn += textwrap.fill(elem, 160, initial_indent='> ', subsequent_indent='  ')
+                rtn += wraptext(elem, initial_indent='> ', subsequent_indent='  ')
                 rtn += '\n'
             return rtn
         else:
