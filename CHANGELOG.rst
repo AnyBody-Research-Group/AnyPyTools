@@ -4,6 +4,19 @@ AnyPyTools Change Log
 
 .. current developments
 
+v0.11.1
+=============
+
+**New:**
+
+- Pytest plugin adds support for specifying ``warnings_to_include``, 
+  ``fatal_warnings`` in the header of AnyScript test files. 
+
+**Changed:**
+
+- The output from pytest plugin is restructured to be more readable. 
+
+
 v0.11.0
 =============
 
