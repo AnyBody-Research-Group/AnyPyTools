@@ -446,22 +446,20 @@ class AnyItem(pytest.Item):
         """Print a representation when a test failes."""
         if isinstance(excinfo.value, AnyException):
             rtn = "Main file:\n"
-            rtn += wraptext(self.fspath.strpath + '\n', initial_indent='  ')
-            rtn += "AnyBody Console:\n"
-            rtn += wraptext(self.anybodycon_path + '\n', initial_indent='  ')
-            rtn += "Special model configuration:\n"
+            rtn += wraptext(self.fspath.strpath, initial_indent='  ')
+            rtn += "\nSpecial model configuration:"
             for k, v in self.defs.items():
-                rtn += "  #define {} {}\n".format(k, v)
+                rtn += "\n  #define {} {}".format(k, v)
             for k, v in self.paths.items():
-                rtn += "  #path {} {}\n".format(k, v)
+                rtn += "\n  #path {} {}".format(k, v)
             if self.macro_file is not None:
                 macro_file = self.macro_file.replace(os.sep, os.altsep)
-                rtn += 'Macro:\n'
-                rtn += wraptext('  anybody.exe -m "{}" &\n'.format(macro_file), initial_indent='  ')
-            rtn += 'Errors:\n'
+                rtn += '\nMacro:'
+                rtn += wraptext('\n  anybody.exe -m "{}" &'.format(macro_file), initial_indent='  ')
+            rtn += '\nErrors:'
             for elem in self.errors:
-                rtn += wraptext(elem, initial_indent='> ', subsequent_indent='  ')
                 rtn += '\n'
+                rtn += wraptext(elem, initial_indent='> ', subsequent_indent='  ')
             return rtn
         else:
             return str(excinfo.value)

@@ -4,6 +4,12 @@ AnyPyTools Change Log
 
 .. current developments
 
+**Fixed:**
+
+- Missing newlines in error output from pytest plugin. 
+
+
+
 v0.11.1
 =============
 
