@@ -266,7 +266,6 @@ class _Task(object):
             parentfolder = os.path.basename(head)
             self.name = parentfolder + '/' + folder
 
-    @property
     def has_error(self):
         return 'ERROR' in self.output
 
@@ -341,7 +340,7 @@ class _Summery(object):
 
     def task_summery(self, task):
         if self.ipywidget:
-            if task.has_error:
+            if task.has_error():
                 self._display(self.format_summery(task))
 
     def _display(self, s):
@@ -357,7 +356,7 @@ class _Summery(object):
 
     def format_summery(self, task):
         entry = ''
-        if task.has_error:
+        if task.has_error():
             entry += 'Failed :'
         elif task.processtime == 0:
             entry += 'Not completed :'
@@ -378,7 +377,7 @@ class _Summery(object):
     def final_summery(self, total_process_time, tasklist):
         unfinished_tasks = [t for t in tasklist if t.processtime <= 0]
         failed_tasks = [t for t in tasklist
-                        if t.has_error and t.processtime > 0]
+                        if t.has_error() and t.processtime > 0]
         if len(failed_tasks):
             self._display('Tasks with errors: {:d}'.format(len(failed_tasks)))
             if self.ipywidget is None:
@@ -765,7 +764,7 @@ class AnyPyProcess(object):
             task.process_number = self.counter
             self.counter += 1
         if task.output:
-            if not task.has_error and task.processtime > 0:
+            if not task.has_error() and task.processtime > 0:
                 if not os.path.isfile(task.logfile):
                     task.logfile = ""
                 task_queue.put(task)
@@ -814,7 +813,7 @@ class AnyPyProcess(object):
         finally:
             if self.fatal_warnings:
                 task.add_warnings_to_error_list()
-            if not self.keep_logfiles and not task.has_error:
+            if not self.keep_logfiles and not task.has_error():
                 try:
                     silentremove(logfile.name)
                     task.logfile = ""
@@ -865,7 +864,7 @@ class AnyPyProcess(object):
                             threads.remove(thread)
                 while task_queue.qsize():
                     task = task_queue.get()
-                    if task.has_error:
+                    if task.has_error():
                         n_errors += 1
                     self.summery.task_summery(task)
                     processed_tasks.append(task)
@@ -885,7 +884,7 @@ class AnyPyProcess(object):
     def cleanup_logfiles(self, tasklist):
         for task in tasklist:
             try:
-                if not self.keep_logfiles and not task.has_error:
+                if not self.keep_logfiles and not task.has_error():
                     if task.logfile:
                         silentremove(task.logfile)
                         task.logfile = ""
