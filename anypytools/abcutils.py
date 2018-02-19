@@ -108,7 +108,7 @@ class _SubProcessContainer(object):
                 try:
                     os.kill(pid, _KILLED_BY_ANYPYTOOLS)
                     killed.append(str(pid))
-                except:
+                except Exception:
                     pass
             self._pids.clear()
 

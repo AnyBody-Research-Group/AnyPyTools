@@ -111,7 +111,7 @@ def amm_xml_version(fpath):
         v1, v2, v3 = version.find('v1').text, version.find(
             'v2').text, version.find('v3').text
         return "{}.{}.{}".format(v1, v2, v3)
-    except:
+    except Exception:
         vstring = "Unknown AMMR version"
     return vstring
 
