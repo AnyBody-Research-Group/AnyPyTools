@@ -275,13 +275,6 @@ class _Task(object):
         except KeyError:
             self.output['ERROR'] = [error_msg]
 
-    def add_warnings_to_error_list(self):
-        if 'WARNING' in self.output:
-            if self.has_error():
-                self.output['ERROR'].extend(self.output['WARNING'])
-            else:
-                self.output['ERROR'] = self.output['WARNING']
-
     def get_output(self, include_task_info=True):
         out = self.output
         if include_task_info:
@@ -803,7 +796,8 @@ class AnyPyProcess(object):
                     task.output = parse_anybodycon_output(
                         logfile.read(),
                         self.ignore_errors,
-                        self.warnings_to_include)
+                        self.warnings_to_include,
+                        fatal_warnings=self.fatal_warnings)
         except Exception as e:
             exc_type, exc_obj, exc_tb = sys.exc_info()
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
@@ -811,8 +805,6 @@ class AnyPyProcess(object):
                            '\n' + str(exc_tb.tb_lineno))
             logger.debug(str(e))
         finally:
-            if self.fatal_warnings:
-                task.add_warnings_to_error_list()
             if not self.keep_logfiles and not task.has_error():
                 try:
                     silentremove(logfile.name)
