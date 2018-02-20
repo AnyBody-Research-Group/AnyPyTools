@@ -8,6 +8,11 @@ AnyPyTools Change Log
 
 - Missing newlines in error output from pytest plugin. 
 
+**Fixed:**
+
+- Fix a problem where the ``ignore_errors`` argument to :class:`AnyPyProcess()` could
+  not filter warnings when they were considered as errors with the ``fatal_warnings`` 
+  arguments. 
 
 
 v0.11.1
