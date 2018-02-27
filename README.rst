@@ -61,9 +61,8 @@ The simplest case::
 Please see the `Jupyter Notebook based tutorial`_, or check the the following for more information:
 
 * `AnyPyTools's Documentation <https://anybody-research-group.github.io/anypytools-docs>`_
-* `Gitter channel <https://gitter.im/AnyBody-Research-Group/AnyPyTools>`_
 
-.. _Jupyter Notebook based tutorial: http://nbviewer.ipython.org/github/AnyBody-Research-Group/AnyPyTools/blob/master/Tutorial/00_AnyPyTools_tutorial.ipynb
+.. _Jupyter Notebook based tutorial: http://nbviewer.jupyter.org/github/AnyBody-Research-Group/AnyPyTools/blob/master/docs/Tutorial/00_AnyPyTools_tutorial.ipynb
 
 .. image:: docs/_static/relax.png
    :alt: Don't panic
