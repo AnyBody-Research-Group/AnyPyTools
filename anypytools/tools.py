@@ -86,7 +86,7 @@ def anybodycon_version(anybodyconpath):
     try:
         out = subprocess.check_output(
             [anybodyconpath, '-ni'], universal_newlines=True)
-    except subprocess.CalledProcessError:
+    except (subprocess.CalledProcessError, FileNotFoundError):
         return None
     m = ANYBODYCON_VERSION_RE.search(out)
     if m is not None:
