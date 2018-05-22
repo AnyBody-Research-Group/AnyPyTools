@@ -14,7 +14,7 @@ v0.12
   not filter warnings when they were considered as errors with the ``fatal_warnings`` 
   arguments. 
 
-** Changed:**
+**Changed:**
 
 - Better error message when ``anybodycon.exe`` can not be found.
 
