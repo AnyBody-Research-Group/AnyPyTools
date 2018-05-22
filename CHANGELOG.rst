@@ -4,15 +4,19 @@ AnyPyTools Change Log
 
 .. current developments
 
+v0.12
+=============
+
 **Fixed:**
 
 - Missing newlines in error output from pytest plugin. 
-
-**Fixed:**
-
 - Fix a problem where the ``ignore_errors`` argument to :class:`AnyPyProcess()` could
   not filter warnings when they were considered as errors with the ``fatal_warnings`` 
   arguments. 
+
+** Changed:**
+
+- Better error message when ``anybodycon.exe`` can not be found.
 
 
 v0.11.1
