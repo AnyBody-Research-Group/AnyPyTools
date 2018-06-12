@@ -343,7 +343,7 @@ class SetValue_random(SetValue):
         if np.any(np.isnan(val)):
             val[np.isnan(val)] = self.rv.rvs()[np.isnan(val)]
 
-        return self.format_macro(val)
+        return self._format_macro(val)
 
 
 class Dump(MacroCommand):
