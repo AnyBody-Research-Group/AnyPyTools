@@ -53,7 +53,20 @@ def test_setvalue():
     
     c = mc.SetValue('val', np.array([[1,0],[0,1]]) )
     assert c.get_macro(0)  == 'classoperation val "Set Value" --value="{{1,0},{0,1}}"'
-    
+
+
+def test_setvalue_random():
+    np.random.seed(1)
+    fdist = norm(2, [1, 1, 1])
+
+    c = mc.SetValue_random('val', fdist)
+    assert c.get_macro(0) == 'classoperation val "Set Value" --value="{2,2,2}"'
+
+    mg = AnyMacro(c)
+    macrolist = mg.create_macros_MonteCarlo(2)
+    assert macrolist[0][0] == 'classoperation val "Set Value" --value="{2,2,2}"'
+    assert macrolist[1][0] == 'classoperation val "Set Value" --value="{1.79048215908,2.58380574427,-1.68494766954}"'
+
 
 def test_dump():
     c = mc.Dump('Main.Study.myvar1')

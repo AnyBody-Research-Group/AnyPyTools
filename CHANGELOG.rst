@@ -4,6 +4,11 @@ AnyPyTools Change Log
 
 .. current developments
 
+**Fixed:**
+
+- Fix regression in for :class:`AnyPyTools.macro_comands.SetValue_random` which caused a 
+  crash when generating macros. 
+
 v0.12
 =============
 
