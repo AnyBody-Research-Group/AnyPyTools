@@ -11,14 +11,12 @@ from builtins import * # noqa
 import os
 import re
 import ast
-import glob
 import shutil
 import argparse
 import itertools
 import contextlib
 from traceback import format_list, extract_tb
 
-import h5py
 import pytest
 
 from anypytools import AnyPyProcess, macro_commands
@@ -45,13 +43,12 @@ class AnyTestSession(object):
     def __init__(self):
         self.ammr_version = ''
         self.ams_version = ''
-        self.basefolder = ''
+        self.save_basefolder = ''
         self.anytest_compare_dir = ''
         self.current_run_folder = None
-        self.save = ''
+        self.save_name = ''
         self.last_number = None
         self.last_session = None
-        self.compare_session = None
 
     def configure(self, config):
         """Configure the AnyTestSession object.
@@ -60,11 +57,13 @@ class AnyTestSession(object):
         since it is instantiated and added to the pytest namespace very
         early in the pytest startup.
         """
-        self.basefolder = config.getoption("--anytest-storage")
-        if not os.path.exists(self.basefolder):
-            os.makedirs(self.basefolder)
-        self.save = config.getoption(
-            "--anytest-save") or config.getoption("--anytest-autosave")
+        self.save_basefolder = config.getoption("--anytest-storage")
+        if not os.path.exists(self.save_basefolder):
+            os.makedirs(self.save_basefolder)
+        self.save_name = config.getoption("--anytest-save")
+        if self.save_name == '':
+            self.save_name == get_tag()
+        self.save_name_study = config.getoption("--anytest-save-study")
         ammr_path = find_ammr_path(config.getoption("--ammr") or config.rootdir.strpath)
         self.ammr_version = get_ammr_version(ammr_path)
         self.ams_path = config.getoption("--anybodycon") or get_anybodycon_path()
@@ -72,72 +71,21 @@ class AnyTestSession(object):
         self.ams_version = anybodycon_version(self.ams_path)
         major_ammr_ver = 1 if self.ammr_version.startswith("1") else 2
         self.bm_constants_map = get_bm_constants(ammr_path=ammr_path, ammr_version=major_ammr_ver)
-        self.compare_session = self.get_compare_session(config)
-        self.run_compare_test = bool(self.save or self.compare_session)
-
-    def get_compare_session(self, config):
-        """Get the session to compare against."""
-        comp = config.getoption("--anytest-compare")
-        if not comp:
-            return None
-        elif isinstance(comp, str) and comp.isdigit():
-            session = self._get_storage_folder(int(comp))
-        else:
-            session = self._get_storage_folder()
-        if not session:
-            raise ValueError(
-                'Could not find any stored test runs to compare against')
-        return session
 
     def finalize(self, config):
         """Finalize a session."""
-        if self.save:
-            storage_folder = os.path.join(self.basefolder, self.session_name)
+        if self.save_name:
+            storage_folder = os.path.join(self.save_basefolder, self.save_name)
+            shutil.rmtree(storage_folder, ignore_errors=True)
             if os.path.exists(self.current_run_folder):
                 shutil.copytree(self.current_run_folder, storage_folder)
 
-    @property
-    def session_name(self):
-        """Return the session name if class configured to save data."""
-        if self.save:
-            return '{:0>4d}_{}'.format(self.last_number + 1, self.save)
-
-    def get_compare_params(self):
-        """Return (base, h5) for every file compare store."""
-        if self.compare_session is None:
-            return []
-        with cwd(self.compare_session):
-            stored_h5files = glob.glob('**/*.anydata.h5')
-        return zip([self.compare_session] * len(stored_h5files), stored_h5files)
-
-    def _get_largest_prefix(self):
-        """Return the heights prefix number for folders in the self.basedir."""
-        subdirs = next(os.walk(self.basefolder))[1]
-        prefixes = [s.split('_')[0] for s in subdirs]
-        numbers = [int(s) for s in prefixes if s.isdigit()]
-        return max(numbers + [0])
-
-    def _get_storage_folder(self, number=None):
-        """Return the full folder name starting with num in self.basedir."""
-        if not number:
-            number = self._get_largest_prefix()
-        if number is None:
-            return None
-        folder = glob.glob('{}\\{:0>4d}_*\\'.format(self.basefolder, number))
-        if len(folder) > 1:
-            raise ValueError('More folders with the same'
-                             ' number prefix in {}'.format(self.basefolder))
-        elif len(folder) == 0:
-            return None
-        else:
-            return folder[0]
-
-    def get_compare_fname(self, name, id, study):
+    def get_save_fname(self, name, id, study):
         """Return the name of the compare h5file, and ensure the parent folder exists."""
         # Initialize and empty the current_run folder.
         if not self.current_run_folder:
             self.current_run_folder = os.path.join(
-                self.basefolder, 'current_run')
+                self.save_basefolder, 'current_run')
             if os.path.exists(self.current_run_folder):
                 shutil.rmtree(self.current_run_folder)
         if id > 0:
@@ -189,27 +137,6 @@ def change_dir(path):
         yield
     finally:
         os.chdir(prev_cwd)
-
-
-def pytest_generate_tests(metafunc):
-    if 'anytest_compare' in metafunc.fixturenames:
-        params = pytest.anytest.get_compare_params()
-        metafunc.parametrize("anytest_compare",
-                             params, indirect=True)
-
-
-@pytest.fixture
-def anytest_compare(request):
-    storage_folder, h5file = request.param
-    current_folder = pytest.anytest.current_run_folder
-    current_fname = os.path.join(current_folder, h5file)
-    if os.path.exists(current_fname):
-        current_h5 = h5py.File(current_fname)
-        stored_h5 = h5py.File(os.path.join(storage_folder, h5file))
-        yield current_h5, stored_h5
-    else:
-        pytest.skip('No matching h5 file found')
-        yield (None, None)
 
 
 def pytest_collect_file(parent, path):
@@ -269,21 +196,6 @@ def _parse_header(header):
                 name, typestr)
             raise TypeError(msg)
     return ns
-
-
-def pytest_collection_modifyitems(session, config, items):
-    """Order test so compare tests are executed last."""
-    first = []
-    last = []
-    other = []
-    for item in items:
-        if hasattr(item, 'fixturenames') and 'anytest_compare' in item.fixturenames:
-            last.append(item)
-        elif item.get_marker('stores_h5'):
-            first.append(item)
-        else:
-            other.append(item)
-    items[:] = first + other + last
 
 
 def pytest_collection_finish(session):
@@ -354,13 +266,13 @@ class AnyItem(pytest.Item):
         self.paths = _as_absolute_paths(paths, start=self.config.rootdir.strpath)
         self.name = test_name
         self.expect_errors = kwargs.get('expect_errors', [])
-        self.compare_study = kwargs.get('compare_study', None)
-        if self.compare_study:
-            self.add_marker('stores_h5')
+        self.save_study = pytest.anytest.save_name_study
+        if not self.save_study:
+            self.save_study = kwargs.get('save_study', 'Main.Study')
         self.timeout = self.config.getoption("--timeout")
         self.errors = []
         self.macro = [macro_commands.Load(self.fspath.strpath, self.defs, self.paths)]
-        self.compare_filename = None
+        self.save_filename = None
         self.macro_file = None
         self.anybodycon_path = pytest.anytest.ams_path
         self.app_opts = {
@@ -376,20 +288,20 @@ class AnyItem(pytest.Item):
         }
         if not self.config.getoption("--only-load"):
             self.macro.append(macro_commands.OperationRun('Main.RunTest'))
-        if pytest.anytest.run_compare_test and self.compare_study:
-            # Add compare test to the test macro
-            self.compare_filename = pytest.anytest.get_compare_fname(
-                name, id, self.compare_study)
+        if pytest.anytest.save_name:
+            # Add save operation to the test macro
+            self.save_filename = pytest.anytest.get_save_fname(
+                name, id, self.save_study)
             save_str = 'classoperation {}.Output "Save data" --type="Deep" --file="{}"'
             save_str = save_str.format(
-                self.compare_study, self.compare_filename)
+                self.save_study, self.save_filename)
             self.macro.append(macro_commands.MacroCommand(save_str))
 
     def runtest(self):
         """Run an AnyScript test item."""
         tmpdir = self.config._tmpdirhandler.mktemp(self.name)
-        if self.compare_filename:
-            os.makedirs(os.path.dirname(self.compare_filename))
+        if self.save_filename:
+            os.makedirs(os.path.dirname(self.save_filename))
         with change_dir(tmpdir.strpath):
             app = AnyPyProcess(**self.app_opts)
             result = app.start_macro(self.macro)[0]
@@ -418,18 +330,18 @@ class AnyItem(pytest.Item):
         if 'ERROR' in result and len(result['ERROR']) > 0:
             self.errors.extend(result['ERROR'])
         # Add info to the hdf5 file if compare output was set
-        if self.compare_filename is not None:
+        if self.save_filename is not None:
             import h5py
-            f = h5py.File(self.compare_filename, 'a')
+            f = h5py.File(self.save_filename, 'a')
             f.attrs['anytest_processtime'] = result['task_processtime']
             f.attrs['anytest_macro'] = '\n'.join(result['task_macro'][:-1])
             f.attrs['anytest_ammr_version'] = pytest.anytest.ammr_version
             f.attrs['anytest_ams_version'] = pytest.anytest.ams_version
             f.close()
-            basedir = os.path.dirname(self.compare_filename)
+            basedir = os.path.dirname(self.save_filename)
             macrofile = write_macro_file(
-                basedir, self.compare_study, self.macro[:-1])
-            with open(os.path.join(basedir, self.compare_study + '.bat'), 'w') as f:
+                basedir, self.save_study, self.macro[:-1])
+            with open(os.path.join(basedir, self.save_study + '.bat'), 'w') as f:
                 anybodygui = re.sub(r"(?i)anybodycon\.exe",
                                     r"anybody\.exe", self.anybodycon_path)
                 f.write('"{}" -m "{}"'.format(anybodygui, macrofile))
@@ -502,23 +414,17 @@ def pytest_addoption(parser):
                     "Must be given in the form: --define MYDEF=6")
     group._addoption("--timeout", default=3600, type=int,
                      help="terminate tests after a certain timeout period")
-    tag = get_tag()
     group.addoption("--anytest-save", metavar="NAME", type=parse_save_name,
                     help='Save the current run into folder '
-                    '`~/.anytest/counter-NAME/`. Default: `<commitid>_'
-                    '<date>_<time>_<isdirty>`, example: `%s`.' % tag)
-    group.addoption("--anytest-autosave", action='store_const', const=tag,
-                    help="Autosave the current run into folder"
-                    "'~/.anytest/counter_%s/" % tag)
+                    '`~/.anytest/counter-NAME/`.')
+    group.addoption("--anytest-save-study", type=str,
+                    help='Used to specify the study saved by the --anytest-save option. '
+                    'Defaults to: "Main.Study" or what is set in the "test_*.any" file')
     group.addoption("--create-macros", action="store_true",
                     help="Create a macro file if the test fails. This makes it "
                     "easy to re-run the failed test in the gui application.")
-    group.addoption("--anytest-compare",
-                    metavar="NUM", nargs="?", default=[], const=True,
-                    help="Compare the current run against run NUM or the latests "
-                    "saved run if unspecified.")
     group.addoption("--anytest-storage",
                     metavar="path", default=os.path.expanduser("~/.anytest"),
                     help="Specify a path to store the runs (when --anytest-save "
-                    "or --benchmark-autosave are used). Default: %(default)r."
+                    "are used). Default: %(default)r."
                     )
