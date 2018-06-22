@@ -5,7 +5,6 @@ Created on Mon Mar 23 21:14:59 2015.
 
 @author: Morten
 """
-import sys
 import types
 import logging
 from pprint import pprint, pformat  # noqa
@@ -15,7 +14,6 @@ from collections import MutableSequence
 import numpy as np
 from scipy.stats import distributions
 
-from anypytools.tools import define2str, path2str, array2anyscript
 from anypytools.tools import define2str, path2str, array2anyscript
 
 logger = logging.getLogger("abt.anypytools")
