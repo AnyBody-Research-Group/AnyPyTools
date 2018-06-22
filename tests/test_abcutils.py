@@ -15,15 +15,6 @@ from anypytools.abcutils import AnyPyProcessOutputList
 demo_model_path = os.path.join(os.path.dirname(__file__), "Demo.Arm2D.any")
 
 
-def has_blaze():
-    try:
-        import anypytools.blaze_converter
-
-        return True
-    except ImportError:
-        return False
-
-
 def setup_simple_model(tmpdir):
     shutil.copyfile(demo_model_path, str(tmpdir.join("model.main.any")))
 
@@ -207,41 +198,6 @@ class TestAnyPyProcess:
 
         reloaded = app.load_results("test.db")
         reloaded["Main.ArmModel.GlobalRef.t"]
-
-    @pytest.mark.skipif(has_blaze, reason="blaze and dynd must be installed")
-    def test_output_convert_data(self, init_simple_model):
-        macro = [
-            [
-                'load "model.main.any"',
-                "operation Main.ArmModelStudy.InverseDynamics",
-                'classoperation Main.ArmModelStudy.Output.MaxMuscleActivity "Dump"',
-                'classoperation Main.ArmModel.GlobalRef.t "Dump"',
-            ],
-            [
-                'load "model.main.any"',
-                "operation Main.ArmModelStudy.InverseDynamics",
-                'classoperation Main.ArmModelStudy.Output.MaxMuscleActivity "Dump"',
-                'classoperation Main.ArmModel.GlobalRef.t "Dump"',
-            ],
-            [
-                'load "model.main.any"',
-                "operation Main.ArmModelStudy.InverseDynamics",
-                'classoperation Main.ArmModelStudy.Output.MaxMuscleActivity "Dump"',
-                'classoperation Main.ArmModel.GlobalRef.t "Dump"',
-            ],
-        ]
-
-        app = AnyPyProcess(return_task_info=True)
-
-        output = app.start_macro(macro)
-
-        out1 = output.to_dynd()
-        assert hasattr(out1, "Main_ArmModelStudy_Output_MaxMuscleActivity")
-        assert hasattr(out1, "Main_ArmModel_GlobalRef_t")
-
-        out2 = output.to_dynd(create_nested_structure=True)
-        assert hasattr(out2, "Main")
-        assert hasattr(out2.Main.ArmModel.GlobalRef, "t")
 
     def test_restart_macro(self, init_simple_model):
         macro = [

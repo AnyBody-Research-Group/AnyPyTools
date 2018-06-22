@@ -332,18 +332,6 @@ class AnyPyProcessOutputList(collections.MutableSequence):
         """Filter elements for whichfunction returns true."""
         return AnyPyProcessOutputList(filter(function, self))
 
-    def to_dynd(self, **kwargs):
-        try:
-            from anypytools.blaze_converter import convert
-
-            return convert(self.list, **kwargs)
-        except ImportError:
-            msg = (
-                "The packages libdynd, dynd-python, datashape, "
-                "odo/into must be installed to convert data"
-            )
-            raise ImportError(msg) from None
-
     def shelve(self, filename, key="results"):
         import shelve
 
