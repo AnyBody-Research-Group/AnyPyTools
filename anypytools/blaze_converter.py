@@ -4,11 +4,27 @@ Created on Sun Sep  7 13:25:38 2014.
 
 @author: Morten
 """
-from __future__ import (absolute_import, division,
-                        print_function, unicode_literals)
-from builtins import (ascii, bytes, chr, dict, filter, hex, input,  # noqa
-                      int, map, next, oct, open, pow, range, round,
-                      str, super, zip)
+from __future__ import absolute_import, division, print_function, unicode_literals
+from builtins import (
+    ascii,
+    bytes,
+    chr,
+    dict,
+    filter,
+    hex,
+    input,  # noqa
+    int,
+    map,
+    next,
+    oct,
+    open,
+    pow,
+    range,
+    round,
+    str,
+    super,
+    zip,
+)
 
 import logging
 import collections
@@ -16,7 +32,8 @@ from copy import deepcopy
 
 import numpy as np
 from datashape import discover
-from datashape.coretypes import (Record, var, Option)
+from datashape.coretypes import Record, var, Option
+
 try:
     from odo import convert
 except ImportError:
@@ -26,7 +43,7 @@ from dynd import nd
 
 from anypytools.tools import AnyPyProcessOutputList
 
-logger = logging.getLogger('abt.anypytools')
+logger = logging.getLogger("abt.anypytools")
 
 
 @convert.register(nd.array, AnyPyProcessOutputList, cost=1.0)
@@ -37,9 +54,9 @@ def convert(res, **kwargs):
     res = deepcopy(res)
     for elem in res:
         for key in elem:
-            if key.startswith('Main') and isinstance(elem[key], np.ndarray):
+            if key.startswith("Main") and isinstance(elem[key], np.ndarray):
                 try:
-                    elem[key] = elem[key].astype('float')
+                    elem[key] = elem[key].astype("float")
                 except ValueError:
                     pass
     ###
@@ -50,8 +67,8 @@ def convert(res, **kwargs):
 def convert_to_nested_structure(obj):
     assert isinstance(obj, collections.Mapping)
     for key in obj:
-        if '.' in key:
-            first, last = key.split('.', 1)
+        if "." in key:
+            first, last = key.split(".", 1)
             if first not in obj:
                 obj[first] = collections.OrderedDict()
             obj[first][last] = obj.pop(key)
@@ -61,7 +78,7 @@ def convert_to_nested_structure(obj):
 def remove_dots_in_key_names(obj):
     assert isinstance(obj, collections.Mapping)
     for key in list(obj.keys()):
-        obj[key.replace('.', '_')] = obj.pop(key)
+        obj[key.replace(".", "_")] = obj.pop(key)
 
 
 def convert_items_to_python_types(obj):
@@ -85,7 +102,7 @@ def update_dict_if(d, u, condition=True):
     if condition is True:
         condition = lambda old_val, new_val: True  # noqa
     elif condition is False:
-        condition = lambda old_val, new_val: False # noqa
+        condition = lambda old_val, new_val: False  # noqa
     for k in u:
         if isinstance(u[k], collections.Mapping):
             r = update_dict_if(d.get(k, {}), u[k], condition)
@@ -161,14 +178,14 @@ def convert_and_extract_dshape(result_list, create_nested_structure=False, **kwa
 
     # If some task info is present set this data so the discover function
     # will always find the correct data type.
-    if 'task_id' in sample_data:
-        sample_data['task_macro_hash'] = 42
-        sample_data['task_id'] = 42
-        sample_data['task_work_dir'] = "string"
-        sample_data['task_name'] = "string"
-        sample_data['task_processtime'] = 10.1
-        sample_data['task_macro'] = ['string', 'string']
-        sample_data['task_logfile'] = 'string'
+    if "task_id" in sample_data:
+        sample_data["task_macro_hash"] = 42
+        sample_data["task_id"] = 42
+        sample_data["task_work_dir"] = "string"
+        sample_data["task_name"] = "string"
+        sample_data["task_processtime"] = 10.1
+        sample_data["task_macro"] = ["string", "string"]
+        sample_data["task_logfile"] = "string"
 
     dshape = build_datashape(sample_data)
 

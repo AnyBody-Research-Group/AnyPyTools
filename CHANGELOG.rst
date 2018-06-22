@@ -4,6 +4,10 @@ AnyPyTools Change Log
 
 .. current developments
 
+**Changed:**
+
+- Source code now formatted with `black <https://black.readthedocs.io/en/stable/>`__ formatter.
+
 
 v0.14.1
 =============

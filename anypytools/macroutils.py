@@ -1,15 +1,32 @@
 # -*- coding: utf-8 -*-
+# pylint: disable: line-too-long
 """
 Created on Mon Mar 23 21:14:59 2015.
 
 @author: Morten
 """
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
+from __future__ import absolute_import, division, print_function, unicode_literals
 
-from builtins import (ascii, bytes, chr, dict, filter, hex, input,  # noqa
-                      int, map, next, oct, open, pow, range, round,
-                      str, super, zip)
+from builtins import (
+    ascii,
+    bytes,
+    chr,
+    dict,
+    filter,
+    hex,
+    input,  # noqa
+    int,
+    map,
+    next,
+    oct,
+    open,
+    pow,
+    range,
+    round,
+    str,
+    super,
+    zip,
+)
 
 import sys
 import types
@@ -22,16 +39,17 @@ from scipy.stats import distributions
 
 
 def is_python2():
-    return (sys.version_info[0] == 2)
+    return sys.version_info[0] == 2
 
 
 def is_python34():
-    return (sys.version_info[0] == 3 and sys.version_info[1] == 4)
+    return sys.version_info[0] == 3 and sys.version_info[1] == 4
 
 
 if sys.platform.startswith("win") and (is_python2() or is_python34()):
     # This is a horrible hack to work around a bug in
     # scipy http://stackoverflow.com/questions/15457786/ctrl-c-crashes-python-after-importing-scipy-stats # noqa
+    # pylint: disable=no-member
     try:
         import thread
     except ImportError:
@@ -44,15 +62,26 @@ if sys.platform.startswith("win") and (is_python2() or is_python34()):
 
     win32api.SetConsoleCtrlHandler(handler, 1)
 
-logger = logging.getLogger('abt.anypytools')
+logger = logging.getLogger("abt.anypytools")
 
 # pprint is used in the doc tests
 from anypytools.tools import define2str, path2str, array2anyscript, pprint  # noqa
 from anypytools.tools import Py3kPrettyPrinter  # noqa
 
-__all__ = ['MacroCommand', 'Load', 'SetValue', 'SetValue_random', 'Dump',
-           'SaveDesign', 'LoadDesign', 'SaveValues', 'LoadValues',
-           'UpdateValues', 'OperationRun', 'SaveData']
+__all__ = [
+    "MacroCommand",
+    "Load",
+    "SetValue",
+    "SetValue_random",
+    "Dump",
+    "SaveDesign",
+    "LoadDesign",
+    "SaveValues",
+    "LoadValues",
+    "UpdateValues",
+    "OperationRun",
+    "SaveData",
+]
 
 
 def _isgenerator(x):
@@ -62,7 +91,7 @@ def _isgenerator(x):
 def _batch(iterable, n=1):
     length = len(iterable)
     for ndx in range(0, length, n):
-        yield iterable[ndx:min(ndx + n, length)]
+        yield iterable[ndx : min(ndx + n, length)]
 
 
 class MacroCommand(object):
@@ -103,7 +132,7 @@ class MacroCommand(object):
             A string with the AnyScript macro
 
         """
-        return '\n'.join(self.cmd)
+        return "\n".join(self.cmd)
 
 
 class Load(MacroCommand):
@@ -151,7 +180,7 @@ class Load(MacroCommand):
             value = self.paths[key]
             cmd.append(path2str(key, value))
 
-        return ' '.join(cmd)
+        return " ".join(cmd)
 
 
 class SetValue(MacroCommand):
@@ -230,7 +259,7 @@ class SetValue(MacroCommand):
         else:
             n_elem = 1
 
-        return '\n'.join([self.get_macro(i) for i in range(n_elem)])
+        return "\n".join([self.get_macro(i) for i in range(n_elem)])
 
     def get_macro(self, index, **kwarg):
         if isinstance(self.value, list):
@@ -243,11 +272,10 @@ class SetValue(MacroCommand):
         if isinstance(val, np.ndarray):
             val = array2anyscript(val)
         elif isinstance(val, float):
-            val = '{:.12g}'.format(val)
+            val = "{:.12g}".format(val)
         elif isinstance(val, int):
-            val = '{:d}'.format(val)
-        return 'classoperation {0} "Set Value" --value="{1}"'.format(self.var,
-                                                                     val)
+            val = "{:d}".format(val)
+        return 'classoperation {0} "Set Value" --value="{1}"'.format(self.var, val)
 
 
 class SetValue_random(SetValue):
@@ -312,8 +340,9 @@ class SetValue_random(SetValue):
         self.var = var
         if not isinstance(frozen_distribution, distributions.rv_frozen):
             raise TypeError(
-                'frozen_distribution must be frozen distribtuion from \
-                            scipy.stats.distributions')
+                "frozen_distribution must be frozen distribtuion from \
+                            scipy.stats.distributions"
+            )
 
         self.rv = frozen_distribution
 
@@ -321,8 +350,9 @@ class SetValue_random(SetValue):
         if isinstance(self.meanvalue, np.ndarray):
             self.shape = self.meanvalue.shape
             self.n_factors = np.prod(self.shape)
-            self.default_lower_tail_probability = default_lower_tail_probability * \
-                np.ones(self.shape)
+            self.default_lower_tail_probability = (
+                default_lower_tail_probability * np.ones(self.shape)
+            )
         else:
             self.shape = None
             self.n_factors = 1
@@ -389,7 +419,7 @@ class Dump(MacroCommand):
         if self._include_in_macro is None or index in self._include_in_macro:
             for var in self.var_list:
                 cmd.append('classoperation {0} "Dump"'.format(var))
-        return '\n'.join(cmd)
+        return "\n".join(cmd)
 
 
 class SaveDesign(MacroCommand):
@@ -415,7 +445,8 @@ class SaveDesign(MacroCommand):
 
     def get_macro(self, index, **kwarg):
         return 'classoperation {} "Save design" --file="{}"'.format(
-            self.operation, self.filename)
+            self.operation, self.filename
+        )
 
 
 class LoadDesign(MacroCommand):
@@ -441,7 +472,8 @@ class LoadDesign(MacroCommand):
 
     def get_macro(self, index, **kwarg):
         return 'classoperation {} "Load design" --file="{}"'.format(
-            self.operation, self.filename)
+            self.operation, self.filename
+        )
 
 
 class SaveValues(MacroCommand):
@@ -463,8 +495,7 @@ class SaveValues(MacroCommand):
         self.filename = filename
 
     def get_macro(self, index, **kwarg):
-        return 'classoperation Main "Save Values" --file="{}"'.format(
-            self.filename)
+        return 'classoperation Main "Save Values" --file="{}"'.format(self.filename)
 
 
 class SaveData(MacroCommand):
@@ -515,8 +546,7 @@ class LoadValues(MacroCommand):
         self.filename = filename
 
     def get_macro(self, index, **kwarg):
-        return 'classoperation Main "Load Values" --file="{}"'.format(
-            self.filename)
+        return 'classoperation Main "Load Values" --file="{}"'.format(self.filename)
 
 
 class UpdateValues(MacroCommand):
@@ -557,7 +587,7 @@ class OperationRun(MacroCommand):
         self.operation = operation
 
     def get_macro(self, index, **kwarg):
-        return 'operation {}'.format(self.operation) + '\n' + 'run'
+        return "operation {}".format(self.operation) + "\n" + "run"
 
 
 class AnyMacro(MutableSequence):
@@ -619,9 +649,8 @@ class AnyMacro(MutableSequence):
 
     """
 
-    def __init__(self, *args,
-                 **kwargs):  # number_of_macros=1, counter_token = None ):
-        super(MutableSequence, self).__init__()
+    def __init__(self, *args, **kwargs):  # number_of_macros=1, counter_token = None ):
+        super(AnyMacro, self).__init__()
         if len(args) == 0:
             self._list = list()
         else:
@@ -629,8 +658,7 @@ class AnyMacro(MutableSequence):
                 args = args[0]
             for arg in args:
                 if not isinstance(arg, MacroCommand):
-                    raise ValueError(
-                        'Argument must be valid macro command classes')
+                    raise ValueError("Argument must be valid macro command classes")
             self._list = list(args)
 
         self.seed = kwargs.pop("seed", None)
@@ -640,7 +668,7 @@ class AnyMacro(MutableSequence):
 
     def __mul__(self, other):
         if not isinstance(other, (int, float)):
-            raise NotImplementedError('operator must be integer')
+            raise NotImplementedError("operator must be integer")
         mg = deepcopy(self)
         mg.number_of_macros = mg.number_of_macros * round(other)
         return mg
@@ -739,12 +767,12 @@ class AnyMacro(MutableSequence):
                 mcr = elem.get_macro(macro_idx)
                 if self.counter_token:
                     mcr = mcr.replace(self.counter_token, str(macro_idx))
-                if mcr is not '':
-                    macro.extend(mcr.split('\n'))
+                if mcr is not "":
+                    macro.extend(mcr.split("\n"))
             macro_list.append(macro)
         return macro_list
 
-    def create_macros_MonteCarlo(self, number_of_macros=None, batch_size=None): # noqa
+    def create_macros_MonteCarlo(self, number_of_macros=None, batch_size=None):  # noqa
         """Generate AnyScript macros for monte carlos studies.
 
         The function returns macros for Monte Carlo parameter studies. This methods
@@ -801,10 +829,11 @@ class AnyMacro(MutableSequence):
             for elem in self:
                 if isinstance(elem, SetValue_random):
                     if macro_idx == 0:
-                        lower_tail_probability = None  # First macro get the default values
+                        lower_tail_probability = (
+                            None
+                        )  # First macro get the default values
                     else:
-                        lower_tail_probability = np.random.random(
-                            elem.n_factors)
+                        lower_tail_probability = np.random.random(elem.n_factors)
                     mcr = elem.get_macro(macro_idx, lower_tail_probability)
                     lhs_idx += elem.n_factors
                 else:
@@ -812,13 +841,19 @@ class AnyMacro(MutableSequence):
 
                 if self.counter_token:
                     mcr = mcr.replace(self.counter_token, str(macro_idx))
-                if mcr is not '':
-                    macro.extend(mcr.split('\n'))
+                if mcr is not "":
+                    macro.extend(mcr.split("\n"))
             macro_list.append(macro)
         return macro_list
 
-    def create_macros_LHS(self, number_of_macros=None, criterion=None, # noqa
-                          iterations=None, batch_size=None, append_default=False):
+    def create_macros_LHS(
+        self,
+        number_of_macros=None,
+        criterion=None,  # noqa
+        iterations=None,
+        batch_size=None,
+        append_default=False,
+    ):
         """Generate AnyScript macros for Latin Hyper Cube Studies studies.
 
         Generates AnyScript macros for parameter studies using Latin hyper cube
@@ -873,17 +908,17 @@ class AnyMacro(MutableSequence):
         ['classoperation Main.MyVar1 "Set Value" --value="{-0.20265197275,0.114947152258,0.924796936287}"',
         'classoperation Main.MyVar2 "Set Value" --value="{0.806864877696,4.4114188826,2.93941843565}"']]
 
-        """# noqa
+        """  # noqa
         try:
             import pyDOE
         except ImportError:
-            raise ImportError(
-                'The pyDOE package must be install to use this class')
+            raise ImportError("The pyDOE package must be install to use this class")
 
         if batch_size is not None:
-            return _batch(self.create_macros_LHS(number_of_macros,
-                                                 criterion,
-                                                 iterations), n=batch_size)
+            return _batch(
+                self.create_macros_LHS(number_of_macros, criterion, iterations),
+                n=batch_size,
+            )
 
         if number_of_macros is None:
             number_of_macros = self.number_of_macros
@@ -891,11 +926,10 @@ class AnyMacro(MutableSequence):
         if self.seed is not None:
             np.random.seed(self.seed)
 
-        factors = sum([e.n_factors for e in self
-                       if isinstance(e, SetValue_random)])
-        lhs_matrix = pyDOE.lhs(factors, number_of_macros,
-                               criterion=criterion,
-                               iterations=iterations)
+        factors = sum([e.n_factors for e in self if isinstance(e, SetValue_random)])
+        lhs_matrix = pyDOE.lhs(
+            factors, number_of_macros, criterion=criterion, iterations=iterations
+        )
 
         macro_list = []
 
@@ -904,10 +938,8 @@ class AnyMacro(MutableSequence):
             lhs_idx = 0
             for elem in self:
                 if isinstance(elem, SetValue_random):
-                    lhs_val = lhs_matrix[macro_idx, lhs_idx:lhs_idx +
-                                         elem.n_factors]
-                    mcr = elem.get_macro(macro_idx,
-                                         lower_tail_probability=lhs_val)
+                    lhs_val = lhs_matrix[macro_idx, lhs_idx : lhs_idx + elem.n_factors]
+                    mcr = elem.get_macro(macro_idx, lower_tail_probability=lhs_val)
                     lhs_idx += elem.n_factors
                 else:
                     mcr = elem.get_macro(macro_idx)
@@ -915,22 +947,21 @@ class AnyMacro(MutableSequence):
                 if self.counter_token:
                     mcr = mcr.replace(self.counter_token, str(macro_idx))
                 if len(mcr) > 0:
-                    macro.extend(mcr.split('\n'))
+                    macro.extend(mcr.split("\n"))
             macro_list.append(macro)
         if append_default:
             macro = []
             for elem in self:
                 mcr = elem.get_macro(number_of_macros)
                 if self.counter_token:
-                    mcr = mcr.replace(self.counter_token,
-                                      str(number_of_macros))
+                    mcr = mcr.replace(self.counter_token, str(number_of_macros))
                 if len(mcr) > 0:
-                    macro.extend(mcr.split('\n'))
+                    macro.extend(mcr.split("\n"))
             macro_list.append(macro)
         return macro_list
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     #    mg = PertubationMacroGenerator()
     #    mg.add_set_value_designvar('test',1)
@@ -939,4 +970,6 @@ if __name__ == '__main__':
     #    pprint(mg.generate_macros())
     #
     import pytest
-    pytest.main(str('generate_macros.py --doctest-modules'))
+
+    pytest.main(str("generate_macros.py --doctest-modules"))
+

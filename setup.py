@@ -24,18 +24,18 @@ long_description = (
 
 
 def _on_py2():
-    return (sys.version_info[0] == 2)
+    return sys.version_info[0] == 2
 
 
 def _on_py34():
-    return (sys.version_info[0] == 3 and sys.version_info[1] == 4)
+    return sys.version_info[0] == 3 and sys.version_info[1] == 4
 
 
 def read(*names, **kwargs):
     """Read content of file."""
     with io.open(
         os.path.join(os.path.dirname(__file__), *names),
-        encoding=kwargs.get("encoding", "utf8")
+        encoding=kwargs.get("encoding", "utf8"),
     ) as fp:
         return fp.read()
 
@@ -43,48 +43,47 @@ def read(*names, **kwargs):
 def find_version(*file_paths):
     """Parse the __version__ string from a file."""
     version_file = read(*file_paths)
-    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]",
-                              version_file, re.M)
+    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", version_file, re.M)
     if version_match:
         return version_match.group(1)
     raise RuntimeError("Unable to find version string.")
 
 
-require_list = ['future', 'numpy']
+require_list = ["future", "numpy"]
 
 if sys.platform.startswith("win") and (_on_py2() or _on_py34()):
-    require_list.extend(['pywin32'])
+    require_list.extend(["pywin32"])
 
 entry_points = {}
 
 if sys.platform.startswith("win"):
-    entry_points['pytest11'] = ['anypytools = anypytools.pytest_plugin']
+    entry_points["pytest11"] = ["anypytools = anypytools.pytest_plugin"]
 
 
 setup(
-    name='AnyPyTools',
+    name="AnyPyTools",
     version=find_version("anypytools", "__init__.py"),
     install_requires=require_list,
-    python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, <4',
-    packages=find_packages(exclude=['docs', 'tests*']),
-    package_data={'anypytools': ['test_models/Demo.Arm2D.any']},
+    python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, <4",
+    packages=find_packages(exclude=["docs", "tests*"]),
+    package_data={"anypytools": ["test_models/Demo.Arm2D.any"]},
     # the following makes a plugin available to pytest
     entry_points=entry_points,
-    author='Morten Lund',
-    author_email='melund@gmail.com',
-    description='Python tools and utilities for working with the AnyBody Modeling System',
+    author="Morten Lund",
+    author_email="melund@gmail.com",
+    description="Python tools and utilities for working with the AnyBody Modeling System",
     long_description=long_description,
-    license='MIT',
-    keywords=('AnyBody Modeling System', 'AnyScript'),
-    url='https://github.com/AnyBody-Research-Group/AnyPyTools',
+    license="MIT",
+    keywords=("AnyBody Modeling System", "AnyScript"),
+    url="https://github.com/AnyBody-Research-Group/AnyPyTools",
     classifiers=[
-        'Development Status :: 5 - Production/Stable',
-        'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
-        'Intended Audience :: Science/Research',
-        'License :: OSI Approved :: MIT License',
-        'Environment :: Win32 (MS Windows)',
-        'Topic :: Scientific/Engineering'
-    ]
+        "Development Status :: 5 - Production/Stable",
+        "Programming Language :: Python :: 2.7",
+        "Programming Language :: Python :: 3.5",
+        "Programming Language :: Python :: 3.6",
+        "Intended Audience :: Science/Research",
+        "License :: OSI Approved :: MIT License",
+        "Environment :: Win32 (MS Windows)",
+        "Topic :: Scientific/Engineering",
+    ],
 )
