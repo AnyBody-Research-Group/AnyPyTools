@@ -4,9 +4,6 @@ Created on Sun Jul 06 19:09:58 2014
 
 @author: Morten
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
-
-
 import os
 import shutil
 import pytest

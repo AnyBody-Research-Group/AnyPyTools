@@ -5,27 +5,6 @@ Utilities for working with the AnyBody Console applicaiton.
 Created on Fri Oct 19 21:14:59 2012
 @author: Morten
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
-from builtins import (
-    ascii,
-    bytes,
-    chr,
-    dict,
-    filter,
-    hex,
-    input,  # noqa
-    int,
-    map,
-    next,
-    oct,
-    open,
-    pow,
-    range,
-    round,
-    str,
-    super,
-    zip,
-)
 
 import os
 import io
@@ -44,8 +23,6 @@ from threading import Thread, RLock
 from queue import Queue
 
 import numpy as np
-from future.utils import text_to_native_str
-from past.builtins import basestring as string_types
 
 from .tools import (
     make_hash,
@@ -585,8 +562,8 @@ class AnyPyProcess(object):
 
         """
         if self.cached_tasklist:
-            savekey = text_to_native_str("processed_tasks")
-            db = shelve.open(text_to_native_str(filename), writeback=True)
+            savekey = "processed_tasks"
+            db = shelve.open(filename, writeback=True)
             if not append or savekey not in db:
                 db[savekey] = self.cached_tasklist
             else:
@@ -622,9 +599,6 @@ class AnyPyProcess(object):
         if batch_name is None:
             batch_name = str(self.cached_arg_hash)
 
-        filename = text_to_native_str(filename)
-        batch_name = text_to_native_str(batch_name)
-
         any_output = AnyPyProcessOutputList(
             [task.get_output() for task in self.cached_tasklist]
         )
@@ -639,13 +613,11 @@ class AnyPyProcess(object):
                 for k, v in run.items():
                     if not isinstance(v, np.ndarray):
                         if isinstance(v, list):
-                            h5_task_group.attrs[
-                                text_to_native_str(k)
-                            ] = text_to_native_str(str(v))
+                            h5_task_group.attrs[k] = str(v)
                         else:
-                            h5_task_group.attrs[text_to_native_str(k)] = v
+                            h5_task_group.attrs[k] = v
                     elif isinstance(v, np.ndarray):
-                        h5_task_group.create_dataset(text_to_native_str(k), data=v)
+                        h5_task_group.create_dataset(k, data=v)
 
     def load_results(self, filename):
         """Load previously saved results.
@@ -677,8 +649,8 @@ class AnyPyProcess(object):
         >>> results = app.start_macro() # rerun unfinished
 
         """
-        loadkey = text_to_native_str("processed_tasks")
-        db = shelve.open(text_to_native_str(filename))
+        loadkey = "processed_tasks"
+        db = shelve.open(filename)
         loaded_data = db[loadkey]
         db.close()
         # Hack to help Enrico convert data to the new structured
@@ -735,7 +707,7 @@ class AnyPyProcess(object):
         if isinstance(macrolist, AnyMacro):
             macrolist = macrolist.create_macros()
         elif isinstance(macrolist, list) and len(macrolist):
-            if isinstance(macrolist[0], string_types):
+            if isinstance(macrolist[0], str):
                 macrolist = [macrolist]
             if isinstance(macrolist[0], MacroCommand):
                 macrolist = [macrolist]
@@ -744,7 +716,7 @@ class AnyPyProcess(object):
                     macrolist = [
                         [mc.get_macro(index=0) for mc in elem] for elem in macrolist
                     ]
-        elif isinstance(macrolist, string_types):
+        elif isinstance(macrolist, str):
             if macrolist.startswith("[") and macrolist.endswith("]"):
                 macrolist = macrolist.strip("[").rstrip("]")
                 macrolist = [macrolist.split(", ")]
@@ -760,9 +732,7 @@ class AnyPyProcess(object):
         if not isinstance(folderlist, list):
             raise TypeError("folderlist must be a list of folders")
         # Extend the folderlist if search_subdir is given
-        if isinstance(search_subdirs, string_types) and isinstance(
-            folderlist[0], string_types
-        ):
+        if isinstance(search_subdirs, str) and isinstance(folderlist[0], str):
             folderlist = sum([getsubdirs(d, search_subdirs) for d in folderlist], [])
         # Check the input arguments and generate the tasklist
         if macrolist is None:

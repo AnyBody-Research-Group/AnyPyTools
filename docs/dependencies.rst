@@ -6,7 +6,6 @@ AnyPyTools currently has the following external dependencies,
 
     - `Python v2.7+/3.4+ <https://www.python.org/>`_
     - `Numpy <http://www.numpy.org/>`_
-    - `Python-Future <http://python-future.org/>`_ 
     - `SciPy* <https://www.scipy.org/>`_
     - `PyDOE* <https://pythonhosted.org/pyDOE/>`_ 
     - `h5py* <http://www.h5py.org/>`_ 

@@ -4,11 +4,6 @@ Created on Sun Jul 06 19:09:58 2014
 
 @author: Morten
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
-from builtins import *
-
-# TEST_UNICODE_LITERALS
-
 import os
 import pytest
 import numpy as np

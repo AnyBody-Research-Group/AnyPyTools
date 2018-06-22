@@ -5,68 +5,21 @@ Created on Mon Mar 23 21:14:59 2015.
 
 @author: Morten
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
-
-from builtins import (
-    ascii,
-    bytes,
-    chr,
-    dict,
-    filter,
-    hex,
-    input,  # noqa
-    int,
-    map,
-    next,
-    oct,
-    open,
-    pow,
-    range,
-    round,
-    str,
-    super,
-    zip,
-)
-
 import sys
 import types
 import logging
+from pprint import pprint, pformat  # noqa
 from copy import deepcopy
 from collections import MutableSequence
 
 import numpy as np
 from scipy.stats import distributions
 
-
-def is_python2():
-    return sys.version_info[0] == 2
-
-
-def is_python34():
-    return sys.version_info[0] == 3 and sys.version_info[1] == 4
-
-
-if sys.platform.startswith("win") and (is_python2() or is_python34()):
-    # This is a horrible hack to work around a bug in
-    # scipy http://stackoverflow.com/questions/15457786/ctrl-c-crashes-python-after-importing-scipy-stats # noqa
-    # pylint: disable=no-member
-    try:
-        import thread
-    except ImportError:
-        import _thread as thread
-    import win32api
-
-    def handler(sig, hook=thread.interrupt_main):
-        hook()
-        return 1
-
-    win32api.SetConsoleCtrlHandler(handler, 1)
+from anypytools.tools import define2str, path2str, array2anyscript
+from anypytools.tools import define2str, path2str, array2anyscript
 
 logger = logging.getLogger("abt.anypytools")
 
-# pprint is used in the doc tests
-from anypytools.tools import define2str, path2str, array2anyscript, pprint  # noqa
-from anypytools.tools import Py3kPrettyPrinter  # noqa
 
 __all__ = [
     "MacroCommand",
@@ -692,8 +645,7 @@ class AnyMacro(MutableSequence):
         return self.__repr__()
 
     def __repr__(self):
-        printer = Py3kPrettyPrinter(width=80)
-        return printer.pformat(self.create_macros())
+        return pformat(self.create_macros())
 
     def insert(self, ii, val):
         self._list.insert(ii, val)

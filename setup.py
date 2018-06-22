@@ -23,14 +23,6 @@ long_description = (
 )
 
 
-def _on_py2():
-    return sys.version_info[0] == 2
-
-
-def _on_py34():
-    return sys.version_info[0] == 3 and sys.version_info[1] == 4
-
-
 def read(*names, **kwargs):
     """Read content of file."""
     with io.open(
@@ -49,10 +41,7 @@ def find_version(*file_paths):
     raise RuntimeError("Unable to find version string.")
 
 
-require_list = ["future", "numpy"]
-
-if sys.platform.startswith("win") and (_on_py2() or _on_py34()):
-    require_list.extend(["pywin32"])
+require_list = ["numpy"]
 
 entry_points = {}
 
@@ -64,7 +53,7 @@ setup(
     name="AnyPyTools",
     version=find_version("anypytools", "__init__.py"),
     install_requires=require_list,
-    python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, <4",
+    python_requires=">=3.5",
     packages=find_packages(exclude=["docs", "tests*"]),
     package_data={"anypytools": ["test_models/Demo.Arm2D.any"]},
     # the following makes a plugin available to pytest
@@ -78,7 +67,6 @@ setup(
     url="https://github.com/AnyBody-Research-Group/AnyPyTools",
     classifiers=[
         "Development Status :: 5 - Production/Stable",
-        "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Intended Audience :: Science/Research",

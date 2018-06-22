@@ -4,27 +4,6 @@ Created on Mon Jan 16 11:40:42 2012.
 
 @author: mel
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
-from builtins import (
-    ascii,
-    bytes,
-    chr,
-    dict,
-    filter,
-    hex,
-    input,  # noqa
-    int,
-    map,
-    next,
-    oct,
-    open,
-    pow,
-    range,
-    round,
-    str,
-    super,
-    zip,
-)
 import os
 import re
 import logging

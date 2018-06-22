@@ -4,33 +4,6 @@ Created on Sun Sep  7 13:25:38 2014.
 
 @author: Morten
 """
-# Python 2/3 compatibility imports
-from __future__ import absolute_import, division, print_function, unicode_literals
-from builtins import (
-    ascii,
-    bytes,
-    chr,
-    dict,
-    filter,
-    hex,
-    input,  # noqa
-    int,
-    map,
-    next,
-    oct,
-    open,
-    pow,
-    range,
-    round,
-    str,
-    super,
-    zip,
-)
-
-from past.builtins import basestring as string_types  # noqa
-
-
-# Standard lib imports
 import os
 import re
 import sys
@@ -38,7 +11,6 @@ import xml
 import copy
 import errno
 import shutil
-import pprint as _pprint
 import logging
 import textwrap
 import datetime
@@ -46,38 +18,14 @@ import warnings
 import platform
 import subprocess
 import collections
+from pprint import pprint
 from ast import literal_eval
 from _thread import get_ident as _get_ident
 
 # external imports
 import numpy as np
-from future.utils import raise_from
-
 
 logger = logging.getLogger("abt.anypytools")
-
-
-# This hacks pprint to always return strings witout u' prefix
-# important when running doctest in both python 2 og python 3
-class Py3kPrettyPrinter(_pprint.PrettyPrinter):
-    """Pretty printer which creates strings without the u' prefix."""
-
-    def format(self, object, context, maxlevels, level):
-        try:
-            if isinstance(object, unicode):
-                rep = "'" + object + "'"
-                return (rep.encode("utf8"), True, False)
-        except NameError:
-            pass
-        return _pprint.PrettyPrinter.format(self, object, context, maxlevels, level)
-
-
-def py3k_pprint(s):
-    printer = Py3kPrettyPrinter(width=110)
-    printer.pprint(s)
-
-
-pprint = py3k_pprint
 
 
 def run_from_ipython():
@@ -307,7 +255,7 @@ class AnyPyProcessOutputList(collections.MutableSequence):
         return len(self.list)
 
     def __getitem__(self, i):
-        if isinstance(i, string_types):
+        if isinstance(i, str):
             # Find the entries where i matches the keys
             key = _get_first_key_match(i, self.list[0])
             try:
@@ -319,7 +267,7 @@ class AnyPyProcessOutputList(collections.MutableSequence):
                 )
             except KeyError:
                 msg = " The key: '{}' is not present in all elements of the output."
-                raise_from(KeyError(msg.format(key)), None)
+                raise KeyError(msg.format(key)) from None
             if data.dtype == np.dtype("O"):
                 # Data will be stacked as an array of objects, if the length of the
                 # time dimension is not consistant across simulations. Warn that some numpy
@@ -355,7 +303,7 @@ class AnyPyProcessOutputList(collections.MutableSequence):
             repr_list = []
             for elem in self.list:
                 if not isinstance(elem, AnyPyProcessOutput):
-                    repr_list.append("  " + _pprint.pformat(elem))
+                    repr_list.append("  " + pprint.pformat(elem))
                     continue
                 for line in elem._repr_gen(prefix=" "):
                     repr_list.append(line)
@@ -394,7 +342,7 @@ class AnyPyProcessOutputList(collections.MutableSequence):
                 "The packages libdynd, dynd-python, datashape, "
                 "odo/into must be installed to convert data"
             )
-            raise raise_from(ImportError(msg), None)
+            raise ImportError(msg) from None
 
     def shelve(self, filename, key="results"):
         import shelve
@@ -453,7 +401,7 @@ def get_anybodycon_path():
 
 
 def define2str(key, value=None):
-    if isinstance(value, string_types):
+    if isinstance(value, str):
         if value.startswith('"') and value.endswith('"'):
             defstr = '-def %s=---"\\"%s\\""' % (key, value[1:-1].replace("\\", "\\\\"))
         else:
@@ -505,7 +453,7 @@ def array2anyscript(arr):
         # pylint: disable=no-member
         if np.isreal(v):
             return "{:.12g}".format(v)
-        elif isinstance(v, (string_types, np.str_)):
+        elif isinstance(v, (str, np.str_)):
             return '"{}"'.format(v)
 
     def createsubarr(arr):
@@ -544,7 +492,7 @@ class AnyPyProcessOutput(collections.OrderedDict):
             return super(AnyPyProcessOutput, self).__getitem__(key)
         except KeyError:
             msg = "The key {} could not be found in the data".format(key)
-            raise raise_from(KeyError(msg), None)
+            raise KeyError(msg) from None
 
     def _repr_gen(self, prefix):
         items = self.items()
@@ -559,7 +507,7 @@ class AnyPyProcessOutput(collections.OrderedDict):
             else:
                 end = ","
             key_str = "'" + key + "'" + ": "
-            val_str = _pprint.pformat(val)
+            val_str = pprint.pformat(val)
             if len(prefix) + len(key_str) + len(val_str) < 80:
                 yield indent + key_str + val_str + end
             else:
