@@ -922,4 +922,3 @@ if __name__ == "__main__":
     import pytest
 
     pytest.main(str("generate_macros.py --doctest-modules"))
-

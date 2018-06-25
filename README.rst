@@ -12,13 +12,15 @@ AnyPyTools
 .. image:: https://anaconda.org/conda-forge/anypytools/badges/installer/conda.svg
    :target: https://conda.anaconda.org/conda-forge
 
-.. image:: https://anaconda.org/conda-forge/anypytools/badges/downloads.svg 
+.. image:: https://anaconda.org/conda-forge/anypytools/badges/downloads.svg
    :target: https://anaconda.org/conda-forge/anypytools
 
+.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
+    :target: https://github.com/ambv/black
 
 AnyPyTools is a toolkit for working with the `AnyBody Modeling System (AMS)`_
-from Python. Its main purpose is to launch AnyBody simulations and collect results. It has a scheduler 
-to launch multiple instances of AMS utilizing computers with multiple cores. AnyPyTools makes it 
+from Python. Its main purpose is to launch AnyBody simulations and collect results. It has a scheduler
+to launch multiple instances of AMS utilizing computers with multiple cores. AnyPyTools makes it
 possible to run parameter and Monte Carlo studies more efficiently than from within AMS.
 
 .. _AnyBody Modeling System (AMS): http://www.anybodytech.com

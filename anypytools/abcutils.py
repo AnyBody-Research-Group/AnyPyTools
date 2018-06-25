@@ -976,4 +976,3 @@ class _ProgressBar:
         self.prog_bar = self.prog_bar[0:pct_place] + (
             pct_string + self.prog_bar[pct_place + len(pct_string) :]
         )
-

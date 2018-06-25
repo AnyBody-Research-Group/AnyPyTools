@@ -7,7 +7,7 @@ env:
     global:
         - secure: "vKZ1zbnGIhZSJOIOLWSKQbHQRoTBt9HNzGSvjW96+EFdOZ6ushzuWtRrv8Y8NKJRAKfSWHjewU+0bpjpCQiZR5nA0w7Y77iiwtmcR2rOP00zb/pYNydwxmLsZzGk0nNpuYaD7tiHnLC3JCzIM7MnVwAU1+sEyUvfvRApVakUrDBETy/NcIdSXSa9NM9XUwAQovsGsRCQ37OeA2ug+yb2zujy6DVh960R1I9VEKVAXJSZCVe1DQY8GYOqlBrRVbbvQJKBP3onKaDp5h8syeFrqXxPIb5DgnIRMhAQE66rl1RpXDosBbbI58G0yBUx0knO+iCJI0coHRMAode2i9H9O0azvKtBpadObzAxFKKPfCZzdNcsqUuxunkNhghg3LWrz6niQn5rmX2MIbGgGw/c2HaUGooZZdZmP7JmGB5fTHNuL9qlsK8JNXaPGE6EK1rrSVMfAhMi5Fm/PCf7GGcx4Qnb0Kudjjchh0kEvB4vqigeg1XMcWb96jSxfnR7gckPXQEMZBRGQl+rxqcQcQgL5iCooR2ze1982FlgoL13JDd6sjx2ksUPlTaq99O6foVZV0Gi92yZeIw1j3p/1k5tfYDKt1q3Vus8hVWP1ql/VYjvUVRyl2En/C8NFDX104A91covqhnof8fM1x9PZhYbh7lvs1JpVMYpZfmIDU925IA="
 
-matrix: 
+matrix:
     include:
       - os: linux
         python: 3.6
@@ -27,9 +27,9 @@ install:
   - hash -r
   - conda config --set always_yes yes --set changeps1 no
   - conda config --add channels conda-forge # For sphinxcontrib.autoprogram
-  - conda update -q conda 
+  - conda update -q conda
   - conda info -a
-  - conda create -q -n doc-build-environment python=3.6 sphinx pandoc cloud_sptheme nbconvert ipykernel nbsphinx numpy scipy doctr h5py pytest pytest-flake8 flake8
+  - conda create -q -n doc-build-environment python=3.6 sphinx pandoc cloud_sptheme nbconvert ipykernel nbsphinx numpy scipy doctr h5py pytest pytest-flake8 flake8 black
   - source activate doc-build-environment
   - python setup.py install
 
@@ -51,4 +51,5 @@ script:
       fi
     - if [[ $FLAKE8 = true ]]; then
         pytest --flake8 anypytools;
+        black --check anypytools
       fi

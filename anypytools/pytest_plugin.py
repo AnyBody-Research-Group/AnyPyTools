@@ -470,4 +470,3 @@ def pytest_addoption(parser):
         help="Specify a path to store the runs (when --anytest-save "
         "are used). Default: %(default)r.",
     )
-
