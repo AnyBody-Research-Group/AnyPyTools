@@ -3,6 +3,7 @@
 *.ipynb_checkpoints
 *.anymcr
 .cache
+.pytest_cache
 *egg-info
 *.bak
 dist/*
