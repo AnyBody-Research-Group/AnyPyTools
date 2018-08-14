@@ -582,6 +582,20 @@ IDLE_PRIORITY_CLASS = 0x0040
 NORMAL_PRIORITY_CLASS = 0x0020
 
 
+NAME_PATTERN = re.compile(r"Main\.[\w\.]*")
+
+
+def correct_dump_prefix(raw, idx):
+    """ Find the correct prefix to use in the output """
+    # The -1000 hack is to avoid coping large strings in memory,
+    # since we really only need to access the previous line.
+    dumpline = raw[max(0, idx - 1000):idx].strip().rsplit('\n', 1)[-1]
+    if dumpline.startswith('#### Macro command'):
+        m = NAME_PATTERN.search(dumpline)
+        if m:
+            return m.group(0)
+
+
 ERROR_PATTERN = re.compile(r'^((ERROR)|(Model loading skipped)).*$', flags=re.IGNORECASE | re.M)
 WARNING_PATTERN = re.compile(r'^(WARNING).*$', flags=re.IGNORECASE | re.M)
 DUMP_PATTERN = re.compile(r'^(Main.*?)\s=\s(.*?(?:\n\s\s.*?)*);', flags=re.M)
@@ -598,8 +612,13 @@ def parse_anybodycon_output(raw, errors_to_ignore=None,
     errors_to_ignore = errors_to_ignore or []
     output = AnyPyProcessOutput()
     # Find all data in logfile
+    prefix_replacement = ('', '')
     for dump in DUMP_PATTERN.finditer(raw):
         name, val = dump.group(1), dump.group(2)
+        new_prefix = correct_dump_prefix(raw, dump.start())
+        if new_prefix:
+            prefix_replacement = (name, new_prefix)
+        name = name.replace(*prefix_replacement)
         try:
             val = _parse_data(dump.group(2))
         except (SyntaxError, ValueError):
