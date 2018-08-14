@@ -4,6 +4,12 @@ AnyPyTools Change Log
 
 .. current developments
 
+
+**Fixed:**
+
+- Make sure anypytools works in Ipython/Jupyter even when ipywidgets is not installed.  
+
+
 v0.13
 =============
 
