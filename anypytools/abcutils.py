@@ -38,9 +38,13 @@ from .macroutils import AnyMacro, MacroCommand
 
 try:
     from IPython.display import HTML, display
+except ImportError:
+    HTML = display = None
+
+try:
     import ipywidgets
 except ImportError:
-    ipywidgets = HTML = display = None
+    ipywidgets = None
 
 
 logger = logging.getLogger('abt.anypytools')
@@ -902,7 +906,7 @@ class _ProgressBar:
         self.prog_bar = '[]'
         self.fill_char = '*'
         self.width = 40
-        if run_from_ipython() and not self.silent:
+        if run_from_ipython() and ipywidgets and not self.silent:
             self.bar_widget = ipywidgets.IntProgress(
                 min=0, max=iterations, value=0, bar_style='')
             self.bar_description = ipywidgets.Label('')
@@ -913,7 +917,7 @@ class _ProgressBar:
     def animate(self, val, failed=0):
         if self.silent:
             return
-        if run_from_ipython():
+        if run_from_ipython() and ipywidgets:
             self._widget_animate(val, failed)
         else:
             self._ascii_animate(val, failed)
