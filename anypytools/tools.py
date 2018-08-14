@@ -18,7 +18,7 @@ import warnings
 import platform
 import subprocess
 import collections
-from pprint import pprint
+import pprint
 from ast import literal_eval
 from _thread import get_ident as _get_ident
 
@@ -377,7 +377,7 @@ def get_anybodycon_path():
         import _winreg as winreg
     try:
         abpath = winreg.QueryValue(
-            winreg.HKEY_CLASSES_ROOT, "AnyBody.AnyScript\\shell\\open\\scommand"
+            winreg.HKEY_CLASSES_ROOT, "AnyBody.AnyScript\\shell\\open\\command"
         )
     except WindowsError:
         raise WindowsError("Could not locate AnyBody in registry")

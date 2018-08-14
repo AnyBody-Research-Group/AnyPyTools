@@ -14,4 +14,3 @@ for nStep in nSteplist:
     )
 
 app.start_macro(macrolist)
-

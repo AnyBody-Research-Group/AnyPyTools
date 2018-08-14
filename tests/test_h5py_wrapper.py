@@ -23,4 +23,3 @@ def test_group():
         t1 = h5group["MomentArm"]  # Standard h5py notation
         t2 = h5group["Model/Knee/Pos"]
         t3 = h5group["Model.Knee.Pos"]
-

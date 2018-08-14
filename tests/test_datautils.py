@@ -20,4 +20,3 @@ def test_open_anyoutputfile(request):
     assert "Main.Studies.ElbowExtension.IterationStep" in header
 
     assert data.shape == (27, 12)
-

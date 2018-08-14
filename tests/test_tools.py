@@ -90,4 +90,3 @@ def test_get_anybodycon_path():
 
 if __name__ == "__main__":
     test_array2anyscript()
-

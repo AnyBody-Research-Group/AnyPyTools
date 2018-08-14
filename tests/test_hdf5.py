@@ -62,4 +62,3 @@ if __name__ == "__main__":
     app.start_macro(macro)
 
     app.save_to_hdf5("test2.hdf5", "Lunge11dec")
-

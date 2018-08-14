@@ -156,4 +156,3 @@ if __name__ == "__main__":
     pytest.main(
         str("test_macros.py ../anypytools/generate_macros.py --doctest-modules")
     )
-
