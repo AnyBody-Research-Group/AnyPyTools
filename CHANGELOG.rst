@@ -9,7 +9,8 @@ AnyPyTools Change Log
 
 - Make sure anypytools works in Ipython/Jupyter even when ipywidgets is not installed.  
 - Fix problem with dump'ing variables which are references in the AnyBody Output structure. Now 
-  the variables will have the same name in the output as givin in the dump command.
+  the variables will have the same name in the output as given in the dump command.
+- Fix problem with log-files beeing removed if AnyBody crashed or exited unexpectedly.  
 
 
 v0.13

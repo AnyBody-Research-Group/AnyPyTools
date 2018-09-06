@@ -660,6 +660,8 @@ def get_ncpu():
 
 def silentremove(filename):
     """Remove a file ignoring cases where the file does not exits."""
+    if not filename:
+        return
     try:
         os.remove(filename)
     except OSError as e:

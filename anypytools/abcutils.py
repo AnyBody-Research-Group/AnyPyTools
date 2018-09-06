@@ -264,6 +264,7 @@ class _Task(object):
         self.number = number
         self.logfile = ""
         self.processtime = 0
+        self.retcode = None
         self.name = taskname
         if not taskname:
             head, folder = os.path.split(folder)
@@ -788,15 +789,11 @@ class AnyPyProcess(object):
                                     env=self.env,
                                     priority=self.priority)
                     try:
-                        retcode = execute_anybodycon(**exe_args)
+                        task.retcode = execute_anybodycon(**exe_args)
                     finally:
                         endtime = time.clock()
                         logfile.seek(0)
                         task.processtime = endtime - starttime
-                    if retcode in (_KILLED_BY_ANYPYTOOLS, _NO_LICENSES_AVAILABLE):
-                        task.processtime = 0
-                        task.add_error('Error: Non zero return code: {}'.format(retcode))
-                        return
                     task.output = parse_anybodycon_output(
                         logfile.read(),
                         self.ignore_errors,
@@ -880,13 +877,10 @@ class AnyPyProcess(object):
     def cleanup_logfiles(self, tasklist):
         for task in tasklist:
             try:
-                if not self.keep_logfiles and not task.has_error():
-                    if task.logfile:
+                if not task.has_error():
+                    if not self.keep_logfiles or task.retcode == _KILLED_BY_ANYPYTOOLS:
                         silentremove(task.logfile)
                         task.logfile = ""
-                if task.processtime <= 0 and task.logfile:
-                    silentremove(task.logfile)
-                    task.logfile = ""
             except OSError as e:
                 logger.debug('Could not remove '
                              '{} {}'.format(task.logfile, str(e)))
