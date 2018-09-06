@@ -878,7 +878,7 @@ class AnyPyProcess(object):
         for task in tasklist:
             try:
                 if not task.has_error():
-                    if not self.keep_logfiles or task.retcode == _KILLED_BY_ANYPYTOOLS: 
+                    if not self.keep_logfiles or task.retcode == _KILLED_BY_ANYPYTOOLS:
                         silentremove(task.logfile)
                         task.logfile = ""
             except OSError as e:
