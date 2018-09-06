@@ -12,6 +12,9 @@ AnyPyTools Change Log
   the variables will have the same name in the output as given in the dump command.
 - Fix problem with log-files beeing removed if AnyBody crashed or exited unexpectedly.  
 
+**Added:**
+
+- Added a simple functionality to save hdf5 files from the pytest plugin.
 
 v0.13
 =============
