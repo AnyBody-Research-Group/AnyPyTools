@@ -22,7 +22,7 @@ __all__ = [
     'BELOW_NORMAL_PRIORITY_CLASS', 'IDLE_PRIORITY_CLASS', 'NORMAL_PRIORITY_CLASS'
 ]
 
-__version__ = '0.14.0'
+__version__ = '0.14.1'
 
 
 def print_versions():

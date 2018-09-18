@@ -5,6 +5,14 @@ AnyPyTools Change Log
 .. current developments
 
 
+v0.14.1
+=============
+
+**Fixed:**
+
+* Minor problem with building documentation with sphinx 1.8.  
+
+
 v0.14
 =============
 
