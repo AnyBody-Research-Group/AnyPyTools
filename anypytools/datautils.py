@@ -4,11 +4,6 @@ Created on Mon Jan 16 11:40:42 2012.
 
 @author: mel
 """
-from __future__ import (absolute_import, division,
-                        print_function, unicode_literals)
-from builtins import (ascii, bytes, chr, dict, filter, hex, input,  # noqa
-                      int, map, next, oct, open, pow, range, round,
-                      str, super, zip)
 import os
 import re
 import logging
@@ -18,13 +13,12 @@ from ast import literal_eval
 
 import numpy as np
 
-logger = logging.getLogger('abt.anypytools')
+logger = logging.getLogger("abt.anypytools")
 
-__all__ = ['anydatah5_generator', 'anyoutputfile_generator',
-           'read_anyoutputfile']
+__all__ = ["anydatah5_generator", "anyoutputfile_generator", "read_anyoutputfile"]
 
 
-def anydatah5_generator(folder=None, match='.*(\.h5)'):
+def anydatah5_generator(folder=None, match=r".*(\.h5)"):
     r"""Create a generator which opens anydata.h5 files.
 
     Parameters
@@ -51,11 +45,13 @@ def anydatah5_generator(folder=None, match='.*(\.h5)'):
 
     """
     from . import h5py_wrapper
+
     if folder is None:
         folder = str(os.getcwd())
 
     def func(item):
         return re.match(item, match, flags=re.IGNORECASE)
+
     filelist = filter(func, os.listdir(folder))
     for filename in filelist:
         try:
@@ -65,7 +61,7 @@ def anydatah5_generator(folder=None, match='.*(\.h5)'):
             pass
 
 
-def anyoutputfile_generator(folder=None, match='.*\.(csv|txt)'):
+def anyoutputfile_generator(folder=None, match=".*\.(csv|txt)"):
     """Create a generator which opens AnyOutput files.
 
     Parameters
@@ -102,6 +98,7 @@ def anyoutputfile_generator(folder=None, match='.*\.(csv|txt)'):
 
     def func(item):
         return re.match(item, match, flags=re.IGNORECASE)
+
     filelist = filter(func, os.listdir(folder))
 
     for filename in filelist:
@@ -114,8 +111,10 @@ def anyoutputfile_generator(folder=None, match='.*\.(csv|txt)'):
 
 
 def open_anyoutputfile(filepath):
-    warnings.warn("Deprecated: open_anyoutputfile is renamed to "
-                  "read_anyoutputfile", DeprecationWarning)
+    warnings.warn(
+        "Deprecated: open_anyoutputfile is renamed to " "read_anyoutputfile",
+        DeprecationWarning,
+    )
     return read_anyoutputfile(filepath)
 
 
@@ -147,14 +146,14 @@ def read_anyoutputfile(filepath):
 
 
     """
-    with open(filepath, 'rU') as anyoutputfile:
+    with open(filepath, "rU") as anyoutputfile:
         constants = {}
-        reader = iter(anyoutputfile.readline, b'')
+        reader = iter(anyoutputfile.readline, b"")
         # Check when the header section ends
         fpos1 = 0
         fpos0 = 0
         for row in reader:
-            if _is_scinum(row.split(',')[0]):
+            if _is_scinum(row.split(",")[0]):
                 break
             # Save constant from AnyOutput file
             const, value = _parse_anyoutputfile_constants(row)
@@ -167,14 +166,14 @@ def read_anyoutputfile(filepath):
         # Read last line of the header section if there is a header
         if fpos0 != 0:
             anyoutputfile.seek(fpos1)
-            header = next(reader).strip('\n').split(',')
+            header = next(reader).strip("\n").split(",")
         else:
             header = None
 
         data = []
         for row in reader:
             try:
-                data.append([float(val) for val in row.strip('\n').split(',')])
+                data.append([float(val) for val in row.strip("\n").split(",")])
             except ValueError:
                 break
         data = np.array(data)
@@ -184,13 +183,13 @@ def read_anyoutputfile(filepath):
 def _parse_anyoutputfile_constants(strvar):
     value = None
     varname = None
-    if strvar.count('=') == 1 and strvar.startswith('Main'):
-        (first, last) = strvar.split('=')
+    if strvar.count("=") == 1 and strvar.startswith("Main"):
+        (first, last) = strvar.split("=")
         varname = first.strip()
         last = last.strip()
         value = None
-        last = last.strip('\n')
-        if last.find('{') == -1:
+        last = last.strip("\n")
+        if last.find("{") == -1:
             try:
                 value = str(literal_eval("'''" + last + "'''"))
                 value = str(literal_eval(last))
@@ -198,7 +197,7 @@ def _parse_anyoutputfile_constants(strvar):
             except Exception:
                 pass
         else:
-            last = last.replace('{', '[').replace('}', ']')
+            last = last.replace("{", "[").replace("}", "]")
             try:
                 value = np.array(literal_eval("'''" + last + "'''"))
                 value = np.array(literal_eval(last))

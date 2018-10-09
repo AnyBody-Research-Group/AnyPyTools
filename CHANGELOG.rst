@@ -4,6 +4,15 @@ AnyPyTools Change Log
 
 .. current developments
 
+**Changed:**
+
+- Source code now formatted with `black <https://black.readthedocs.io/en/stable/>`__ formatter.
+
+**Removed:**
+
+- Support for Python 2 was dropped. This also removes the dependency on the ``future`` package. 
+
+
 
 v0.14.1
 =============
