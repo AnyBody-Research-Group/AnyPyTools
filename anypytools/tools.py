@@ -417,6 +417,13 @@ def get_anybodycon_path():
         raise WindowsError('Could not locate AnyBody in registry')
     abpath = abpath.rsplit(' ', 1)[0].strip('"')
     abpath = os.path.join(os.path.dirname(abpath), 'AnyBodyCon.exe')
+
+    if not os.path.isfile(abpath):
+        raise IOError(
+            ("Registry path (%s) to AnyBody console leads to non-existing file. "
+            "Set anybodycon_path in AnyPyProcess() to manually set the path."
+        ) % abpath)
+
     if '~' in abpath:
         abpath = _expand_short_path_name(abpath)
     return abpath
