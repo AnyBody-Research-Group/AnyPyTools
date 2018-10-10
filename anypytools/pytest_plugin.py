@@ -47,7 +47,7 @@ class AnyTestSession(object):
         self.ams_version = ""
         self.save_basefolder = ""
         self.anytest_compare_dir = ""
-        self.current_run_folder = None
+        self.hdf5_save_folder = None
         self.save_name = ""
         self.last_number = None
         self.last_session = None
@@ -65,7 +65,13 @@ class AnyTestSession(object):
         self.save_name = config.getoption("--anytest-save")
         if self.save_name == "":
             self.save_name == get_tag()
+        # Handle settings for save hdf5 files in test
+        if self.save_name:
+            self.hdf5_save_folder = os.path.join(self.save_basefolder, self.save_name)
+            if os.path.exists(self.hdf5_save_folder):
+                shutil.rmtree(self.hdf5_save_folder, ignore_errors=True)
         self.save_name_study = config.getoption("--anytest-save-study")
+
         ammr_path = find_ammr_path(config.getoption("--ammr") or config.rootdir.strpath)
         self.ammr_version = get_ammr_version(ammr_path)
         self.ams_path = config.getoption("--anybodycon") or get_anybodycon_path()
@@ -76,26 +82,14 @@ class AnyTestSession(object):
             ammr_path=ammr_path, ammr_version=major_ammr_ver
         )
 
-    def finalize(self, config):
-        """Finalize a session."""
-        if self.save_name:
-            storage_folder = os.path.join(self.save_basefolder, self.save_name)
-            shutil.rmtree(storage_folder, ignore_errors=True)
-            if os.path.exists(self.current_run_folder):
-                shutil.copytree(self.current_run_folder, storage_folder)
-
     def get_save_fname(self, name, id, study):
-        """Return the name of the compare h5file, and ensure the parent folder exists."""
+        """Return the name of the compare h5file"""
         # Initialize and empty the current_run folder.
-        if not self.current_run_folder:
-            self.current_run_folder = os.path.join(self.save_basefolder, "current_run")
-            if os.path.exists(self.current_run_folder):
-                shutil.rmtree(self.current_run_folder)
         if id > 0:
             compare_test_name = "{}_{}".format(name, id)
         else:
             compare_test_name = "{}".format(name)
-        compare_test_folder = os.path.join(self.current_run_folder, compare_test_name)
+        compare_test_folder = os.path.join(self.hdf5_save_folder, compare_test_name)
         studyname = "{}.anydata.h5".format(study)
         return os.path.join(compare_test_folder, studyname)
 
@@ -216,15 +210,7 @@ def pytest_configure(config):
 
 def pytest_unconfigure(config):
     """Finialize the test session."""
-    pytest.anytest.finalize(config)
-
-
-def write_macro_file(path, name, macro):
-    """Write list of macros to a file."""
-    filename = os.path.join(path, name + ".anymcr")
-    with open(filename, "w") as f:
-        f.writelines([str(mcr) + "\n" for mcr in macro])
-    return filename
+    pass  # pytest.anytest.finalize(config)
 
 
 class AnyFile(pytest.File):
@@ -289,7 +275,7 @@ class AnyItem(pytest.Item):
             "ignore_errors": kwargs.get("ignore_errors", []),
             "warnings_to_include": kwargs.get("warnings_to_include", []),
             "fatal_warnings": kwargs.get("fatal_warnings", False),
-            "keep_logfiles": kwargs.get("keep_logfiles", False),
+            "keep_logfiles": kwargs.get("keep_logfiles", True),
             "logfile_prefix": kwargs.get("logfile_prefix", None),
         }
         if not self.config.getoption("--only-load"):
@@ -342,6 +328,10 @@ class AnyItem(pytest.Item):
         if self.save_filename is not None:
             import h5py
 
+            if not os.path.exists(self.save_filename):
+                self.errors.append(
+                    "TEST ERROR: No HDF5 data were save from: " + self.save_study
+                )
             f = h5py.File(self.save_filename, "a")
             f.attrs["anytest_processtime"] = result["task_processtime"]
             f.attrs["anytest_macro"] = "\n".join(result["task_macro"][:-1])
@@ -349,12 +339,17 @@ class AnyItem(pytest.Item):
             f.attrs["anytest_ams_version"] = pytest.anytest.ams_version
             f.close()
             basedir = os.path.dirname(self.save_filename)
-            macrofile = write_macro_file(basedir, self.save_study, self.macro[:-1])
-            with open(os.path.join(basedir, self.save_study + ".bat"), "w") as f:
+
+            logfile = result["task_logfile"]
+            macrofile = os.path.splitext(logfile)[0] + ".anymcr"
+            shutil.copyfile(logfile, os.path.join(basedir, "logfile.txt"))
+            shutil.copyfile(macrofile, os.path.join(basedir, "macro.anymcr"))
+
+            with open(os.path.join(basedir, "run.bat"), "w") as f:
                 anybodygui = re.sub(
-                    r"(?i)anybodycon\.exe", r"anybody\.exe", self.anybodycon_path
+                    r"(?i)anybodycon\.exe", "anybody.exe", self.anybodycon_path
                 )
-                f.write('"{}" -m "{}"'.format(anybodygui, macrofile))
+                f.write('"{}" -m "macro.anymcr"'.format(anybodygui, macrofile))
 
         if len(self.errors) > 0:
             if self.config.getoption("--create-macros"):
@@ -363,6 +358,9 @@ class AnyItem(pytest.Item):
                 )
                 self.macro_file = macro_name
             raise AnyException(self)
+
+        shutil.rmtree(tmpdir.strpath, ignore_errors=True)
+
         return
 
     def repr_failure(self, excinfo):
