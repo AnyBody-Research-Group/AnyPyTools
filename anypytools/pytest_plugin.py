@@ -70,8 +70,6 @@ class AnyTestSession(object):
             self.hdf5_save_folder = os.path.join(self.save_basefolder, self.save_name)
             if os.path.exists(self.hdf5_save_folder):
                 shutil.rmtree(self.hdf5_save_folder, ignore_errors=True)
-        self.save_name_study = config.getoption("--anytest-save-study")
-
         ammr_path = find_ammr_path(config.getoption("--ammr") or config.rootdir.strpath)
         self.ammr_version = get_ammr_version(ammr_path)
         self.ams_path = config.getoption("--anybodycon") or get_anybodycon_path()
@@ -254,9 +252,11 @@ class AnyItem(pytest.Item):
         self.paths = _as_absolute_paths(paths, start=self.config.rootdir.strpath)
         self.name = test_name
         self.expect_errors = kwargs.get("expect_errors", [])
-        self.save_study = pytest.anytest.save_name_study
-        if not self.save_study:
-            self.save_study = kwargs.get("save_study", "Main.Study")
+
+        self.save_study = kwargs.get("save_study", "Main.Study")
+        if self.save_study is None:
+            pytest.anytest.save_name = None
+
         self.timeout = self.config.getoption("--timeout")
         self.errors = []
         self.macro = [macro_commands.Load(self.fspath.strpath, self.defs, self.paths)]
@@ -445,12 +445,12 @@ def pytest_addoption(parser):
         type=parse_save_name,
         help="Save the current run into folder " "`~/.anytest/counter-NAME/`.",
     )
-    group.addoption(
-        "--anytest-save-study",
-        type=str,
-        help="Used to specify the study saved by the --anytest-save option. "
-        'Defaults to: "Main.Study" or what is set in the "test_*.any" file',
-    )
+    # group.addoption(
+    #     "--anytest-save-study",
+    #     type=str,
+    #     help="Used to specify the study saved by the --anytest-save option. "
+    #     'Defaults to: "Main.Study" or what is set in the "test_*.any" file',
+    # )
     group.addoption(
         "--create-macros",
         action="store_true",
