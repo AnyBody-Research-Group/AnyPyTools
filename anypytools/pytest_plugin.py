@@ -198,13 +198,9 @@ def pytest_collection_finish(session):
     print("\nUsing AnyBodyCon: ", pytest.anytest.ams_path)
 
 
-def pytest_namespace():
-    """Add an instance of the AnyTestSession class to the pytest name space."""
-    return {"anytest": AnyTestSession()}
-
-
 def pytest_configure(config):
     """Configure the AnyTest framework."""
+    pytest.anytest = AnyTestSession()
     pytest.anytest.configure(config)
 
 
