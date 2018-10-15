@@ -60,7 +60,7 @@ class AnyTestSession(object):
         since it is instantiated and added to the pytest namespace very
         early in the pytest startup.
         """
-        self.hdf5_save_folder = config.getoption("--anytest-storage")
+        self.hdf5_save_folder = config.getoption("--anytest-output")
         if os.path.exists(self.hdf5_save_folder):
             shutil.rmtree(self.hdf5_save_folder, ignore_errors=True)
         self.save_hdf5_files = config.getoption("--anytest-save")
@@ -441,7 +441,7 @@ def pytest_addoption(parser):
         "easy to re-run the failed test in the gui application.",
     )
     group.addoption(
-        "--anytest-storage",
+        "--anytest-output",
         metavar="path",
         default=pathlib.Path.cwd() / "anytest-output",
         help="Specify a path to store the runs (when --anytest-save "
