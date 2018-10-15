@@ -9,6 +9,7 @@ import os
 import re
 import ast
 import shutil
+import pathlib
 import argparse
 import itertools
 import contextlib
@@ -48,7 +49,7 @@ class AnyTestSession(object):
         self.save_basefolder = ""
         self.anytest_compare_dir = ""
         self.hdf5_save_folder = None
-        self.save_name = ""
+        self.save_hdf5_files = False
         self.last_number = None
         self.last_session = None
 
@@ -59,17 +60,11 @@ class AnyTestSession(object):
         since it is instantiated and added to the pytest namespace very
         early in the pytest startup.
         """
-        self.save_basefolder = config.getoption("--anytest-storage")
-        if not os.path.exists(self.save_basefolder):
-            os.makedirs(self.save_basefolder)
-        self.save_name = config.getoption("--anytest-save")
-        if self.save_name == "":
-            self.save_name == get_tag()
-        # Handle settings for save hdf5 files in test
-        if self.save_name:
-            self.hdf5_save_folder = os.path.join(self.save_basefolder, self.save_name)
-            if os.path.exists(self.hdf5_save_folder):
-                shutil.rmtree(self.hdf5_save_folder, ignore_errors=True)
+        self.hdf5_save_folder = config.getoption("--anytest-storage")
+        if os.path.exists(self.hdf5_save_folder):
+            shutil.rmtree(self.hdf5_save_folder, ignore_errors=True)
+        self.save_hdf5_files = config.getoption("--anytest-save")
+
         ammr_path = find_ammr_path(config.getoption("--ammr") or config.rootdir.strpath)
         self.ammr_version = get_ammr_version(ammr_path)
         self.ams_path = config.getoption("--anybodycon") or get_anybodycon_path()
@@ -255,7 +250,7 @@ class AnyItem(pytest.Item):
 
         self.save_study = kwargs.get("save_study", "Main.Study")
         if self.save_study is None:
-            pytest.anytest.save_name = None
+            pytest.anytest.save_hdf5_files = False
 
         self.timeout = self.config.getoption("--timeout")
         self.errors = []
@@ -276,7 +271,7 @@ class AnyItem(pytest.Item):
         }
         if not self.config.getoption("--only-load"):
             self.macro.append(macro_commands.OperationRun("Main.RunTest"))
-        if pytest.anytest.save_name:
+        if pytest.anytest.save_hdf5_files:
             # Add save operation to the test macro
             self.save_filename = pytest.anytest.get_save_fname(
                 name, id, self.save_study
@@ -391,17 +386,6 @@ class AnyException(Exception):
     """Custom exception for error reporting."""
 
 
-def parse_save_name(stringval):
-    """Parse function."""
-    if not stringval:
-        raise argparse.ArgumentTypeError("Argument can't be empty.")
-    not_allowed = "".join(c for c in r"\/:*?<>|" if c in stringval)
-    if not_allowed:
-        raise argparse.ArgumentTypeError(
-            "Characters are not allowed: " "/:*?<>|\\ (it has %r)" % not_allowed
-        )
-    return stringval
-
 
 def pytest_addoption(parser):
     group = parser.getgroup("anypytools", "testing AnyBody models")
@@ -441,9 +425,8 @@ def pytest_addoption(parser):
     )
     group.addoption(
         "--anytest-save",
-        metavar="NAME",
-        type=parse_save_name,
-        help="Save the current run into folder " "`~/.anytest/counter-NAME/`.",
+        action="store_true",
+        help="Save hdf5 files from tests.",
     )
     # group.addoption(
     #     "--anytest-save-study",
@@ -460,7 +443,7 @@ def pytest_addoption(parser):
     group.addoption(
         "--anytest-storage",
         metavar="path",
-        default=os.path.expanduser("~/.anytest"),
+        default=pathlib.Path.cwd() / "anytest-output",
         help="Specify a path to store the runs (when --anytest-save "
         "are used). Default: %(default)r.",
     )
