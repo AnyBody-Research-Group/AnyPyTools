@@ -60,8 +60,8 @@ class AnyTestSession(object):
         early in the pytest startup.
         """
         self.hdf5_save_folder = config.getoption("--anytest-output")
-        if os.path.exists(self.hdf5_save_folder):
-            shutil.rmtree(self.hdf5_save_folder, ignore_errors=True)
+        # if os.path.exists(self.hdf5_save_folder):
+        #     shutil.rmtree(self.hdf5_save_folder, ignore_errors=True)
         self.save_hdf5_files = config.getoption("--anytest-save")
 
         ammr_path = find_ammr_path(config.getoption("--ammr") or config.rootdir.strpath)
@@ -283,7 +283,10 @@ class AnyItem(pytest.Item):
         """Run an AnyScript test item."""
         tmpdir = self.config._tmpdirhandler.mktemp(self.name)
         if self.save_filename:
-            os.makedirs(os.path.dirname(self.save_filename))
+            dirname = os.path.dirname(self.save_filename)
+            if os.path.exists(dirname):
+                shutil.rmtree(dirname, ignore_errors=True)
+            os.makedirs(dirname)
         with change_dir(tmpdir.strpath):
             app = AnyPyProcess(**self.app_opts)
             result = app.start_macro(self.macro)[0]
