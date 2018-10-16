@@ -9,7 +9,6 @@ import os
 import re
 import ast
 import shutil
-import pathlib
 import argparse
 import itertools
 import contextlib
@@ -443,7 +442,7 @@ def pytest_addoption(parser):
     group.addoption(
         "--anytest-output",
         metavar="path",
-        default=pathlib.Path.cwd() / "anytest-output",
+        default=os.path.join(os.getcwd(), "anytest-output"),
         help="Specify a path to store the runs (when --anytest-save "
         "are used). Default: %(default)r.",
     )
