@@ -248,10 +248,6 @@ class AnyItem(pytest.Item):
         self.name = test_name
         self.expect_errors = kwargs.get("expect_errors", [])
 
-        self.save_study = kwargs.get("save_study", "Main.Study")
-        if self.save_study is None:
-            pytest.anytest.save_hdf5_files = False
-
         self.timeout = self.config.getoption("--timeout")
         self.errors = []
         self.macro = [macro_commands.Load(self.fspath.strpath, self.defs, self.paths)]
@@ -271,7 +267,9 @@ class AnyItem(pytest.Item):
         }
         if not self.config.getoption("--only-load"):
             self.macro.append(macro_commands.OperationRun("Main.RunTest"))
-        if pytest.anytest.save_hdf5_files:
+
+        self.save_study = kwargs.get("save_study", "Main.Study")
+        if pytest.anytest.save_hdf5_files and self.save_study:
             # Add save operation to the test macro
             self.save_filename = pytest.anytest.get_save_fname(
                 name, id, self.save_study
@@ -389,7 +387,6 @@ class AnyException(Exception):
     """Custom exception for error reporting."""
 
 
-
 def pytest_addoption(parser):
     group = parser.getgroup("anypytools", "testing AnyBody models")
 
@@ -427,9 +424,7 @@ def pytest_addoption(parser):
         help="terminate tests after a certain timeout period",
     )
     group.addoption(
-        "--anytest-save",
-        action="store_true",
-        help="Save hdf5 files from tests.",
+        "--anytest-save", action="store_true", help="Save hdf5 files from tests."
     )
     # group.addoption(
     #     "--anytest-save-study",
