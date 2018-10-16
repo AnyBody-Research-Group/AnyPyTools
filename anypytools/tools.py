@@ -52,7 +52,7 @@ def anybodycon_version(anybodyconpath):
     try:
         out = subprocess.check_output([anybodyconpath, "-ni"], universal_newlines=True)
     except (subprocess.CalledProcessError, FileNotFoundError):
-        return None
+        return "0.0.0"
     m = ANYBODYCON_VERSION_RE.search(out)
     if m is not None:
         return m.groupdict()["version"]
