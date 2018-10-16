@@ -163,7 +163,7 @@ HEADER_ENSURES = (
     ("keep_logfiles", (bool,)),
     ("logfile_prefix", (str,)),
     ("expect_errors", (list,)),
-    ("save_study", (str,)),
+    ("save_study", (str,type(None))),
 )
 
 
