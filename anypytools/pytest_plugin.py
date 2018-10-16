@@ -144,9 +144,9 @@ def _format_switches(defs):
     elif isinstance(defs, list):
         pass
     else:
-        defs = [{}]
+        defs = [dict()]
     if len(defs) == 0:
-        defs = [{}]
+        defs = [dict()]
     return defs
 
 
@@ -163,11 +163,12 @@ HEADER_ENSURES = (
     ("keep_logfiles", (bool,)),
     ("logfile_prefix", (str,)),
     ("expect_errors", (list,)),
+    ("save_study", (str,)),
 )
 
 
 def _parse_header(header):
-    ns = {}
+    ns = dict()
     try:
         exec(header, globals(), ns)
     except SyntaxError:
@@ -209,11 +210,11 @@ class AnyFile(pytest.File):
         # Collect define statements from the header
         strheader = _read_header(self.fspath.strpath)
         header = _parse_header(strheader)
-        def_list = _format_switches(header.pop("define", {}))
+        def_list = _format_switches(header.pop("define", None))
         def_list = [
             replace_bm_constants(d, pytest.anytest.bm_constants_map) for d in def_list
         ]
-        path_list = _format_switches(header.pop("path", {}))
+        path_list = _format_switches(header.pop("path", None))
         combinations = itertools.product(def_list, path_list)
         # Run though the defines an create a test case for each
         for i, (defs, paths) in enumerate(combinations):
