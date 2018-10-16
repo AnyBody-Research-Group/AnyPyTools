@@ -39,6 +39,14 @@ def cwd(path):
         os.chdir(oldpwd)
 
 
+def pytest_xdist_setupnodes(config, specs):
+    """ called before any remote node is set up. """
+    print(
+        "\n\nUsing AnyBodyCon: ",
+        config.getoption("--anybodycon") or get_anybodycon_path(), "\n"
+    )
+
+
 class AnyTestSession(object):
     """Class for storing configuation of the AnyTest plugin to pytest."""
 
