@@ -39,6 +39,14 @@ def cwd(path):
         os.chdir(oldpwd)
 
 
+def pytest_xdist_setupnodes(config, specs):
+    """ called before any remote node is set up. """
+    print(
+        "\n\nUsing AnyBodyCon: ",
+        config.getoption("--anybodycon") or get_anybodycon_path(), "\n"
+    )
+
+
 class AnyTestSession(object):
     """Class for storing configuation of the AnyTest plugin to pytest."""
 
@@ -47,8 +55,8 @@ class AnyTestSession(object):
         self.ams_version = ""
         self.save_basefolder = ""
         self.anytest_compare_dir = ""
-        self.current_run_folder = None
-        self.save_name = ""
+        self.hdf5_save_folder = None
+        self.save_hdf5_files = False
         self.last_number = None
         self.last_session = None
 
@@ -59,13 +67,11 @@ class AnyTestSession(object):
         since it is instantiated and added to the pytest namespace very
         early in the pytest startup.
         """
-        self.save_basefolder = config.getoption("--anytest-storage")
-        if not os.path.exists(self.save_basefolder):
-            os.makedirs(self.save_basefolder)
-        self.save_name = config.getoption("--anytest-save")
-        if self.save_name == "":
-            self.save_name == get_tag()
-        self.save_name_study = config.getoption("--anytest-save-study")
+        self.hdf5_save_folder = config.getoption("--anytest-output")
+        # if os.path.exists(self.hdf5_save_folder):
+        #     shutil.rmtree(self.hdf5_save_folder, ignore_errors=True)
+        self.save_hdf5_files = config.getoption("--anytest-save")
+
         ammr_path = find_ammr_path(config.getoption("--ammr") or config.rootdir.strpath)
         self.ammr_version = get_ammr_version(ammr_path)
         self.ams_path = config.getoption("--anybodycon") or get_anybodycon_path()
@@ -76,26 +82,14 @@ class AnyTestSession(object):
             ammr_path=ammr_path, ammr_version=major_ammr_ver
         )
 
-    def finalize(self, config):
-        """Finalize a session."""
-        if self.save_name:
-            storage_folder = os.path.join(self.save_basefolder, self.save_name)
-            shutil.rmtree(storage_folder, ignore_errors=True)
-            if os.path.exists(self.current_run_folder):
-                shutil.copytree(self.current_run_folder, storage_folder)
-
     def get_save_fname(self, name, id, study):
-        """Return the name of the compare h5file, and ensure the parent folder exists."""
+        """Return the name of the compare h5file"""
         # Initialize and empty the current_run folder.
-        if not self.current_run_folder:
-            self.current_run_folder = os.path.join(self.save_basefolder, "current_run")
-            if os.path.exists(self.current_run_folder):
-                shutil.rmtree(self.current_run_folder)
         if id > 0:
             compare_test_name = "{}_{}".format(name, id)
         else:
             compare_test_name = "{}".format(name)
-        compare_test_folder = os.path.join(self.current_run_folder, compare_test_name)
+        compare_test_folder = os.path.join(self.hdf5_save_folder, compare_test_name)
         studyname = "{}.anydata.h5".format(study)
         return os.path.join(compare_test_folder, studyname)
 
@@ -158,9 +152,9 @@ def _format_switches(defs):
     elif isinstance(defs, list):
         pass
     else:
-        defs = [{}]
+        defs = [dict()]
     if len(defs) == 0:
-        defs = [{}]
+        defs = [dict()]
     return defs
 
 
@@ -177,11 +171,12 @@ HEADER_ENSURES = (
     ("keep_logfiles", (bool,)),
     ("logfile_prefix", (str,)),
     ("expect_errors", (list,)),
+    ("save_study", (str,type(None))),
 )
 
 
 def _parse_header(header):
-    ns = {}
+    ns = dict()
     try:
         exec(header, globals(), ns)
     except SyntaxError:
@@ -204,27 +199,15 @@ def pytest_collection_finish(session):
     print("\nUsing AnyBodyCon: ", pytest.anytest.ams_path)
 
 
-def pytest_namespace():
-    """Add an instance of the AnyTestSession class to the pytest name space."""
-    return {"anytest": AnyTestSession()}
-
-
 def pytest_configure(config):
     """Configure the AnyTest framework."""
+    pytest.anytest = AnyTestSession()
     pytest.anytest.configure(config)
 
 
 def pytest_unconfigure(config):
     """Finialize the test session."""
-    pytest.anytest.finalize(config)
-
-
-def write_macro_file(path, name, macro):
-    """Write list of macros to a file."""
-    filename = os.path.join(path, name + ".anymcr")
-    with open(filename, "w") as f:
-        f.writelines([str(mcr) + "\n" for mcr in macro])
-    return filename
+    pass  # pytest.anytest.finalize(config)
 
 
 class AnyFile(pytest.File):
@@ -235,11 +218,11 @@ class AnyFile(pytest.File):
         # Collect define statements from the header
         strheader = _read_header(self.fspath.strpath)
         header = _parse_header(strheader)
-        def_list = _format_switches(header.pop("define", {}))
+        def_list = _format_switches(header.pop("define", None))
         def_list = [
             replace_bm_constants(d, pytest.anytest.bm_constants_map) for d in def_list
         ]
-        path_list = _format_switches(header.pop("path", {}))
+        path_list = _format_switches(header.pop("path", None))
         combinations = itertools.product(def_list, path_list)
         # Run though the defines an create a test case for each
         for i, (defs, paths) in enumerate(combinations):
@@ -272,9 +255,7 @@ class AnyItem(pytest.Item):
         self.paths = _as_absolute_paths(paths, start=self.config.rootdir.strpath)
         self.name = test_name
         self.expect_errors = kwargs.get("expect_errors", [])
-        self.save_study = pytest.anytest.save_name_study
-        if not self.save_study:
-            self.save_study = kwargs.get("save_study", "Main.Study")
+
         self.timeout = self.config.getoption("--timeout")
         self.errors = []
         self.macro = [macro_commands.Load(self.fspath.strpath, self.defs, self.paths)]
@@ -289,12 +270,14 @@ class AnyItem(pytest.Item):
             "ignore_errors": kwargs.get("ignore_errors", []),
             "warnings_to_include": kwargs.get("warnings_to_include", []),
             "fatal_warnings": kwargs.get("fatal_warnings", False),
-            "keep_logfiles": kwargs.get("keep_logfiles", False),
+            "keep_logfiles": kwargs.get("keep_logfiles", True),
             "logfile_prefix": kwargs.get("logfile_prefix", None),
         }
         if not self.config.getoption("--only-load"):
             self.macro.append(macro_commands.OperationRun("Main.RunTest"))
-        if pytest.anytest.save_name:
+
+        self.save_study = kwargs.get("save_study", "Main.Study")
+        if pytest.anytest.save_hdf5_files and self.save_study:
             # Add save operation to the test macro
             self.save_filename = pytest.anytest.get_save_fname(
                 name, id, self.save_study
@@ -307,7 +290,10 @@ class AnyItem(pytest.Item):
         """Run an AnyScript test item."""
         tmpdir = self.config._tmpdirhandler.mktemp(self.name)
         if self.save_filename:
-            os.makedirs(os.path.dirname(self.save_filename))
+            dirname = os.path.dirname(self.save_filename)
+            if os.path.exists(dirname):
+                shutil.rmtree(dirname, ignore_errors=True)
+            os.makedirs(dirname)
         with change_dir(tmpdir.strpath):
             app = AnyPyProcess(**self.app_opts)
             result = app.start_macro(self.macro)[0]
@@ -342,6 +328,10 @@ class AnyItem(pytest.Item):
         if self.save_filename is not None:
             import h5py
 
+            if not os.path.exists(self.save_filename):
+                self.errors.append(
+                    "TEST ERROR: No HDF5 data were save from: " + self.save_study
+                )
             f = h5py.File(self.save_filename, "a")
             f.attrs["anytest_processtime"] = result["task_processtime"]
             f.attrs["anytest_macro"] = "\n".join(result["task_macro"][:-1])
@@ -349,12 +339,17 @@ class AnyItem(pytest.Item):
             f.attrs["anytest_ams_version"] = pytest.anytest.ams_version
             f.close()
             basedir = os.path.dirname(self.save_filename)
-            macrofile = write_macro_file(basedir, self.save_study, self.macro[:-1])
-            with open(os.path.join(basedir, self.save_study + ".bat"), "w") as f:
+
+            logfile = result["task_logfile"]
+            macrofile = os.path.splitext(logfile)[0] + ".anymcr"
+            shutil.copyfile(logfile, os.path.join(basedir, "logfile.txt"))
+            shutil.copyfile(macrofile, os.path.join(basedir, "macro.anymcr"))
+
+            with open(os.path.join(basedir, "run.bat"), "w") as f:
                 anybodygui = re.sub(
-                    r"(?i)anybodycon\.exe", r"anybody\.exe", self.anybodycon_path
+                    r"(?i)anybodycon\.exe", "anybody.exe", self.anybodycon_path
                 )
-                f.write('"{}" -m "{}"'.format(anybodygui, macrofile))
+                f.write('"{}" -m "macro.anymcr"'.format(anybodygui, macrofile))
 
         if len(self.errors) > 0:
             if self.config.getoption("--create-macros"):
@@ -363,6 +358,9 @@ class AnyItem(pytest.Item):
                 )
                 self.macro_file = macro_name
             raise AnyException(self)
+
+        shutil.rmtree(tmpdir.strpath, ignore_errors=True)
+
         return
 
     def repr_failure(self, excinfo):
@@ -395,18 +393,6 @@ class AnyItem(pytest.Item):
 
 class AnyException(Exception):
     """Custom exception for error reporting."""
-
-
-def parse_save_name(stringval):
-    """Parse function."""
-    if not stringval:
-        raise argparse.ArgumentTypeError("Argument can't be empty.")
-    not_allowed = "".join(c for c in r"\/:*?<>|" if c in stringval)
-    if not_allowed:
-        raise argparse.ArgumentTypeError(
-            "Characters are not allowed: " "/:*?<>|\\ (it has %r)" % not_allowed
-        )
-    return stringval
 
 
 def pytest_addoption(parser):
@@ -446,17 +432,14 @@ def pytest_addoption(parser):
         help="terminate tests after a certain timeout period",
     )
     group.addoption(
-        "--anytest-save",
-        metavar="NAME",
-        type=parse_save_name,
-        help="Save the current run into folder " "`~/.anytest/counter-NAME/`.",
+        "--anytest-save", action="store_true", help="Save hdf5 files from tests."
     )
-    group.addoption(
-        "--anytest-save-study",
-        type=str,
-        help="Used to specify the study saved by the --anytest-save option. "
-        'Defaults to: "Main.Study" or what is set in the "test_*.any" file',
-    )
+    # group.addoption(
+    #     "--anytest-save-study",
+    #     type=str,
+    #     help="Used to specify the study saved by the --anytest-save option. "
+    #     'Defaults to: "Main.Study" or what is set in the "test_*.any" file',
+    # )
     group.addoption(
         "--create-macros",
         action="store_true",
@@ -464,9 +447,9 @@ def pytest_addoption(parser):
         "easy to re-run the failed test in the gui application.",
     )
     group.addoption(
-        "--anytest-storage",
+        "--anytest-output",
         metavar="path",
-        default=os.path.expanduser("~/.anytest"),
+        default=os.path.join(os.getcwd(), "anytest-output"),
         help="Specify a path to store the runs (when --anytest-save "
         "are used). Default: %(default)r.",
     )
