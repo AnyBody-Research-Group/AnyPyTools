@@ -261,7 +261,7 @@ class AnyPyProcessOutputList(collections.MutableSequence):
             try:
                 data = np.array(
                     [
-                        super(AnyPyProcessOutputList, e).__getitem__(key)
+                        super(AnyPyProcessOutput, e).__getitem__(key)
                         for e in self.list
                     ]
                 )
