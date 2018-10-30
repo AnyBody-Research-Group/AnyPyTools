@@ -7,7 +7,7 @@ Developer's Guide
    :align: center
 
 This is place for developer information that does not belong in the user 
-guides or the API reference, but is usefull for people developing or contributing
+guides or the API reference, but is useful for people developing or contributing
 to AnyPyTools.
 
 .. note:: All code changes must go through the pull request review procedure.

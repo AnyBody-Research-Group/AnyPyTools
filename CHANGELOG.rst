@@ -2,16 +2,27 @@
 AnyPyTools Change Log
 =====================
 
-.. current developments
+v1.0.0
+=============
 
 **Changed:**
 
 - Source code now formatted with `black <https://black.readthedocs.io/en/stable/>`__ formatter.
 
+**Added:**
+
+- Added a feature to the pytest plugin to save HDF5 files when running AnyScript tests. The purpose
+  of this feature is to easily generated data for comparing the simulation of two different models
+  or the same model with a different version of AMS.
+
 **Removed:**
 
-- Support for Python 2 was dropped. This also removes the dependency on the ``future`` package. 
+- Support for legacy Python (2) was dropped. This also removes the dependency on the ``future`` package. 
 
+**Fixed:**
+
+- Fixed a regression when accessing the output of the ``start_macro`` command
+  (``AnyPyProcessOutputList``) for aggregated results across multiple macros. 
 
 
 v0.14.1
