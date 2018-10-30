@@ -43,7 +43,8 @@ def pytest_xdist_setupnodes(config, specs):
     """ called before any remote node is set up. """
     print(
         "\n\nUsing AnyBodyCon: ",
-        config.getoption("--anybodycon") or get_anybodycon_path(), "\n"
+        config.getoption("--anybodycon") or get_anybodycon_path(),
+        "\n",
     )
 
 
@@ -171,7 +172,7 @@ HEADER_ENSURES = (
     ("keep_logfiles", (bool,)),
     ("logfile_prefix", (str,)),
     ("expect_errors", (list,)),
-    ("save_study", (str,type(None))),
+    ("save_study", (str, type(None))),
 )
 
 
