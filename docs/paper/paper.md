@@ -1,5 +1,5 @@
 ---
-title: 'AnyPyTools: A Python package for reproducable research with the AnyBody Modeling System.
+title: 'AnyPyTools: A Python package for reproducible research with the AnyBody Modeling System.
 tags:
   - Python
   - Musculoskeletal Modeling
@@ -30,78 +30,46 @@ bibliography: paper.bib
 
 Introduction
 
+The AnyPyTools package provides a Python interface to automate multibody
+musculoskeletal model simulations in the AnyBody Modeling System. The main
+advantage of AnyPyTools is that it enables reproducible research for the
+AnyBody Modeling System, and bridges the gap to the whole ecosystem of open
+source scientific Python packages.
 
-The ``anypytools`` package provides as Python interface to automate
-musculoskeletal model simulations in the AnyBody Modeling System to run parallel
-batch processing, model sensitivity studies, and parameter studies using either
-monte-carlo (random sampling) or Latin hybercube sampling. This replaces the
-tedious automating musculoskeltal simulations in the AnyBody Modeling System. 
+As musculoskeletal simulations becomes increasingly important in decision making
+processes in a range of applications, so does the requirement for model
+verification and validation (V&V) [@Lund2012-ty]. Successful V&V will often
+require running large number of simulations (batch processing) or investigating
+parameters systematically (sensitivity or parameter studies). The stand-alone
+AnyBody Modeling System is not very suited for these kind of meta analysis. The
+modeling system is essentially a IDE/compiler for scripting single multibody
+musculoskeletal models in the AnyScript modeling language. 
 
-The ``anypytools`` library was developed at Aalborg University to
+The AnyPyTools Python package enables batch processing, parallazation of model
+simulations, model sensitivity studies, and parameter studies using either
+monte-carlo (random sampling) or Latin hypercube sampling. It makes reproducible
+research much easier and replaces the tedious process of manually automating the
+musculoskeletal simulations and aggregating the results.
+
+The AnyPyTools library was developed at Aalborg University to
 help in the effort to validate musculoskeletal models created within the AnyBody
-Modeling System [@Lund2015-ix, @Lund2012-ty]. In this work ``anypytools`` was
+Modeling System [@Lund2015-ix, @Lund2012-ty]. In this work AnyPyTools was
 used to orchestrate large number of model simulations and distribute the load over
 multiple processors, as well as collect the results directly in Python and
-investigate the sensitivity of the model predictions [@zenodo]. The library have
-evolved over time to also 
+investigate the sensitivity of the model predictions. The library have
+evolved over time to also include a pytest plugin for running unit tests on
+AnyScript files (`test_*.any`) similar to how unit-tests are used for python.
 
-The main advantage of ``anypytools`` is that it enables reproducible research
-for the AnyBody Modeling System, and bridges the gap between the AnyBody Modeling
-System and the wealth of open source Python tools which has emerged.
+The AnyPyTools library has been used in a large number for scientific publications
+over the last 5 years. 
 
-The ``AnyPyTools`` has been used in a large number for scientific publications 
+The source code for AnyPyTools has been archived to Zenodo with the linked DOI: [@Lund2018-jm]
 
-The source code for ``AnyPyTools`` has been
-archived to Zenodo with the linked DOI: [@zenodo]
-
-
-
-``Gala`` is an Astropy-affiliated Python package for galactic dynamics. Python
-enables wrapping low-level languages (e.g., C) for speed without losing
-flexibility or ease-of-use in the user-interface. The API for ``Gala`` was
-designed to provide a class-based and user-friendly interface to fast (C or
-Cython-optimized) implementations of common operations such as gravitational
-potential and force evaluation, orbit integration, dynamical transformations,
-and chaos indicators for nonlinear dynamics. ``Gala`` also relies heavily on and
-interfaces well with the implementations of physical units and astronomical
-coordinate systems in the ``Astropy`` package [@astropy] (``astropy.units`` and
-``astropy.coordinates``).
-
-``Gala`` was designed to be used by both astronomical researchers and by
-students in courses on gravitational dynamics or astronomy. It has already been
-used in a number of scientific publications [@Pearson:2017] and has also been
-used in graduate courses on Galactic dynamics to, e.g., provide interactive
-visualizations of textbook material [@Binney:2008]. The combination of speed,
-design, and support for Astropy functionality in ``Gala`` will enable exciting
-scientific explorations of forthcoming data releases from the *Gaia* mission
-[@gaia] by students and experts alike. The source code for ``Gala`` has been
-archived to Zenodo with the linked DOI: [@zenodo]
-
-# Mathematics
-
-Single dollars ($) are required for inline mathematics e.g. $f(x) = e^{\pi/x}$
-
-Double dollars make self-standing equations:
-
-$$\Theta(x) = \left\{\begin{array}{l}
-0\textrm{ if } x < 0\cr
-1\textrm{ else}
-\end{array}\right.$$
-
-
-# Citations
-
-Citations to entries in paper.bib should be in
-[rMarkdown](http://rmarkdown.rstudio.com/authoring_bibliographies_and_citations.html)
-format.
-
-# Figures
-
-Figures can be included like this: ![Example figure.](figure.png)
 
 # Acknowledgements
 
-We acknowledge contributions from Brigitta Sipocz, Syrtis Major, and Semyeong
-Oh, and support from Kathryn Johnston during the genesis of this project.
+We acknowledge contributions from AnyBody Technology A/S who have used the package extensively
+for their verification and validation work. Also, thanks to to the numerous academic users of the
+AnyBody Modeling System from all over the world who have contributed feedback and feature requests.  
 
 # References
