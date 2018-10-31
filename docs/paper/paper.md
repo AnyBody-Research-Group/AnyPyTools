@@ -28,21 +28,19 @@ bibliography: paper.bib
 
 # Summary
 
-Introduction
-
 The AnyPyTools package provides a Python interface to automate multibody
 musculoskeletal model simulations in the AnyBody Modeling System. The main
 advantage of AnyPyTools is that it enables reproducible research for the
 AnyBody Modeling System, and bridges the gap to the whole ecosystem of open
 source scientific Python packages.
 
-As musculoskeletal simulations becomes increasingly important in decision making
+As musculoskeletal simulations become increasingly important in decision making
 processes in a range of applications, so does the requirement for model
 verification and validation (V&V) [@Lund2012-ty]. Successful V&V will often
 require running large number of simulations (batch processing) or investigating
 parameters systematically (sensitivity or parameter studies). The stand-alone
-AnyBody Modeling System is not very suited for these kind of meta analysis. The
-modeling system is essentially a IDE/compiler for scripting single multibody
+AnyBody Modeling System is not very suited for this kind of meta-analysis. The
+modeling system is essentially an IDE/compiler for scripting single multibody
 musculoskeletal models in the AnyScript modeling language. 
 
 The AnyPyTools Python package enables batch processing, parallazation of model
@@ -56,14 +54,16 @@ help in the effort to validate musculoskeletal models created within the AnyBody
 Modeling System [@Lund2015-ix, @Lund2012-ty]. In this work AnyPyTools was
 used to orchestrate large number of model simulations and distribute the load over
 multiple processors, as well as collect the results directly in Python and
-investigate the sensitivity of the model predictions. The library have
+investigate the sensitivity of the model predictions. The library has
 evolved over time to also include a pytest plugin for running unit tests on
 AnyScript files (`test_*.any`) similar to how unit-tests are used for python.
 
-The AnyPyTools library has been used in a large number for scientific publications
-over the last 5 years. 
+The AnyPyTools library is available on both PyPI and conda. It has been
+downloaded more than 20.000 times from the conda-forge channel and has been used in a large
+number of scientific publications over the last 5 years [@De_Pieri2018-py, Oliveira2017-by, Oliveira2013-ec, Oliveira2013-xi, Lund2015-ix]
 
-The source code for AnyPyTools has been archived to Zenodo with the linked DOI: [@Lund2018-jm]
+The source code for AnyPyTools are available on GitHub and releases are archived
+to Zenodo with the linked DOI: [@Lund2018-jm]
 
 
 # Acknowledgements
