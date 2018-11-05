@@ -37,15 +37,15 @@ source scientific Python packages.
 As musculoskeletal simulations become increasingly important in decision making
 processes in a range of applications, so does the requirement for model
 verification and validation (V&V) [@Lund2012-ty]. Successful V&V will often
-require running large number of simulations (batch processing) or investigating
+require running large numbers of simulations (batch processing) or investigating
 parameters systematically (sensitivity or parameter studies). The stand-alone
 AnyBody Modeling System is not very suited for this kind of meta-analysis. The
 modeling system is essentially an IDE/compiler for scripting single multibody
 musculoskeletal models in the AnyScript modeling language. 
 
-The AnyPyTools Python package enables batch processing, parallazation of model
-simulations, model sensitivity studies, and parameter studies using either
-monte-carlo (random sampling) or Latin hypercube sampling. It makes reproducible
+The AnyPyTools Python package enables batch processing, parallization of model
+simulations, model sensitivity studies, and parameter studies, using either
+Monte-Carlo (random sampling) or Latin hypercube sampling. It makes reproducible
 research much easier and replaces the tedious process of manually automating the
 musculoskeletal simulations and aggregating the results.
 
@@ -75,6 +75,6 @@ to Zenodo with the linked DOI: [@Lund2018-jm]
 
 We acknowledge contributions from AnyBody Technology A/S who have used the package extensively
 for their verification and validation work. Also, thanks to to the numerous academic users of the
-AnyBody Modeling System from all over the world who have contributed feedback and feature requests.  
+AnyBody Modeling System from all over the world, who have contributed feedback and feature requests.  
 
 # References
