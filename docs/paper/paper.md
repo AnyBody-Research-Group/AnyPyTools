@@ -61,7 +61,7 @@ AnyScript files (`test_*.any`) similar to how unit-tests are used for python.
 The AnyPyTools library is available on both PyPI and conda. It has been
 downloaded more than 20.000 times from the conda-forge channel and has been used in a large
 number of scientific publications over the last 5 years [@De_Pieri2018-py, @Stensgaard_Stoltze2018-hi,
-@Richards2018-oj, @Theodorakos2018-jv, @DellIsola2017-ac, @Eltoukhy2017-ut,
+@Richards2018-oj, @Theodorakos2018-jv, Rasmussen2018-nq, @DellIsola2017-ac, @Eltoukhy2017-ut,
 @Skals2017-if, @Oliveira2017-by, @Skipper_Andersen2017-cw, @Skals2017-sg,
 @Vanheule2017-sh, @Theodorakos2016-jx, @Lund2015-ix, @Oliveira2014-vd,
 @Oliveira2013-xi, @Oliveira2013-ec]
