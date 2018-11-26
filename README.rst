@@ -19,9 +19,13 @@ AnyPyTools
     :target: https://github.com/ambv/black
 
 AnyPyTools is a toolkit for working with the `AnyBody Modeling System (AMS)`_
-from Python. Its main purpose is to launch AnyBody simulations and collect results. It has a scheduler
-to launch multiple instances of AMS utilizing computers with multiple cores. AnyPyTools makes it
-possible to run parameter and Monte Carlo studies more efficiently than from within AMS.
+from Python. It enables reproduceable research with the AnyBody Modeling System, and bridges the gap to whole ecosystem of open source scientific Python. 
+
+The AnyPyTools Python package enables batch processing, parallization of model
+simulations, model sensitivity studies, and parameter studies, using either
+Monte-Carlo (random sampling) or Latin hypercube sampling. It makes reproducible
+research much easier and replaces the tedious process of manually automating the
+musculoskeletal simulations and aggregating the results.
 
 .. _AnyBody Modeling System (AMS): http://www.anybodytech.com
 
