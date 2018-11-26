@@ -43,7 +43,7 @@ AnyBody Modeling System is not very suited for this kind of meta-analysis. The
 modeling system is essentially an IDE/compiler for scripting single multibody
 musculoskeletal models in the AnyScript modeling language. 
 
-The AnyPyTools Python package enables batch processing, parallization of model
+The AnyPyTools Python package enables batch processing, parallelization of model
 simulations, model sensitivity studies, and parameter studies, using either
 Monte-Carlo (random sampling) or Latin hypercube sampling. It makes reproducible
 research much easier and replaces the tedious process of manually automating the
