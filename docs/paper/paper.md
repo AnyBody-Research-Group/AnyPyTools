@@ -1,5 +1,5 @@
 ---
-title: 'AnyPyTools: A Python package for reproducible research with the AnyBody Modeling System.
+title: 'AnyPyTools: A Python package for reproducible research with the AnyBody Modeling System'
 tags:
   - Python
   - Musculoskeletal Modeling
