@@ -20,7 +20,7 @@ authors:
 affiliations:
  - name: AnyBody Technology A/S, Denmark
    index: 1
- - name: Department of Mechanical Engineering, Aalborg University, Denmark
+ - name: Department of Materials and Production, Aalborg University, Denmark
    index: 2
 date: 09 October 2018
 bibliography: paper.bib
@@ -56,7 +56,7 @@ used to orchestrate large number of model simulations and distribute the load ov
 multiple processors, as well as collect the results directly in Python and
 investigate the sensitivity of the model predictions. The library has
 evolved over time to also include a pytest plugin for running unit tests on
-AnyScript files (`test_*.any`) similar to how unit-tests are used for python.
+AnyScript files (`test_*.any`) similar to how unit-tests are used for Python.
 
 The AnyPyTools library is available on both PyPI and conda. It has been
 downloaded more than 20.000 times from the conda-forge channel and has been used in a large
