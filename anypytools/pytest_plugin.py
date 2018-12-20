@@ -39,15 +39,6 @@ def cwd(path):
         os.chdir(oldpwd)
 
 
-def pytest_xdist_setupnodes(config, specs):
-    """ called before any remote node is set up. """
-    print(
-        "\n\nUsing AnyBodyCon: ",
-        config.getoption("--anybodycon") or get_anybodycon_path(),
-        "\n",
-    )
-
-
 class AnyTestSession(object):
     """Class for storing configuation of the AnyTest plugin to pytest."""
 
@@ -200,10 +191,25 @@ def pytest_collection_finish(session):
     print("\nUsing AnyBodyCon: ", pytest.anytest.ams_path)
 
 
+class DeferPlugin(object):
+    """Simple plugin to defer pytest-xdist hook functions."""
+
+    def pytest_xdist_setupnodes(config, specs):
+        """ called before any remote node is set up. """
+        print(
+            "\n\nUsing AnyBodyCon: ",
+            config.getoption("--anybodycon") or get_anybodycon_path(),
+            "\n",
+        )
+
+
 def pytest_configure(config):
     """Configure the AnyTest framework."""
     pytest.anytest = AnyTestSession()
     pytest.anytest.configure(config)
+
+    if config.pluginmanager.hasplugin("xdist"):
+        config.pluginmanager.register(DeferPlugin())
 
 
 def pytest_unconfigure(config):
