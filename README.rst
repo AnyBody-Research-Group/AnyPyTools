@@ -9,14 +9,15 @@ AnyPyTools
 .. image:: https://travis-ci.org/AnyBody-Research-Group/AnyPyTools.svg?branch=master
     :target: https://travis-ci.org/AnyBody-Research-Group/AnyPyTools
 
-.. image:: https://anaconda.org/conda-forge/anypytools/badges/installer/conda.svg
-   :target: https://conda.anaconda.org/conda-forge
-
 .. image:: https://anaconda.org/conda-forge/anypytools/badges/downloads.svg
    :target: https://anaconda.org/conda-forge/anypytools
 
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
     :target: https://github.com/ambv/black
+    
+.. image:: http://joss.theoj.org/papers/10.21105/joss.01108/status.svg
+   :target: https://doi.org/10.21105/joss.01108
+  
 
 AnyPyTools is a toolkit for working with the `AnyBody Modeling System (AMS)`_
 from Python. It enables reproduceable research with the AnyBody Modeling System, and bridges the gap to whole ecosystem of open source scientific Python. 
@@ -28,6 +29,12 @@ research much easier and replaces the tedious process of manually automating the
 musculoskeletal simulations and aggregating the results.
 
 .. _AnyBody Modeling System (AMS): http://www.anybodytech.com
+
+If you use the library for publications please **cite as:** 
+
+    Lund et al., (2019). AnyPyTools: A Python package for reproducible research with the AnyBody Modeling System. Journal of Open Source Software, 4(33), 1108, https://doi.org/10.21105/joss.01108
+
+
 
 
 Installation
