@@ -12,10 +12,8 @@ v1.1
 - Added an ``logfile`` argument to the ``app.start_macro()`` function. This allow for setting an
   explicit name for a log file. If ``start_macro()`` runs muliple instances the logfile will have
   the task number appended.
-
-
-
-
+- Added ``debug_mode`` option to the ``AnyPyProcess`` class. This will the debug mode of the
+  console application (e.g. the ``/deb #`` flag).
 
 
 v1.0.1

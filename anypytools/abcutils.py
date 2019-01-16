@@ -474,6 +474,8 @@ class AnyPyProcess(object):
         should use for Python Hooks. This will added the ``PYTHONHOME`` environment variable and
         prepended to the ``PATH`` before starting the AnyBody Console application.
         (Defaults to None, which will use the default Python installation on the computer.)
+    debug_mode : int, optional
+        Sets the debug mode flag for the AnyBodyConsole appplication (e.g. the /deb <number> flag)
     priority : int, optional
         The priority of the subprocesses. This can be on of the following:
         ``anypytools.IDLE_PRIORITY_CLASS``, ``anypytools.BELOW_NORMAL_PRIORITY_CLASS``,
@@ -513,6 +515,7 @@ class AnyPyProcess(object):
         keep_logfiles=False,
         logfile_prefix=None,
         python_env=None,
+        debug_mode=0,
         priority=BELOW_NORMAL_PRIORITY_CLASS,
     ):
         if not isinstance(ignore_errors, (list, type(None))):
@@ -532,6 +535,7 @@ class AnyPyProcess(object):
         self.silent = silent
         self.timeout = timeout
         self.counter = 0
+        self.debug_mode = debug_mode
         self.fatal_warnings = fatal_warnings
         self.return_task_info = return_task_info
         self.ignore_errors = ignore_errors
@@ -842,6 +846,7 @@ class AnyPyProcess(object):
                     keep_macrofile=self.keep_logfiles,
                     env=self.env,
                     priority=self.priority,
+                    debug_mode=self.debug_mode,
                 )
                 try:
                     task.retcode = execute_anybodycon(**exe_args)
