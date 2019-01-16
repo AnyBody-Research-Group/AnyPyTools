@@ -15,6 +15,7 @@ import types
 import ctypes
 import shelve
 import atexit
+import pathlib
 import logging
 import collections
 from subprocess import Popen
@@ -138,6 +139,7 @@ def execute_anybodycon(
     keep_macrofile=False,
     env=None,
     priority=BELOW_NORMAL_PRIORITY_CLASS,
+    debug_mode=0,
 ):
     """Launch a single AnyBodyConsole applicaiton.
 
@@ -169,6 +171,9 @@ def execute_anybodycon(
         ``anypytools.IDLE_PRIORITY_CLASS``, ``anypytools.BELOW_NORMAL_PRIORITY_CLASS``,
         ``anypytools.NORMAL_PRIORITY_CLASS``, ``anypytools.HIGH_PRIORITY_CLASS``
         Default is BELOW_NORMAL_PRIORITY_CLASS.
+    debug_mode : int
+        The AMS debug mode to use. Defaults to 0 which is disabled. 1 correspond to 
+        crashdump enabled
 
     Returns
     -------
@@ -196,7 +201,14 @@ def execute_anybodycon(
     with open(macro_filename, "w+b") as macro_file:
         macro_file.write("\n".join(macro).encode("UTF-8"))
         macro_file.flush()
-    anybodycmd = [os.path.realpath(anybodycon_path), "--macro=", macro_file.name, "/ni"]
+    anybodycmd = [
+        os.path.realpath(anybodycon_path),
+        "--macro=",
+        macro_file.name,
+        "/ni",
+        "/deb",
+        str(debug_mode),
+    ]
     if sys.platform.startswith("win"):
         # Don't display the Windows GPF dialog if the invoked program dies.
         # See comp.os.ms-windows.programmer.win32
@@ -260,10 +272,11 @@ class _Task(object):
         macro: list of macro commands to execute
         number: id number of the task
         name: name of the task, which is used for printing status informations
+        logfile: If provided will specify an explicit logfile to use. 
 
     """
 
-    def __init__(self, folder=None, macro=None, taskname=None, number=1):
+    def __init__(self, folder=None, macro=None, taskname=None, number=1, logfile=None):
         """Init the Task class with the class attributes."""
         self.folder = folder
         if not folder:
@@ -274,7 +287,7 @@ class _Task(object):
             self.macro = []
         self.output = AnyPyProcessOutput()
         self.number = number
-        self.logfile = ""
+        self.logfile = logfile or ""
         self.processtime = 0
         self.retcode = None
         self.name = taskname
@@ -295,7 +308,7 @@ class _Task(object):
     def get_output(self, include_task_info=True):
         out = self.output
         if include_task_info:
-            out["task_macro_hash"] = make_hash(self.macro)
+            out["task_macro_hash"] = format(make_hash(self.macro), "x")
             out["task_id"] = self.number
             out["task_work_dir"] = self.folder
             out["task_name"] = self.name
@@ -316,6 +329,7 @@ class _Task(object):
             macro=task_output["task_macro"],
             taskname=task_output["task_name"],
             number=task_output["task_id"],
+            logfile=task_output["task_logfile"],
         )
         task.processtime = task_output["task_processtime"]
         task.output = task_output
@@ -327,12 +341,16 @@ class _Task(object):
             yield cls.from_output_data(elem)
 
     @classmethod
-    def from_macrofolderlist(cls, macrolist, folderlist):
+    def from_macrofolderlist(cls, macrolist, folderlist, explicit_logfile=None):
         if not macrolist:
             raise StopIteration
-        macrofolderlist = ((m, f) for f in folderlist for m in macrolist)
+        macrofolderlist = [(m, f) for f in folderlist for m in macrolist]
         for i, (macro, folder) in enumerate(macrofolderlist):
-            yield cls(folder, macro, number=i)
+            log = explicit_logfile
+            if log and len(macrofolderlist) > 1:
+                log = pathlib.Path(log)
+                log = log.parent / (log.stem + "_" + str(i) + log.suffix)
+            yield cls(folder, macro, number=i, logfile=log)
 
     @staticmethod
     def is_valid(output_elem):
@@ -662,7 +680,7 @@ class AnyPyProcess(object):
         return AnyPyProcessOutputList(results)
 
     def start_macro(
-        self, macrolist=None, folderlist=None, search_subdirs=None, **kwargs
+        self, macrolist=None, folderlist=None, search_subdirs=None, logfile=None
     ):
         """Start a batch processing job.
 
@@ -684,6 +702,9 @@ class AnyPyProcess(object):
             Regular expression used to extend the folderlist with all the
             subdirectories that match the regular expression.
             Defaults to None: No subdirectories are included.
+        logfile: str, optional
+            If specified an explicit name will be used for the log files generated. 
+            Otherwise, random names are used for logfiles
 
         Returns
         -------
@@ -734,6 +755,11 @@ class AnyPyProcess(object):
         # Extend the folderlist if search_subdir is given
         if isinstance(search_subdirs, str) and isinstance(folderlist[0], str):
             folderlist = sum([getsubdirs(d, search_subdirs) for d in folderlist], [])
+        # Check for explicit logfile
+        if not isinstance(logfile, (type(None), str, os.PathLike)):
+            raise ValueError("logfile must be a str or path")
+        if not self.logfile_prefix and not logfile:
+            self.logfile_prefix = str(round(time.time()))[-5:]
         # Check the input arguments and generate the tasklist
         if macrolist is None:
             if self.cached_tasklist:
@@ -747,19 +773,20 @@ class AnyPyProcess(object):
         elif isinstance(macrolist[0], collections.Mapping):
             tasklist = list(_Task.from_output_list(macrolist))
         elif isinstance(macrolist[0], list):
-            arg_hash = make_hash([macrolist, folderlist, search_subdirs])
+            arg_hash = format(
+                abs(make_hash([macrolist, folderlist, search_subdirs, logfile])), "x"
+            )
             if self.cached_tasklist and self.cached_arg_hash == arg_hash:
                 tasklist = self.cached_tasklist
             else:
                 self.cached_arg_hash = arg_hash
-                tasklist = list(_Task.from_macrofolderlist(macrolist, folderlist))
+                tasklist = list(
+                    _Task.from_macrofolderlist(macrolist, folderlist, logfile)
+                )
         else:
             raise ValueError("Nothing to process for " + str(macrolist))
 
         self.summery = _Summery(have_ipython=run_from_ipython(), silent=self.silent)
-
-        if self.logfile_prefix is None:
-            self.logfile_prefix = str(self.cached_arg_hash)[:4] + "_"
 
         # Start the scheduler
         process_time = self._schedule_processes(tasklist, self._worker)
@@ -779,51 +806,55 @@ class AnyPyProcess(object):
             task.process_number = self.counter
             self.counter += 1
         if task.output:
+            # Skip processing trials already completed without errors
             if not task.has_error() and task.processtime > 0:
-                if not os.path.isfile(task.logfile):
-                    task.logfile = ""
+                # if not os.path.isfile(task.logfile):
+                #     task.logfile = ""
                 task_queue.put(task)
                 return
+
+        if not os.path.exists(task.folder):
+            raise (ValueError("The folder does not exists: {}".format(task.folder)))
         try:
-            if not os.path.exists(task.folder):
-                task.add_error("Could not find folder: {}".format(task.folder))
-                task.logfile = ""
-            else:
-                tmp_kwargs = dict(
-                    mode="a+",
+            if not task.logfile:
+                # If no explicit log file was given use NamedTemporaryFile
+                # to create one
+                with NamedTemporaryFile(
+                    mode="w+",
                     prefix=self.logfile_prefix,
                     suffix=".log",
                     dir=task.folder,
                     delete=False,
+                ) as fh:
+                    task.logfile = fh.name
+            with open(task.logfile, "w+") as logfile:
+                logfile.write("########### MACRO #############\n")
+                logfile.write("\n".join(task.macro))
+                logfile.write("\n\n######### OUTPUT LOG ##########")
+                logfile.flush()
+                task.logfile = logfile.name
+                starttime = time.clock()
+                exe_args = dict(
+                    macro=task.macro,
+                    logfile=logfile,
+                    anybodycon_path=self.anybodycon_path,
+                    timeout=self.timeout,
+                    keep_macrofile=self.keep_logfiles,
+                    env=self.env,
+                    priority=self.priority,
                 )
-                with NamedTemporaryFile(**tmp_kwargs) as logfile:
-                    logfile.write("########### MACRO #############\n")
-                    logfile.write("\n".join(task.macro))
-                    logfile.write("\n\n######### OUTPUT LOG ##########")
-                    logfile.flush()
-                    task.logfile = logfile.name
-                    starttime = time.clock()
-                    exe_args = dict(
-                        macro=task.macro,
-                        logfile=logfile,
-                        anybodycon_path=self.anybodycon_path,
-                        timeout=self.timeout,
-                        keep_macrofile=self.keep_logfiles,
-                        env=self.env,
-                        priority=self.priority,
-                    )
-                    try:
-                        task.retcode = execute_anybodycon(**exe_args)
-                    finally:
-                        endtime = time.clock()
-                        logfile.seek(0)
-                        task.processtime = endtime - starttime
-                    task.output = parse_anybodycon_output(
-                        logfile.read(),
-                        self.ignore_errors,
-                        self.warnings_to_include,
-                        fatal_warnings=self.fatal_warnings,
-                    )
+                try:
+                    task.retcode = execute_anybodycon(**exe_args)
+                finally:
+                    endtime = time.clock()
+                    logfile.seek(0)
+                    task.processtime = endtime - starttime
+                task.output = parse_anybodycon_output(
+                    logfile.read(),
+                    self.ignore_errors,
+                    self.warnings_to_include,
+                    fatal_warnings=self.fatal_warnings,
+                )
         except Exception as e:
             exc_type, exc_obj, exc_tb = sys.exc_info()
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
@@ -904,8 +935,8 @@ class AnyPyProcess(object):
     def cleanup_logfiles(self, tasklist):
         for task in tasklist:
             try:
-                if not task.has_error():
-                    if not self.keep_logfiles or task.retcode == _KILLED_BY_ANYPYTOOLS:
+                if not self.keep_logfiles:
+                    if not task.has_error() or task.retcode == _KILLED_BY_ANYPYTOOLS:
                         silentremove(task.logfile)
                         task.logfile = ""
             except OSError as e:

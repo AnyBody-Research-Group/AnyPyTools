@@ -2,6 +2,22 @@
 AnyPyTools Change Log
 =====================
 
+
+
+v1.1
+=============
+
+**Added:**
+
+- Added an ``logfile`` argument to the ``app.start_macro()`` function. This allow for setting an
+  explicit name for a log file. If ``start_macro()`` runs muliple instances the logfile will have
+  the task number appended.
+
+
+
+
+
+
 v1.0.1
 =============
 

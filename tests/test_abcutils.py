@@ -7,6 +7,7 @@ Created on Sun Jul 06 19:09:58 2014
 import os
 import shutil
 import pytest
+import pathlib
 
 
 from anypytools.abcutils import AnyPyProcess
@@ -43,6 +44,31 @@ class TestAnyPyProcess:
         app = AnyPyProcess(silent=True, keep_logfiles=True, return_task_info=True)
         output = app.start_macro(default_macro)
         assert os.path.isfile(output[0]["task_logfile"])
+
+    def test_explicit_logfiles_str(self, init_simple_model, default_macro):
+        logfile = "test.log"
+        app = AnyPyProcess(silent=True, keep_logfiles=True, return_task_info=True)
+        output = app.start_macro(default_macro, logfile=logfile)
+        assert os.path.isfile(logfile)
+
+    def test_explicit_logfiles_path(self, init_simple_model, default_macro):
+        logfile = pathlib.Path("test.log")
+        app = AnyPyProcess(silent=True, keep_logfiles=True, return_task_info=True)
+        output = app.start_macro(default_macro, logfile=logfile)
+        assert os.path.isfile(logfile)
+
+    def test_explicit_logfiles_multiple(self, init_simple_model):
+        logfile = "test.log"
+        macro = [
+            ['load "model.main.any"', "operation Main.ArmModelStudy.InverseDynamics"],
+            ['load "model.main.any"', "operation Main.ArmModelStudy.InverseDynamics"],
+            ['load "model.main.any"', "operation Main.ArmModelStudy.InverseDynamics"],
+        ]
+        app = AnyPyProcess(silent=True, keep_logfiles=True, return_task_info=True)
+        output = app.start_macro(macro, logfile=logfile)
+        assert os.path.isfile("test_0.log")
+        assert os.path.isfile("test_1.log")
+        assert os.path.isfile("test_2.log")
 
     def test_macro_with_erros(self, init_simple_model, default_macro):
         app = AnyPyProcess(
