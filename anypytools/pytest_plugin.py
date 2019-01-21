@@ -194,7 +194,7 @@ def pytest_collection_finish(session):
 class DeferPlugin(object):
     """Simple plugin to defer pytest-xdist hook functions."""
 
-    def pytest_xdist_setupnodes(config, specs):
+    def pytest_xdist_setupnodes(self, config, specs):
         """ called before any remote node is set up. """
         print(
             "\n\nUsing AnyBodyCon: ",
