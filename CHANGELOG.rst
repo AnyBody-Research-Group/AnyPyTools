@@ -3,6 +3,14 @@ AnyPyTools Change Log
 =====================
 
 
+v1.1.1
+=============
+
+**Fixed:**
+
+- Fix bug in pytest plugin when pytest-xdist is installed.
+
+
 
 v1.1
 =============
