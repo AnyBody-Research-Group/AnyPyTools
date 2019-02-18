@@ -232,7 +232,7 @@ def _get_first_key_match(key, names):
     return matching[0]
 
 
-class AnyPyProcessOutputList(collections.MutableSequence):
+class AnyPyProcessOutputList(collections.abc.MutableSequence):
     """List like class to wrap the output of model simulations.
 
     The class behaves as a normal list but provide
@@ -245,7 +245,7 @@ class AnyPyProcessOutputList(collections.MutableSequence):
             self.extend(list(elem))
 
     def check(self, v):
-        if not isinstance(v, collections.MutableSequence):
+        if not isinstance(v, collections.abc.MutableSequence):
             v = [v]
         for e in v:
             if not isinstance(e, collections.OrderedDict):

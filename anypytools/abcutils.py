@@ -222,7 +222,7 @@ def execute_anybodycon(
     subprocess_flags |= priority
     # Check global module flag to avoid starting processes after
     # the user cancelled the processes
-    timeout_time = time.clock() + timeout
+    timeout_time = time.process_time() + timeout
     proc = Popen(
         anybodycmd,
         stdout=logfile,
@@ -232,7 +232,7 @@ def execute_anybodycon(
     )
     _subprocess_container.add(proc.pid)
     while proc.poll() is None:
-        if time.clock() > timeout_time:
+        if time.process_time() > timeout_time:
             proc.terminate()
             proc.communicate()
             try:
@@ -774,7 +774,7 @@ class AnyPyProcess(object):
                     "the AnyPyProcess object has cached output "
                     "to process"
                 )
-        elif isinstance(macrolist[0], collections.Mapping):
+        elif isinstance(macrolist[0], collections.abc.Mapping):
             tasklist = list(_Task.from_output_list(macrolist))
         elif isinstance(macrolist[0], list):
             arg_hash = format(
@@ -837,7 +837,7 @@ class AnyPyProcess(object):
                 logfile.write("\n\n######### OUTPUT LOG ##########")
                 logfile.flush()
                 task.logfile = logfile.name
-                starttime = time.clock()
+                starttime = time.process_time()
                 exe_args = dict(
                     macro=task.macro,
                     logfile=logfile,
@@ -851,7 +851,7 @@ class AnyPyProcess(object):
                 try:
                     task.retcode = execute_anybodycon(**exe_args)
                 finally:
-                    endtime = time.clock()
+                    endtime = time.process_time()
                     logfile.seek(0)
                     task.processtime = endtime - starttime
                 task.output = parse_anybodycon_output(
@@ -888,7 +888,7 @@ class AnyPyProcess(object):
             totaltime = 0
             return totaltime
         use_threading = number_tasks > 1 and self.num_processes > 1
-        starttime = time.clock()
+        starttime = time.process_time()
         task_queue = Queue()
         pbar = _ProgressBar(number_tasks, self.silent)
         pbar.animate(0)
@@ -934,7 +934,7 @@ class AnyPyProcess(object):
             # to escape this try-catch. This is usefull when if the code is
             # run in an outer loop which we want to excape as well.
             time.sleep(1)
-        totaltime = time.clock() - starttime
+        totaltime = time.process_time() - starttime
         return totaltime
 
     def cleanup_logfiles(self, tasklist):

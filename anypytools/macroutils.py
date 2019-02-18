@@ -9,7 +9,7 @@ import types
 import logging
 from pprint import pprint, pformat  # noqa
 from copy import deepcopy
-from collections import MutableSequence
+from collections.abc import MutableSequence
 
 import numpy as np
 from scipy.stats import distributions
