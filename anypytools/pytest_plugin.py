@@ -272,6 +272,7 @@ class AnyItem(pytest.Item):
         self.app_opts = {
             "return_task_info": True,
             "silent": True,
+            "debug_mode": self.config.getoption("--anybody_debug_mode")
             "anybodycon_path": self.anybodycon_path,
             "timeout": self.timeout,
             "ignore_errors": kwargs.get("ignore_errors", []),
@@ -419,12 +420,10 @@ def pytest_addoption(parser):
         help="anybodycon.exe used in test: default or " "path-to-anybodycon",
     )
     group.addoption(
-        "--ammr",
-        action="store",
-        metavar="path",
-        help="Can be used to specify which AnyBody Managed Model "
-        "Repository (AMMR) to use. Setting this will pass a "
-        "'AMMR_PATH' path statement for all models",
+        "--anybody_debug_mode",
+        default=0,
+        type=int,
+        help="Sets the debug mode for the anybody console application. This can be used to enable crash dumps."
     )
     group.addoption(
         "--only-load",
