@@ -307,14 +307,21 @@ class AnyItem(pytest.Item):
             self.app = app
         # Ignore error due to missing Main.RunTest
         if "ERROR" in result:
-            for i, err in enumerate(result["ERROR"]):
+            runtest_missing = any(
+                "Error : Main.RunTest : Unresolved object" in err 
+                for err in result["ERROR"]
+            )
+            if runtest_missing:
                 runtest_errros = (
                     "Error : Main.RunTest : Unresolved object",
                     "Main.RunTest : Select Operation is not expected",
+                    "Error : run : command unexpected while",
                 )
-                if any(s in err for s in runtest_errros):
-                    del result["ERROR"][i]
-                    break
+                result["ERROR"][:] = [
+                    err 
+                    for err in result["ERROR"]
+                    if not any(s in err for s in runtest_errros)
+                ]
         # Check that the expected errors are present
         if self.expect_errors:
             error_list = result.get("ERROR", [])
