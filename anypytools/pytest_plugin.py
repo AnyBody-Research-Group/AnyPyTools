@@ -309,17 +309,16 @@ class AnyItem(pytest.Item):
         # Ignore error due to missing Main.RunTest
         if "ERROR" in result:
             runtest_missing = any(
-                "Error : Main.RunTest : Unresolved object" in err 
-                for err in result["ERROR"]
+                "Error : Main.RunTest :" in err for err in result["ERROR"]
             )
             if runtest_missing:
                 runtest_errros = (
-                    "Error : Main.RunTest : Unresolved object",
-                    "Main.RunTest : Select Operation is not expected",
+                    "Error : Main.RunTest : Unresolved",
+                    "Main.RunTest : Select Operation",
                     "Error : run : command unexpected while",
                 )
                 result["ERROR"][:] = [
-                    err 
+                    err
                     for err in result["ERROR"]
                     if not any(s in err for s in runtest_errros)
                 ]
@@ -423,7 +422,7 @@ def pytest_addoption(parser):
         "--anybody_debug_mode",
         default=0,
         type=int,
-        help="Sets the debug mode for the anybody console application. This can be used to enable crash dumps."
+        help="Sets the debug mode for the anybody console application. This can be used to enable crash dumps.",
     )
     group.addoption(
         "--only-load",
