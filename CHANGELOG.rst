@@ -7,6 +7,11 @@ AnyPyTools Change Log
 v1.1.2
 =============
 
+**Added:**
+
+- Add an option to the pytest plugin to set the ``debug_mode`` for the console application. 
+
+
 **Fixed:**
 
 - Pytest plugin can now handle new error messages from the upcoming AnyBody Modeling System 7.2.
