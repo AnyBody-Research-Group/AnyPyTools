@@ -272,6 +272,7 @@ class AnyItem(pytest.Item):
         self.app_opts = {
             "return_task_info": True,
             "silent": True,
+            "debug_mode": self.config.getoption("--anybody_debug_mode"),
             "anybodycon_path": self.anybodycon_path,
             "timeout": self.timeout,
             "ignore_errors": kwargs.get("ignore_errors", []),
@@ -307,14 +308,21 @@ class AnyItem(pytest.Item):
             self.app = app
         # Ignore error due to missing Main.RunTest
         if "ERROR" in result:
-            for i, err in enumerate(result["ERROR"]):
+            runtest_missing = any(
+                "Error : Main.RunTest : Unresolved object" in err 
+                for err in result["ERROR"]
+            )
+            if runtest_missing:
                 runtest_errros = (
                     "Error : Main.RunTest : Unresolved object",
                     "Main.RunTest : Select Operation is not expected",
+                    "Error : run : command unexpected while",
                 )
-                if any(s in err for s in runtest_errros):
-                    del result["ERROR"][i]
-                    break
+                result["ERROR"][:] = [
+                    err 
+                    for err in result["ERROR"]
+                    if not any(s in err for s in runtest_errros)
+                ]
         # Check that the expected errors are present
         if self.expect_errors:
             error_list = result.get("ERROR", [])
@@ -412,17 +420,23 @@ def pytest_addoption(parser):
         help="anybodycon.exe used in test: default or " "path-to-anybodycon",
     )
     group.addoption(
+        "--anybody_debug_mode",
+        default=0,
+        type=int,
+        help="Sets the debug mode for the anybody console application. This can be used to enable crash dumps."
+    )
+    group.addoption(
+        "--only-load",
+        action="store_true",
+        help="Only run a load test. I.e. do not run the " "'RunTest' macro",
+    )
+    group.addoption(
         "--ammr",
         action="store",
         metavar="path",
         help="Can be used to specify which AnyBody Managed Model "
         "Repository (AMMR) to use. Setting this will pass a "
         "'AMMR_PATH' path statement for all models",
-    )
-    group.addoption(
-        "--only-load",
-        action="store_true",
-        help="Only run a load test. I.e. do not run the " "'RunTest' macro",
     )
     group.addoption(
         "--define",

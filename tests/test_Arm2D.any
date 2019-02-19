@@ -1,0 +1,9 @@
+
+
+Main = {
+
+  #include "Demo.Arm2D.any"
+
+  AnyOperation& RunTest = Main.ArmModelStudy.Kinematics;
+
+};
