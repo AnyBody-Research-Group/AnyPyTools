@@ -431,6 +431,14 @@ def pytest_addoption(parser):
         help="Only run a load test. I.e. do not run the " "'RunTest' macro",
     )
     group.addoption(
+        "--ammr",
+        action="store",
+        metavar="path",
+        help="Can be used to specify which AnyBody Managed Model "
+        "Repository (AMMR) to use. Setting this will pass a "
+        "'AMMR_PATH' path statement for all models",
+    )
+    group.addoption(
         "--define",
         action="append",
         type=lambda kv: kv.split("=", 1),
