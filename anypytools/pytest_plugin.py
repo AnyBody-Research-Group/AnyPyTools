@@ -272,7 +272,7 @@ class AnyItem(pytest.Item):
         self.app_opts = {
             "return_task_info": True,
             "silent": True,
-            "debug_mode": self.config.getoption("--anybody_debug_mode")
+            "debug_mode": self.config.getoption("--anybody_debug_mode"),
             "anybodycon_path": self.anybodycon_path,
             "timeout": self.timeout,
             "ignore_errors": kwargs.get("ignore_errors", []),
