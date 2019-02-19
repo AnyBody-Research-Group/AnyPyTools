@@ -17,6 +17,7 @@ import shelve
 import atexit
 import pathlib
 import logging
+import warnings
 import collections
 from subprocess import Popen
 from tempfile import NamedTemporaryFile
@@ -517,7 +518,12 @@ class AnyPyProcess(object):
         python_env=None,
         debug_mode=0,
         priority=BELOW_NORMAL_PRIORITY_CLASS,
+        **kwargs
     ):
+        if len(kwargs):
+        warnings.warn(
+            "The following input arguments are not supported/understood:\n" + str(list(kwargs.keys())),
+        )
         if not isinstance(ignore_errors, (list, type(None))):
             raise ValueError("ignore_errors must be a list of strings")
 
