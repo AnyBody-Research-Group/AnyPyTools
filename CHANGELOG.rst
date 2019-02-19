@@ -3,6 +3,19 @@ AnyPyTools Change Log
 =====================
 
 
+
+v1.1.2
+=============
+
+**Fixed:**
+
+- Pytest plugin can now handle new error messages from the upcoming AnyBody Modeling System 7.2.
+
+- Deprecation warnings from using abstract base classes in the Python collection module. 
+
+
+
+
 v1.1.1
 =============
 
