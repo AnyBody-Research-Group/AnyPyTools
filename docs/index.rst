@@ -53,6 +53,17 @@ Documentation
     api/index
     pytest_plugin
 
+================
+How to cite?
+================
+
+If you use the library for publications please cite as:
+
+.. rst-class:: without-title
+
+.. seealso::
+    Lund et al., (2019). AnyPyTools: A Python package for reproducible research with the AnyBody Modeling System. Journal of Open Source Software, 4(33), 1108, https://doi.org/10.21105/joss.01108
+
 
 ============
 Development
