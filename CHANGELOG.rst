@@ -2,6 +2,14 @@
 AnyPyTools Change Log
 =====================
 
+v1.1.3
+=============
+
+**Added:**
+
+- Add an option to add pytest markers to in the AnyScript test files. This is done by setting ``pytest_markers=["slow"]`` in
+  in the header. It is the same as decorating Python tests with ``@pytest.mark.slow``.
+
 
 
 v1.1.2
