@@ -164,6 +164,7 @@ HEADER_ENSURES = (
     ("logfile_prefix", (str,)),
     ("expect_errors", (list,)),
     ("save_study", (str, type(None))),
+    ("pytest_markers", (list,)),
 )
 
 
@@ -262,6 +263,9 @@ class AnyItem(pytest.Item):
         self.paths = _as_absolute_paths(paths, start=self.config.rootdir.strpath)
         self.name = test_name
         self.expect_errors = kwargs.get("expect_errors", [])
+        
+        for marker in kwargs.get('pytest_markers', []):
+            self.add_marker(marker)
 
         self.timeout = self.config.getoption("--timeout")
         self.errors = []
@@ -428,6 +432,9 @@ def pytest_addoption(parser):
         "--only-load",
         action="store_true",
         help="Only run a load test. I.e. do not run the " "'RunTest' macro",
+    )
+    group.addoption(
+        "--runslow", action="store_true", default=False, help="run slow tests"
     )
     group.addoption(
         "--ammr",
