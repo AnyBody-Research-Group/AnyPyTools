@@ -2,6 +2,14 @@
 AnyPyTools Change Log
 =====================
 
+v1.1.4
+=============
+
+**Removed:**
+
+- Removed an ``--runslow`` argument in pytest plugin api. This setting caused problem when the user defined it them self. 
+
+
 v1.1.3
 =============
 
