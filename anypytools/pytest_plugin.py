@@ -434,9 +434,6 @@ def pytest_addoption(parser):
         help="Only run a load test. I.e. do not run the " "'RunTest' macro",
     )
     group.addoption(
-        "--runslow", action="store_true", default=False, help="run slow tests"
-    )
-    group.addoption(
         "--ammr",
         action="store",
         metavar="path",
