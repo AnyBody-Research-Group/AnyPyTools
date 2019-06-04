@@ -2,6 +2,20 @@
 AnyPyTools Change Log
 =====================
 
+v1.2.0
+=============
+
+**Added:**
+- Pytest plugin: Option to set the ``faltal_warnings`` variable as a list 
+  to select the warnings which should trigger an error. 
+
+
+**Removed:**
+
+- Pytest plugin: Deprecated the ``warnings_to_include`` variable. Instead use the `fatal_warnings` 
+  variable to select specific warnings.
+
+
 v1.1.5
 =============
 
