@@ -2,6 +2,14 @@
 AnyPyTools Change Log
 =====================
 
+v1.1.5
+=============
+
+**Fixed:**
+
+- Fix a bug with pytest plugin which caused expected errors to still show up in the error list.
+
+
 v1.1.4
 =============
 

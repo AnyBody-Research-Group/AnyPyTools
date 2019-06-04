@@ -327,8 +327,8 @@ class AnyItem(pytest.Item):
                     if not any(s in err for s in runtest_errros)
                 ]
         # Check that the expected errors are present
+        error_list = result.get("ERROR", [])
         if self.expect_errors:
-            error_list = result.get("ERROR", [])
             for xerr in self.expect_errors:
                 xerr_found = False
                 for i, error in enumerate(error_list):
@@ -340,8 +340,8 @@ class AnyItem(pytest.Item):
                         "TEST ERROR: Expected error not " 'found: "{}"'.format(xerr)
                     )
         # Add remaining errors to item's error list
-        if "ERROR" in result and len(result["ERROR"]) > 0:
-            self.errors.extend(result["ERROR"])
+        if error_list:
+            self.errors.extend(error_list)
         # Add info to the hdf5 file if compare output was set
         if self.save_filename is not None:
             import h5py
