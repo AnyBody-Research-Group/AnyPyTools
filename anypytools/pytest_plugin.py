@@ -9,9 +9,11 @@ import os
 import re
 import ast
 import shutil
+import warnings
 import argparse
 import itertools
 import contextlib
+import collections
 from traceback import format_list, extract_tb
 
 import pytest
@@ -155,16 +157,16 @@ def _as_absolute_paths(d, start=os.getcwd()):
 
 
 HEADER_ENSURES = (
-    ("define", (dict, list, tuple)),
-    ("path", (dict, list, tuple)),
-    ("ignore_errors", (list,)),
-    ("warnings_to_include", (list,)),
-    ("fatal_warnings", (bool,)),
+    ("define", (dict, collections.abc.Sequence)),
+    ("path", (dict, collections.abc.Sequence)),
+    ("ignore_errors", (collections.abc.Sequence,)),
+    ("warnings_to_include", (collections.abc.Sequence,)),
+    ("fatal_warnings", (bool,collections.abc.Sequence)),
     ("keep_logfiles", (bool,)),
     ("logfile_prefix", (str,)),
-    ("expect_errors", (list,)),
+    ("expect_errors", (collections.abc.Sequence,)),
     ("save_study", (str, type(None))),
-    ("pytest_markers", (list,)),
+    ("pytest_markers", (collections.abc.Sequence,)),
 )
 
 
@@ -273,6 +275,21 @@ class AnyItem(pytest.Item):
         self.save_filename = None
         self.macro_file = None
         self.anybodycon_path = pytest.anytest.ams_path
+
+
+        fatal_warnings = kwargs.get("fatal_warnings", False)
+        warnings_to_include = kwargs.get("warnings_to_include", None)
+        if warnings_to_include:
+            warnings.war(
+                "`warnings_to_include` is deprecated. Specify the `fatal_warnings` variable as "
+                "a list to select specific warnings"
+            )
+            if not isinstance(fatal_warnings, collections.abc.Sequence):
+                fatal_warnings = warnings_to_include
+
+        if not isinstance(fatal_warnings, collections.abc.Sequence):
+            fatal_warnings = ['WARNING'] if fatal_warnings else []
+
         self.app_opts = {
             "return_task_info": True,
             "silent": True,
@@ -280,8 +297,8 @@ class AnyItem(pytest.Item):
             "anybodycon_path": self.anybodycon_path,
             "timeout": self.timeout,
             "ignore_errors": kwargs.get("ignore_errors", []),
-            "warnings_to_include": kwargs.get("warnings_to_include", []),
-            "fatal_warnings": kwargs.get("fatal_warnings", False),
+            "warnings_to_include": fatal_warnings,
+            "fatal_warnings": bool(fatal_warnings),
             "keep_logfiles": kwargs.get("keep_logfiles", True),
             "logfile_prefix": kwargs.get("logfile_prefix", None),
         }
