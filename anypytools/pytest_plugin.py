@@ -280,7 +280,7 @@ class AnyItem(pytest.Item):
         fatal_warnings = kwargs.get("fatal_warnings", False)
         warnings_to_include = kwargs.get("warnings_to_include", None)
         if warnings_to_include:
-            warnings.war(
+            warnings.warn(
                 "`warnings_to_include` is deprecated. Specify the `fatal_warnings` variable as "
                 "a list to select specific warnings"
             )
