@@ -161,7 +161,7 @@ HEADER_ENSURES = (
     ("path", (dict, collections.abc.Sequence)),
     ("ignore_errors", (collections.abc.Sequence,)),
     ("warnings_to_include", (collections.abc.Sequence,)),
-    ("fatal_warnings", (bool,collections.abc.Sequence)),
+    ("fatal_warnings", (bool, collections.abc.Sequence)),
     ("keep_logfiles", (bool,)),
     ("logfile_prefix", (str,)),
     ("expect_errors", (collections.abc.Sequence,)),
@@ -243,7 +243,7 @@ class AnyFile(pytest.File):
                     parent=self,
                     defs=defs,
                     paths=paths,
-                    **header
+                    **header,
                 )
             else:
                 raise ValueError("Malformed input: ", header)
@@ -265,8 +265,8 @@ class AnyItem(pytest.Item):
         self.paths = _as_absolute_paths(paths, start=self.config.rootdir.strpath)
         self.name = test_name
         self.expect_errors = kwargs.get("expect_errors", [])
-        
-        for marker in kwargs.get('pytest_markers', []):
+
+        for marker in kwargs.get("pytest_markers", []):
             self.add_marker(marker)
 
         self.timeout = self.config.getoption("--timeout")
@@ -276,19 +276,19 @@ class AnyItem(pytest.Item):
         self.macro_file = None
         self.anybodycon_path = pytest.anytest.ams_path
 
-
         fatal_warnings = kwargs.get("fatal_warnings", False)
         warnings_to_include = kwargs.get("warnings_to_include", None)
         if warnings_to_include:
             warnings.warn(
-                "`warnings_to_include` is deprecated. Specify the `fatal_warnings` variable as "
-                "a list to select specific warnings"
+                f"\n{name}:`warnings_to_include` is deprecated. \nSpecify the `fatal_warnings` variable as "
+                "a list to select specific warnings",
+                DeprecationWarning,
             )
             if not isinstance(fatal_warnings, collections.abc.Sequence):
                 fatal_warnings = warnings_to_include
 
         if not isinstance(fatal_warnings, collections.abc.Sequence):
-            fatal_warnings = ['WARNING'] if fatal_warnings else []
+            fatal_warnings = ["WARNING"] if fatal_warnings else []
 
         self.app_opts = {
             "return_task_info": True,
