@@ -206,9 +206,9 @@ def execute_anybodycon(
         os.path.realpath(anybodycon_path),
         "--macro=",
         macro_file.name,
-        "/ni",
         "/deb",
         str(debug_mode),
+        "/ni",
     ]
     if sys.platform.startswith("win"):
         # Don't display the Windows GPF dialog if the invoked program dies.

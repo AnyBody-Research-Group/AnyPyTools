@@ -2,6 +2,16 @@
 AnyPyTools Change Log
 =====================
 
+v1.2.1
+=============
+
+**Fixed:**
+- Add a work-around for a bug in AnyBody < 7.2.2 which cause the AnyBody console  
+  to start in interactive mode when launched from AnyPyTools. This could cause the 
+  console application to hang if something fails in AnyBody. 
+
+
+
 v1.2.0
 =============
 
