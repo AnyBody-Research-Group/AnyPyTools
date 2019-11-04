@@ -855,9 +855,11 @@ class AnyPyProcess(object):
                 try:
                     task.retcode = execute_anybodycon(**exe_args)
                 finally:
-                    endtime = time.time()
+                    if task.retcode == _KILLED_BY_ANYPYTOOLS:
+                        task.processtime = 0
+                    else:
+                        task.processtime = time.time() - starttime
                     logfile.seek(0)
-                    task.processtime = endtime - starttime
                 task.output = parse_anybodycon_output(
                     logfile.read(),
                     self.ignore_errors,
@@ -931,7 +933,7 @@ class AnyPyProcess(object):
 
                 time.sleep(0.05)
         except KeyboardInterrupt:
-            _display("Processing interrupted")
+            _display("\nProcessing interrupted")
             _subprocess_container.stop_all = True
             # Add a small delay here. It allows the user to press ctrl-c twice
             # to escape this try-catch. This is usefull when if the code is
