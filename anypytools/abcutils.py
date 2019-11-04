@@ -19,7 +19,7 @@ import pathlib
 import logging
 import warnings
 import collections
-from subprocess import Popen
+from subprocess import Popen, TimeoutExpired
 from tempfile import NamedTemporaryFile
 from threading import Thread, RLock
 from queue import Queue
@@ -100,12 +100,11 @@ class _SubProcessContainer(object):
 
     @stop_all.setter
     def stop_all(self, value):
-        with _thread_lock:
-            if value:
-                self._stop_all = True
-                self._kill_running_processes()
-            else:
-                self._stop_all = False
+        if value:
+            self._stop_all = True
+            self._kill_running_processes()
+        else:
+            self._stop_all = False
 
     def _kill_running_processes(self):
         """Clean up and shut down any running processes."""
@@ -182,14 +181,15 @@ def execute_anybodycon(
         The return code from the AnyBody Console application.
 
     """
-    if logfile is None:
-        logfile = sys.stdout
 
     try:
         macro_filename = os.path.splitext(logfile.name)[0] + ".anymcr"
     except AttributeError:
         macro_filename = "macrofile.anymcr"
 
+    if logfile is None:
+        logfile = sys.stdout
+        
     if anybodycon_path is None:
         anybodycon_path = get_anybodycon_path()
 
@@ -223,7 +223,6 @@ def execute_anybodycon(
     subprocess_flags |= priority
     # Check global module flag to avoid starting processes after
     # the user cancelled the processes
-    timeout_time = time.process_time() + timeout
     proc = Popen(
         anybodycmd,
         stdout=logfile,
@@ -232,20 +231,17 @@ def execute_anybodycon(
         env=env,
     )
     _subprocess_container.add(proc.pid)
-    while proc.poll() is None:
-        if time.process_time() > timeout_time:
+    try:
+        proc.wait(timeout=timeout)
+    except TimeoutExpired:
             proc.terminate()
             proc.communicate()
-            try:
+            if logfile.seekable(): 
                 logfile.seek(0, os.SEEK_END)
-            except io.UnsupportedOperation:
-                pass
             logfile.write(
                 "\nERROR: AnyPyTools : Timeout after {:d} sec.".format(int(timeout))
             )
             proc.returncode = 0
-            break
-        time.sleep(0.05)
     _subprocess_container.remove(proc.pid)
     retcode = ctypes.c_int32(proc.returncode).value
     if retcode == _KILLED_BY_ANYPYTOOLS:
@@ -512,7 +508,7 @@ class AnyPyProcess(object):
         ignore_errors=None,
         warnings_to_include=None,
         fatal_warnings=False,
-        return_task_info=False,
+        return_task_info=True,
         keep_logfiles=False,
         logfile_prefix=None,
         python_env=None,
@@ -844,7 +840,7 @@ class AnyPyProcess(object):
                 logfile.write("\n\n######### OUTPUT LOG ##########")
                 logfile.flush()
                 task.logfile = logfile.name
-                starttime = time.process_time()
+                starttime = time.time()
                 exe_args = dict(
                     macro=task.macro,
                     logfile=logfile,
@@ -858,7 +854,7 @@ class AnyPyProcess(object):
                 try:
                     task.retcode = execute_anybodycon(**exe_args)
                 finally:
-                    endtime = time.process_time()
+                    endtime = time.time()
                     logfile.seek(0)
                     task.processtime = endtime - starttime
                 task.output = parse_anybodycon_output(
@@ -868,24 +864,23 @@ class AnyPyProcess(object):
                     fatal_warnings=self.fatal_warnings,
                 )
         except Exception as e:
+            if isinstance(e, KeyboardInterrupt):
+                task.processtime = 0
+                raise
             exc_type, exc_obj, exc_tb = sys.exc_info()
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
             task.add_error(
                 str(exc_type) + "\n" + str(fname) + "\n" + str(exc_tb.tb_lineno)
             )
+            task.add_error(str(e))
             logger.debug(str(e))
         finally:
             if not self.keep_logfiles and not task.has_error():
-                try:
-                    silentremove(logfile.name)
-                    task.logfile = ""
-                except OSError as e:
-                    pass  # Ignore if AnyBody has not released the log file.
+                silentremove(logfile.name)
+                task.logfile = ""
             task_queue.put(task)
 
     def _schedule_processes(self, tasklist, _worker):
-        # Reset the global flag that allows
-        global _stop_all_processes
         _subprocess_container.stop_all = False
         # Make a shallow copy of the task list,
         # so we don't mess with the callers list.
@@ -895,7 +890,7 @@ class AnyPyProcess(object):
             totaltime = 0
             return totaltime
         use_threading = number_tasks > 1 and self.num_processes > 1
-        starttime = time.process_time()
+        starttime = time.time()
         task_queue = Queue()
         pbar = _ProgressBar(number_tasks, self.silent)
         pbar.animate(0)
@@ -933,7 +928,7 @@ class AnyPyProcess(object):
                     processed_tasks.append(task)
                     pbar.animate(len(processed_tasks), n_errors)
 
-                time.sleep(0.01)
+                time.sleep(0.05)
         except KeyboardInterrupt:
             _display("Processing interrupted")
             _subprocess_container.stop_all = True
@@ -941,7 +936,7 @@ class AnyPyProcess(object):
             # to escape this try-catch. This is usefull when if the code is
             # run in an outer loop which we want to excape as well.
             time.sleep(1)
-        totaltime = time.process_time() - starttime
+        totaltime = time.time() - starttime
         return totaltime
 
     def cleanup_logfiles(self, tasklist):
