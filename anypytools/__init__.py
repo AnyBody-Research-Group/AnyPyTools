@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 """AnyPyTools library."""
-
+import os
 import sys
 import platform
 import logging
+
+if "FOR_DISABLE_CONSOLE_CTRL_HANDLER" not in os.environ:
+    os.environ["FOR_DISABLE_CONSOLE_CTRL_HANDLER"] = "1"
 
 from anypytools.abcutils import AnyPyProcess, execute_anybodycon
 from anypytools.macroutils import AnyMacro
