@@ -189,7 +189,7 @@ def execute_anybodycon(
 
     if logfile is None:
         logfile = sys.stdout
-        
+
     if anybodycon_path is None:
         anybodycon_path = get_anybodycon_path()
 
@@ -234,14 +234,14 @@ def execute_anybodycon(
     try:
         proc.wait(timeout=timeout)
     except TimeoutExpired:
-            proc.terminate()
-            proc.communicate()
-            if logfile.seekable(): 
-                logfile.seek(0, os.SEEK_END)
-            logfile.write(
-                "\nERROR: AnyPyTools : Timeout after {:d} sec.".format(int(timeout))
-            )
-            proc.returncode = 0
+        proc.terminate()
+        proc.communicate()
+        if logfile.seekable():
+            logfile.seek(0, os.SEEK_END)
+        logfile.write(
+            "\nERROR: AnyPyTools : Timeout after {:d} sec.".format(int(timeout))
+        )
+        proc.returncode = 0
     _subprocess_container.remove(proc.pid)
     retcode = ctypes.c_int32(proc.returncode).value
     if retcode == _KILLED_BY_ANYPYTOOLS:
@@ -735,15 +735,16 @@ class AnyPyProcess(object):
         if isinstance(macrolist, AnyMacro):
             macrolist = macrolist.create_macros()
         elif isinstance(macrolist, list) and len(macrolist):
-            if isinstance(macrolist[0], str):
-                macrolist = [macrolist]
-            if isinstance(macrolist[0], MacroCommand):
+            if not isinstance(macrolist[0], (list, tuple)):
                 macrolist = [macrolist]
             if isinstance(macrolist[0], list) and len(macrolist[0]):
-                if isinstance(macrolist[0][0], MacroCommand):
-                    macrolist = [
-                        [mc.get_macro(index=0) for mc in elem] for elem in macrolist
+                macrolist = [
+                    [
+                        mc.get_macro(index=0) if isinstance(mc, MacroCommand) else mc
+                        for mc in elem
                     ]
+                    for elem in macrolist
+                ]
         elif isinstance(macrolist, str):
             if macrolist.startswith("[") and macrolist.endswith("]"):
                 macrolist = macrolist.strip("[").rstrip("]")
