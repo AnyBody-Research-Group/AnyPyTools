@@ -2,6 +2,21 @@
 AnyPyTools Change Log
 =====================
 
+v1.2.2
+=============
+
+**Fixed:** 
+- Fixed problem with Ctrl-C events not working. ``scipy.stats`` used
+  some fortran routines which hijacked the key event and caused a crash instead. 
+  
+- Fixed an issue with process time not being reported correctly.
+
+- Fixed an issue with macros which were a mixture of normal strings and macro-command helper
+  classes from ``anypytools.macro_commands``. 
+
+
+
+
 v1.2.1
 =============
 

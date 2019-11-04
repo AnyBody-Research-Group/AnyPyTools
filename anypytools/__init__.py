@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 """AnyPyTools library."""
-
+import os
 import sys
 import platform
 import logging
+
+if "FOR_DISABLE_CONSOLE_CTRL_HANDLER" not in os.environ:
+    os.environ["FOR_DISABLE_CONSOLE_CTRL_HANDLER"] = "1"
 
 from anypytools.abcutils import AnyPyProcess, execute_anybodycon
 from anypytools.macroutils import AnyMacro
@@ -34,7 +37,7 @@ __all__ = [
     "NORMAL_PRIORITY_CLASS",
 ]
 
-__version__ = "1.2.1"
+__version__ = "1.2.2"
 
 
 def print_versions():
