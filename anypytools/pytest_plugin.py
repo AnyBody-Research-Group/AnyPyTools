@@ -62,13 +62,12 @@ class AnyTestSession(object):
         early in the pytest startup.
         """
 
-
         if config.getoption("--debug"):
             import ptvsd
 
             # 5678 is the default attach port in the VS Code debug configurations
             print("Waiting for debugger attach")
-            ptvsd.enable_attach(address=('localhost', 5678), redirect_output=True)
+            ptvsd.enable_attach(address=("localhost", 5678), redirect_output=True)
             ptvsd.wait_for_attach()
             breakpoint()
 
@@ -81,7 +80,6 @@ class AnyTestSession(object):
         self.bm_constants_map = get_bm_constants(
             ammr_path=ammr_path, ammr_version=major_ammr_ver
         )
-
 
 
 def _limited_traceback(excinfo):
@@ -187,9 +185,9 @@ def _parse_header(header):
 
 
 def _write_macro_file(path, name, macro):
-    filename = os.path.join(path, name + '.anymcr')
-    with open(filename, 'w') as f:
-        f.writelines([str(mcr)+'\n' for mcr in macro])
+    filename = os.path.join(path, name + ".anymcr")
+    with open(filename, "w") as f:
+        f.writelines([str(mcr) + "\n" for mcr in macro])
     return filename
 
 
@@ -305,7 +303,7 @@ class AnyItem(pytest.Item):
         }
         if not self.config.getoption("--only-load"):
             self.macro.append(macro_commands.OperationRun("Main.RunTest"))
-        
+
         self.hdf5_outputs = []
         save_study = kwargs.get("save_study", None)
         if self.config.getoption("--anytest-output") and save_study:
@@ -366,14 +364,14 @@ class AnyItem(pytest.Item):
             subfolder = Path(self.config.getoption("--anytest-name"))
             target = base / subfolder / self.name
             self.save_output_files(tmpdir, target, result, self.hdf5_outputs)
-        
+
         if self.errors and self.config.getoption("--create-macros"):
             logfile = result["task_logfile"]
             shutil.copyfile(logfile, self.fspath / (self.name + ".txt"))
-            shutil.copyfile(logfile.with_suffix(".anymcr"), self.fspath / (self.name + ".anymcr"))
-            macro_name = _write_macro_file(
-                self.fspath.dirname, self.name, self.macro
+            shutil.copyfile(
+                logfile.with_suffix(".anymcr"), self.fspath / (self.name + ".anymcr")
             )
+            macro_name = _write_macro_file(self.fspath.dirname, self.name, self.macro)
 
         shutil.rmtree(tmpdir, ignore_errors=True)
 
@@ -382,12 +380,12 @@ class AnyItem(pytest.Item):
 
         return
 
-    
-    def save_output_files(self, src_folder, target_folder, result, hdf5files): 
+    def save_output_files(self, src_folder, target_folder, result, hdf5files):
         """ Saves hdf5, macro, and log files from a test run
             and copy it to the target_folder
         """
         import h5py
+
         target_folder = Path(target_folder)
         src_folder = Path(src_folder)
         src_log = Path(result["task_logfile"])
@@ -398,7 +396,7 @@ class AnyItem(pytest.Item):
 
         for fn in hdf5files:
             if (src_folder / fn).exists():
-                shutil.copyfile(src_folder / fn, target_folder / fn) 
+                shutil.copyfile(src_folder / fn, target_folder / fn)
                 f = h5py.File(target_folder / fn, "a")
                 f.attrs["anytest_processtime"] = result["task_processtime"]
                 f.attrs["anytest_macro"] = "\n".join(result["task_macro"][:-1])
@@ -419,9 +417,6 @@ class AnyItem(pytest.Item):
                 r"(?i)anybodycon\.exe", "anybody.exe", pytest.anytest.ams_path
             )
             f.write(f'"{anybodygui}" -m "%~dp0{target_macro.name}"')
-
-
-
 
     def repr_failure(self, excinfo):
         """Print a representation when a test failes."""
@@ -500,15 +495,18 @@ def pytest_addoption(parser):
     )
     group.addoption(
         "--anytest-name",
-        nargs='?',
-        default = time.strftime('%Y_%m_%d-%H.%M.%S'),
+        nargs="?",
+        default=time.strftime("%Y_%m_%d-%H.%M.%S"),
         help="Specify the subfolder where test output is stored. This defaults to a time stamp, but can overriden with a specific name",
     )
+
     group.addoption(
         "--anytest-output",
         metavar="path",
-        nargs='?',
-        default = None,
+        nargs="?",
+        default=None,
         const=os.path.join(os.getcwd(), "anytest-output"),
-        help="Specify if hdf5 files are saved from the tests. Can be assined a value to specify the base folder where data will be saved. Default save directory is %(const)r.",
+        help=(
+            "Specify if hdf5 files are saved from the tests. Can be assined a value to specify the base folder where data will be saved. Default save directory is %(const)r."
+        ),
     )

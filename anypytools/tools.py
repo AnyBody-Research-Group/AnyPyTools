@@ -260,10 +260,7 @@ class AnyPyProcessOutputList(collections.abc.MutableSequence):
             key = _get_first_key_match(i, self.list[0])
             try:
                 data = np.array(
-                    [
-                        super(AnyPyProcessOutput, e).__getitem__(key)
-                        for e in self.list
-                    ]
+                    [super(AnyPyProcessOutput, e).__getitem__(key) for e in self.list]
                 )
             except KeyError:
                 msg = " The key: '{}' is not present in all elements of the output."
