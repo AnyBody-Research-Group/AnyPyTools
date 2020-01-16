@@ -41,7 +41,7 @@ def find_version(*file_paths):
     raise RuntimeError("Unable to find version string.")
 
 
-require_list = ["numpy"]
+require_list = ["numpy", "scipy"]
 
 entry_points = {}
 
@@ -53,7 +53,7 @@ setup(
     name="AnyPyTools",
     version=find_version("anypytools", "__init__.py"),
     install_requires=require_list,
-    python_requires=">=3.5",
+    python_requires=">=3.6",
     packages=find_packages(exclude=["docs", "tests*"]),
     package_data={"anypytools": ["test_models/Demo.Arm2D.any"]},
     # the following makes a plugin available to pytest
@@ -67,8 +67,10 @@ setup(
     url="https://github.com/AnyBody-Research-Group/AnyPyTools",
     classifiers=[
         "Development Status :: 5 - Production/Stable",
-        "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Framework :: Pytest",
         "Intended Audience :: Science/Research",
         "License :: OSI Approved :: MIT License",
         "Environment :: Win32 (MS Windows)",

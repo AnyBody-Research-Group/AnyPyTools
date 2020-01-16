@@ -62,15 +62,6 @@ class AnyTestSession(object):
         early in the pytest startup.
         """
 
-        if config.getoption("--debug"):
-            import ptvsd
-
-            # 5678 is the default attach port in the VS Code debug configurations
-            print("Waiting for debugger attach")
-            ptvsd.enable_attach(address=("localhost", 5678), redirect_output=True)
-            ptvsd.wait_for_attach()
-            breakpoint()
-
         ammr_path = find_ammr_path(config.getoption("--ammr") or config.rootdir.strpath)
         self.ammr_version = get_ammr_version(ammr_path)
         self.ams_path = config.getoption("--anybodycon") or get_anybodycon_path()
