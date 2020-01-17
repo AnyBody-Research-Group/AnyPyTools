@@ -2,6 +2,14 @@
 AnyPyTools Change Log
 =====================
 
+
+v1.3.0
+=============
+
+**Changed:**
+- Changed the interface for the pytest plugin when saving hdf5 files from anybody tests. 
+
+
 v1.2.2
 =============
 
