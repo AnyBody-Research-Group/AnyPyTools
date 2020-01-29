@@ -15,3 +15,6 @@ docs/Tutorial/data.db.dat
 docs/Tutorial/data.db.dir
 docs/Tutorial/TestOutput.csv
 .vs
+Tests/_anytest_output
+Tests/anytest_output
+.mypy_cache
