@@ -3,6 +3,15 @@ AnyPyTools Change Log
 =====================
 
 
+v1.4.0
+=============
+
+**Added:**
+- New option for running the GUI version of AMS with AnyPyTools instead of the console. s
+
+
+
+
 v1.3.0
 =============
 
