@@ -498,7 +498,7 @@ class AnyPyProcess(object):
         self.ignore_errors = ignore_errors
         self.warnings_to_include = warnings_to_include
         self.keep_logfiles = keep_logfiles
-            self.logfile_prefix = logfile_prefix
+        self.logfile_prefix = logfile_prefix
         self.cached_arg_hash = None
         self.cached_tasklist = None
         if python_env is not None:
@@ -747,8 +747,8 @@ class AnyPyProcess(object):
         try:
             with tqdm(total=len(tasklist), disable=self.silent) as pbar:
                 for task in self._schedule_processes(tasklist):
-                if task.has_error() and not self.silent:
-                    tqdm.write(task_summery(task))
+                    if task.has_error() and not self.silent:
+                        tqdm.write(task_summery(task))
                         if hasattr(pbar, "container"):
                             pbar.container.children[0].bar_style = "danger"
                     pbar.update()
@@ -782,6 +782,7 @@ class AnyPyProcess(object):
 
         if not os.path.exists(task.folder):
             raise (ValueError("The folder does not exists: {}".format(task.folder)))
+
         try:
             if not task.logfile:
                 # If no explicit log file was given use NamedTemporaryFile
@@ -813,29 +814,22 @@ class AnyPyProcess(object):
                 )
                 try:
                     task.retcode = execute_anybodycon(**exe_args)
-                finally:
                     if task.retcode == _KILLED_BY_ANYPYTOOLS:
                         task.processtime = 0
                     else:
                         task.processtime = time.time() - starttime
+                except KeyboardInterrupt as e:
+                    task.processtime = 0
+                    raise e
+                finally:
                     logfile.seek(0)
+
                 task.output = parse_anybodycon_output(
                     logfile.read(),
                     self.ignore_errors,
                     self.warnings_to_include,
                     fatal_warnings=self.fatal_warnings,
                 )
-        except Exception as e:
-            if isinstance(e, KeyboardInterrupt):
-                task.processtime = 0
-                raise e
-            exc_type, exc_obj, exc_tb = sys.exc_info()
-            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            task.add_error(
-                str(exc_type) + "\n" + str(fname) + "\n" + str(exc_tb.tb_lineno)
-            )
-            task.add_error(str(e))
-            logger.debug(str(e))
         finally:
             if not self.keep_logfiles and not task.has_error():
                 silentremove(logfile.name)
