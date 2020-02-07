@@ -637,15 +637,6 @@ def silentremove(filename):
             raise  # re-raise exception if a different error occured
 
 
-def _run_from_ipython():
-    """Return True if run from IPython."""
-    try:
-        __IPYTHON__
-        return True
-    except NameError:
-        return False
-
-
 def make_hash(o):
     """Make a hash from a dictionary, list, tuple or set.
 

@@ -2,6 +2,15 @@
 AnyPyTools Change Log
 =====================
 
+v1.4.0
+=============
+
+**Changed:**
+- Progressbars are now draw using `tqdm <https://github.com/tqdm/tqdm>`__. This enables error 
+  messages while the progress bar is rendering, and solves a problem with detecting when the 
+  code is running in Jupyter notebook and not. 
+
+
 
 v1.4.0
 =============

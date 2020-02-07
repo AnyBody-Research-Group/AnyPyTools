@@ -19,12 +19,16 @@ import pathlib
 import logging
 import warnings
 import collections
+from pathlib import Path
 from subprocess import Popen, TimeoutExpired
 from tempfile import NamedTemporaryFile
 from threading import Thread, RLock
 from queue import Queue
 
+from typing import Generator, List
+
 import numpy as np
+from tqdm.auto import tqdm
 
 from .tools import (
     make_hash,
@@ -39,17 +43,6 @@ from .tools import (
     silentremove,
 )
 from .macroutils import AnyMacro, MacroCommand
-
-try:
-    from IPython.display import HTML, display
-except ImportError:
-    HTML = display = None
-
-try:
-    import ipywidgets
-except ImportError:
-    ipywidgets = None
-
 
 logger = logging.getLogger("abt.anypytools")
 
@@ -122,13 +115,6 @@ class _SubProcessContainer(object):
 
 _subprocess_container = _SubProcessContainer()
 atexit.register(_subprocess_container._kill_running_processes)
-
-
-def _display(line, *args, **kwargs):
-    if run_from_ipython():
-        display(HTML(line))
-    else:
-        print(line, *args, **kwargs)
 
 
 def execute_anybodycon(
@@ -275,9 +261,11 @@ class _Task(object):
 
     def __init__(self, folder=None, macro=None, taskname=None, number=1, logfile=None):
         """Init the Task class with the class attributes."""
-        self.folder = folder
-        if not folder:
-            self.folder = os.getcwd()
+        if folder:
+            folder = Path(folder)
+        else:
+            folder = Path(os.getcwd())
+        self.folder = str(folder.absolute())
         if macro is not None:
             self.macro = macro
         else:
@@ -288,10 +276,10 @@ class _Task(object):
         self.processtime = 0
         self.retcode = None
         self.name = taskname
-        if not taskname:
-            head, folder = os.path.split(folder)
-            parentfolder = os.path.basename(head)
-            self.name = parentfolder + "/" + folder
+        if taskname:
+            self.name = taskname
+        else:
+            self.name = f"{folder.parent.name}-{folder.name}-{number}"
 
     def has_error(self):
         return "ERROR" in self.output
@@ -363,64 +351,30 @@ class _Task(object):
         return all(k in output_elem for k in keys)
 
 
-class _Summery(object):
-    """Class to display the summery of task."""
+def tasklist_summery(tasklist: List[_Task]) -> str:
+    out = ""
+    unfinished_tasks = [t for t in tasklist if t.processtime <= 0]
+    failed_tasks = [t for t in tasklist if t.has_error() and t.processtime > 0]
+    completed_tasks = [t for t in tasklist if not t.has_error() and t.processtime > 0]
+    out += f"Completed: {len(completed_tasks)}"
+    if len(failed_tasks):
+        out += f", Failed: {len(failed_tasks):d}\n"
+    if len(unfinished_tasks):
+        out += f", Not processed: {len(unfinished_tasks):d}\n"
+    return out
 
-    def __init__(self, have_ipython=False, silent=False):
-        self._silent = silent
-        if have_ipython and ipywidgets and not self._silent:
-            self.ipywidget = ipywidgets.HTML()
-            self.ipywidget.initialized = False
-        else:
-            self.ipywidget = None
 
-    def task_summery(self, task):
-        if self.ipywidget:
-            if task.has_error():
-                self._display(self.format_summery(task))
-
-    def _display(self, s):
-        if self._silent:
-            return
-        if self.ipywidget is not None:
-            if not self.ipywidget.initialized:
-                display(self.ipywidget)
-                self.ipywidget.initialized = True
-            self.ipywidget.value += s + "<br>"
-        else:
-            print(s)
-
-    def format_summery(self, task):
-        entry = ""
-        if task.has_error():
-            entry += "Failed :"
-        elif task.processtime == 0:
-            entry += "Not completed :"
-        else:
-            entry += "Completed :"
-        entry += "{1!s} : {2:5.0f} sec : {0} : ".format(
-            task.name, task.number, task.processtime
-        )
-        if task.logfile:
-            if run_from_ipython():
-                tmpl = '<a href="file:///{0}" target="_blank">{1}</a>'
-                entry += tmpl.format(task.logfile, os.path.basename(task.logfile))
-            else:
-                entry += "{0}".format(os.path.basename(task.logfile))
-        return entry
-
-    def final_summery(self, total_process_time, tasklist):
-        unfinished_tasks = [t for t in tasklist if t.processtime <= 0]
-        failed_tasks = [t for t in tasklist if t.has_error() and t.processtime > 0]
-        if len(failed_tasks):
-            self._display("Tasks with errors: {:d}".format(len(failed_tasks)))
-            if self.ipywidget is None:
-                self._display("\n".join([self.format_summery(t) for t in failed_tasks]))
-        if len(unfinished_tasks):
-            self._display(
-                "Tasks that did not complete: " "{:d}".format(len(unfinished_tasks))
-            )
-        self._display("Total time: {:.1f} seconds".format(total_process_time))
+def task_summery(task: _Task) -> str:
+    if task.has_error():
+        status = "Failed"
+    elif task.processtime == 0:
+        status = "Not completed"
+    else:
+        status = "Completed"
+    line = f"{status} (i={task.number}) : {task.processtime:.1f} sec"
+    if task.logfile:
+        line += f" : {os.path.basename(task.logfile)}"
+    return line
 
 
 class AnyPyProcess(object):
@@ -514,7 +468,7 @@ class AnyPyProcess(object):
         python_env=None,
         debug_mode=0,
         priority=BELOW_NORMAL_PRIORITY_CLASS,
-        **kwargs
+        **kwargs,
     ):
         if len(kwargs):
             warnings.warn(
@@ -544,10 +498,7 @@ class AnyPyProcess(object):
         self.ignore_errors = ignore_errors
         self.warnings_to_include = warnings_to_include
         self.keep_logfiles = keep_logfiles
-        if logfile_prefix is not None:
-            self.logfile_prefix = logfile_prefix + "_"
-        else:
-            self.logfile_prefix = logfile_prefix
+        self.logfile_prefix = logfile_prefix
         self.cached_arg_hash = None
         self.cached_tasklist = None
         if python_env is not None:
@@ -766,8 +717,6 @@ class AnyPyProcess(object):
         # Check for explicit logfile
         if not isinstance(logfile, (type(None), str, os.PathLike)):
             raise ValueError("logfile must be a str or path")
-        if not self.logfile_prefix and not logfile:
-            self.logfile_prefix = str(round(time.time()))[-5:]
         # Check the input arguments and generate the tasklist
         if macrolist is None:
             if self.cached_tasklist:
@@ -794,14 +743,26 @@ class AnyPyProcess(object):
         else:
             raise ValueError("Nothing to process for " + str(macrolist))
 
-        self.summery = _Summery(have_ipython=run_from_ipython(), silent=self.silent)
-
         # Start the scheduler
-        process_time = self._schedule_processes(tasklist, self._worker)
+        try:
+            with tqdm(total=len(tasklist), disable=self.silent) as pbar:
+                for task in self._schedule_processes(tasklist):
+                    if task.has_error() and not self.silent:
+                        tqdm.write(task_summery(task))
+                        if hasattr(pbar, "container"):
+                            pbar.container.children[0].bar_style = "danger"
+                    pbar.update()
+        except KeyboardInterrupt as e:
+            tqdm.write("KeyboardInterrupt: User aborted")
+            time.sleep(1)
+        finally:
+            if not self.silent:
+                tqdm.write(tasklist_summery(tasklist))
+
         self.cleanup_logfiles(tasklist)
         # Cache the processed tasklist for restarting later
         self.cached_tasklist = tasklist
-        self.summery.final_summery(process_time, tasklist)
+        # self.summery.final_summery(process_time, tasklist)
         task_output = [
             task.get_output(include_task_info=self.return_task_info)
             for task in tasklist
@@ -816,21 +777,20 @@ class AnyPyProcess(object):
         if task.output:
             # Skip processing trials already completed without errors
             if not task.has_error() and task.processtime > 0:
-                # if not os.path.isfile(task.logfile):
-                #     task.logfile = ""
                 task_queue.put(task)
                 return
 
         if not os.path.exists(task.folder):
             raise (ValueError("The folder does not exists: {}".format(task.folder)))
+
         try:
             if not task.logfile:
                 # If no explicit log file was given use NamedTemporaryFile
                 # to create one
                 with NamedTemporaryFile(
                     mode="w+",
-                    prefix=self.logfile_prefix,
-                    suffix=".log",
+                    prefix=(self.logfile_prefix or task.name.lower()) + "_(",
+                    suffix=").txt",
                     dir=task.folder,
                     delete=False,
                 ) as fh:
@@ -854,93 +814,64 @@ class AnyPyProcess(object):
                 )
                 try:
                     task.retcode = execute_anybodycon(**exe_args)
-                finally:
                     if task.retcode == _KILLED_BY_ANYPYTOOLS:
                         task.processtime = 0
                     else:
                         task.processtime = time.time() - starttime
+                except KeyboardInterrupt as e:
+                    task.processtime = 0
+                    raise e
+                finally:
                     logfile.seek(0)
+
                 task.output = parse_anybodycon_output(
                     logfile.read(),
                     self.ignore_errors,
                     self.warnings_to_include,
                     fatal_warnings=self.fatal_warnings,
                 )
-        except Exception as e:
-            if isinstance(e, KeyboardInterrupt):
-                task.processtime = 0
-                raise
-            exc_type, exc_obj, exc_tb = sys.exc_info()
-            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            task.add_error(
-                str(exc_type) + "\n" + str(fname) + "\n" + str(exc_tb.tb_lineno)
-            )
-            task.add_error(str(e))
-            logger.debug(str(e))
         finally:
             if not self.keep_logfiles and not task.has_error():
                 silentremove(logfile.name)
                 task.logfile = ""
             task_queue.put(task)
 
-    def _schedule_processes(self, tasklist, _worker):
+    def _schedule_processes(self, tasklist) -> Generator[_Task, None, None]:
         _subprocess_container.stop_all = False
         # Make a shallow copy of the task list,
         # so we don't mess with the callers list.
         tasklist = copy.copy(tasklist)
         number_tasks = len(tasklist)
-        if number_tasks == 0:
-            totaltime = 0
-            return totaltime
         use_threading = number_tasks > 1 and self.num_processes > 1
-        starttime = time.time()
-        task_queue = Queue()
-        pbar = _ProgressBar(number_tasks, self.silent)
-        pbar.animate(0)
-        processed_tasks = []
-        n_errors = 0
-        threads = []
-        try:
-            # run while there is still threads, tasks or stuff in the queue
-            # to process
-            while threads or tasklist or task_queue.qsize():
-                # if we aren't using all the processors AND there is still
-                # data left to compute, then spawn another thread
-                if (len(threads) < self.num_processes) and tasklist:
-                    if use_threading:
-                        t = Thread(
-                            target=_worker, args=tuple([tasklist.pop(0), task_queue])
-                        )
-                        t.daemon = True
-                        t.start()
-                        threads.append(t)
-                    else:
-                        _worker(tasklist.pop(0), task_queue)
+        task_queue: Queue = Queue()
+        threads: List[Thread] = []
+        # run while there is still threads, tasks or stuff in the queue
+        # to process
+        while threads or tasklist or task_queue.qsize():
+            # if we aren't using all the processors AND there is still
+            # data left to compute, then spawn another thread
+            if (len(threads) < self.num_processes) and tasklist:
+                if use_threading:
+                    t = Thread(
+                        target=self._worker, args=tuple([tasklist.pop(0), task_queue])
+                    )
+                    t.daemon = True
+                    t.start()
+                    threads.append(t)
                 else:
-                    # In the case that we have the maximum number
-                    # of running threads or we run out tasks.
-                    # Check if any of them are done
-                    for thread in threads:
-                        if not thread.isAlive():
-                            threads.remove(thread)
-                while task_queue.qsize():
-                    task = task_queue.get()
-                    if task.has_error():
-                        n_errors += 1
-                    self.summery.task_summery(task)
-                    processed_tasks.append(task)
-                    pbar.animate(len(processed_tasks), n_errors)
+                    self._worker(tasklist.pop(0), task_queue)
+            else:
+                # In the case that we have the maximum number
+                # of running threads or we run out tasks.
+                # Check if any of them are done
+                for thread in threads:
+                    if not thread.is_alive():
+                        threads.remove(thread)
+            while task_queue.qsize():
+                task = task_queue.get()
+                yield task
 
-                time.sleep(0.05)
-        except KeyboardInterrupt:
-            _display("\nProcessing interrupted")
-            _subprocess_container.stop_all = True
-            # Add a small delay here. It allows the user to press ctrl-c twice
-            # to escape this try-catch. This is usefull when if the code is
-            # run in an outer loop which we want to excape as well.
-            time.sleep(1)
-        totaltime = time.time() - starttime
-        return totaltime
+            time.sleep(0.05)
 
     def cleanup_logfiles(self, tasklist):
         for task in tasklist:
@@ -959,61 +890,3 @@ class AnyPyProcess(object):
                     logger.debug(
                         "Could not removing " "{} {}".format(macrofile, str(e))
                     )
-
-
-class _ProgressBar:
-    def __init__(self, iterations, silent=False):
-        self.silent = silent
-        self.iterations = iterations
-        self.prog_bar = "[]"
-        self.fill_char = "*"
-        self.width = 40
-        if run_from_ipython() and ipywidgets and not self.silent:
-            self.bar_widget = ipywidgets.IntProgress(
-                min=0, max=iterations, value=0, bar_style=""
-            )
-            self.bar_description = ipywidgets.Label("")
-            box = ipywidgets.HBox([self.bar_description, self.bar_widget])
-            box.layout.align_items = "center"
-            display(box)
-
-    def animate(self, val, failed=0):
-        if self.silent:
-            return
-        if run_from_ipython() and ipywidgets:
-            self._widget_animate(val, failed)
-        else:
-            self._ascii_animate(val, failed)
-
-    def _widget_animate(self, val, failed):
-        self.bar_widget.value = val
-        self.bar_description.value = "%d of %s" % (val, self.iterations)
-        if failed > 0:
-            self.bar_widget.bar_style = "danger"
-        elif val == self.iterations:
-            self.bar_widget.bar_style = "success"
-
-    def _ascii_animate(self, val, failed):
-        self.__update_amount((val / float(self.iterations)) * 100.0)
-        self.prog_bar += "  %d of %s complete" % (val, self.iterations)
-        if failed == 1:
-            self.prog_bar += " ({0} Error)".format(failed)
-        elif failed > 1:
-            self.prog_bar += " ({0} Errors)".format(failed)
-        print("\r", end="")
-        print(self.prog_bar, end="")
-        sys.stdout.flush()
-
-    def __update_amount(self, new_amount):
-        percent_done = int(round((new_amount / 100.0) * 100.0))
-        all_full = self.width - 2
-        num_hashes = int(round((percent_done / 100.0) * all_full))
-        self.prog_bar = "[{}{}]".format(
-            self.fill_char * num_hashes, " " * (all_full - num_hashes)
-        )
-        pct_place = int(len(self.prog_bar) / 2) - len(str(percent_done))
-        pct_string = "%d%%" % percent_done
-
-        self.prog_bar = self.prog_bar[0:pct_place] + (
-            pct_string + self.prog_bar[pct_place + len(pct_string) :]
-        )
