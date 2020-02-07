@@ -41,7 +41,7 @@ def find_version(*file_paths):
     raise RuntimeError("Unable to find version string.")
 
 
-require_list = ["numpy", "scipy"]
+require_list = ["numpy", "scipy", "tqdm"]
 
 entry_points = {}
 
