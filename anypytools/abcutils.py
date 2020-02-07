@@ -41,6 +41,7 @@ from .tools import (
     run_from_ipython,
     get_ncpu,
     silentremove,
+    case_preserving_replace,
 )
 from .macroutils import AnyMacro, MacroCommand
 
@@ -177,19 +178,19 @@ def execute_anybodycon(
         logfile = sys.stdout
 
     if anybodycon_path is None:
-        anybodycon_path = get_anybodycon_path()
+        anybodycon_path = Path(get_anybodycon_path())
 
     if macro and macro[-1] != "exit":
         macro.append("exit")
 
     if not os.path.isfile(anybodycon_path):
-        raise IOError("Can not find anybodycon.exe: " + anybodycon_path)
+        raise IOError(f"Can not find anybodycon.exe: {anybodycon_path}")
 
     with open(macro_filename, "w+b") as macro_file:
         macro_file.write("\n".join(macro).encode("UTF-8"))
         macro_file.flush()
     anybodycmd = [
-        os.path.realpath(anybodycon_path),
+        str(anybodycon_path.resolve()),
         "--macro=",
         macro_file.name,
         "/deb",
@@ -427,6 +428,9 @@ class AnyPyProcess(object):
         (Defaults to None, which will use the default Python installation on the computer.)
     debug_mode : int, optional
         Sets the debug mode flag for the AnyBodyConsole appplication (e.g. the /deb <number> flag)
+    use_gui : bool, optional
+        Swictch to use the GUI instead of the console version of AMS. This works by replacing the 'anybodycon' part
+        of the executable with 'anybody' of the `anybodycon_path` arguments. I.e. ".../anybdoycon.exe" becomes ".../anybody.exe"
     priority : int, optional
         The priority of the subprocesses. This can be on of the following:
         ``anypytools.IDLE_PRIORITY_CLASS``, ``anypytools.BELOW_NORMAL_PRIORITY_CLASS``,
@@ -467,6 +471,7 @@ class AnyPyProcess(object):
         logfile_prefix=None,
         python_env=None,
         debug_mode=0,
+        use_gui=False,
         priority=BELOW_NORMAL_PRIORITY_CLASS,
         **kwargs,
     ):
@@ -482,11 +487,17 @@ class AnyPyProcess(object):
             raise ValueError("warnings_to_include must be a list of strings")
 
         if anybodycon_path is None:
-            self.anybodycon_path = get_anybodycon_path()
-        elif os.path.exists(anybodycon_path):
+            anybodycon_path = get_anybodycon_path()
+        anybodycon_path = Path(anybodycon_path)
+        if use_gui:
+            anybodycon_path = anybodycon_path.with_name(
+                case_preserving_replace(anybodycon_path.name, "anybodycon", "anybody")
+            )
+
+        if anybodycon_path.exists():
             self.anybodycon_path = anybodycon_path
         else:
-            raise IOError("Can't find " + anybodycon_path)
+            raise IOError(f"Can't find  {anybodycon_path}")
         self.num_processes = num_processes
         self.priority = priority
         self.silent = silent

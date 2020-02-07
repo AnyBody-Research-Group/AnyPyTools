@@ -44,6 +44,33 @@ ANYBODYCON_VERSION_RE = re.compile(
 ON_WINDOWS = platform.system() == "Windows"
 
 
+def case_preserving_replace(string, old, new):
+    """ Replace string while preserving the case
+    """
+
+    def repl(match):
+        current = match.group()
+        result = ""
+        all_upper = True
+        for i, c in enumerate(current):
+            if i >= len(new):
+                break
+            if c.isupper():
+                result += new[i].upper()
+            else:
+                result += new[i].lower()
+                all_upper = False
+        # append any remaining characters from new
+        if all_upper:
+            result += new[i + 1 :].upper()
+        else:
+            result += new[i + 1 :].lower()
+        return result
+
+    regex = re.compile(re.escape(old), re.I)
+    return regex.sub(repl, string)
+
+
 def anybodycon_version(anybodyconpath):
     """Return the AnyBodyCon version."""
     anybodyconpath = anybodyconpath or get_anybodycon_path()

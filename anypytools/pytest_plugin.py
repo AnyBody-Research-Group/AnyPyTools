@@ -153,6 +153,7 @@ HEADER_ENSURES = (
     ("expect_errors", (collections.abc.Sequence,)),
     ("save_study", (str, collections.abc.Sequence)),
     ("pytest_markers", (collections.abc.Sequence,)),
+    ("use_gui", (bool,)),
 )
 
 
@@ -208,6 +209,7 @@ def pytest_configure(config):
         config.pluginmanager.register(DeferPlugin())
 
 
+
 def pytest_collection_modifyitems(items, config):
     selected_items = []
     deselected_items = []
@@ -223,11 +225,6 @@ def pytest_collection_modifyitems(items, config):
 
 
 
-
-
-def pytest_unconfigure(config):
-    """Finialize the test session."""
-    pass  # pytest.anytest.finalize(config)
 
 
 class AnyFile(pytest.File):
@@ -308,6 +305,7 @@ class AnyItem(pytest.Item):
             "fatal_warnings": bool(fatal_warnings),
             "keep_logfiles": kwargs.get("keep_logfiles", True),
             "logfile_prefix": kwargs.get("logfile_prefix", None),
+            "use_gui": kwargs.get("use_gui", False),
         }
         if not self.config.getoption("--only-load"):
             self.macro.append(macro_commands.OperationRun("Main.RunTest"))

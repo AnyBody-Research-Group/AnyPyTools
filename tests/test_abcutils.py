@@ -57,6 +57,12 @@ class TestAnyPyProcess:
         output = app.start_macro(default_macro, logfile=logfile)
         assert os.path.isfile(logfile)
 
+    def test_with_gui(self, init_simple_model, default_macro):
+        app = AnyPyProcess(silent=True, use_gui=False)
+        default_macro[0].append("run")
+        output = app.start_macro(default_macro)
+        assert not "ERROR" in output[0]
+
     def test_explicit_logfiles_multiple(self, init_simple_model):
         logfile = "test.log"
         macro = [
