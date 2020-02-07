@@ -9,23 +9,13 @@ v1.4.0
 - Progressbars are now draw using `tqdm <https://github.com/tqdm/tqdm>`__. This enables error 
   messages while the progress bar is rendering, and solves a problem with detecting when the 
   code is running in Jupyter notebook and not. 
-
-
-
-v1.4.0
-=============
-
-**Changed:**
 - Running the pytest plugin with the ``--anytest-save`` argument now deselects 
   all tests which doesn't save data to HDF 5 files.
-
-
-v1.4.0
-=============
-
-**Added:**
-- New option for running the GUI version of AMS with AnyPyTools instead of the console. s
-
+- New option for running the GUI version of AMS with AnyPyTools instead of the console.
+- Task meta info (i.e. ``task_logfile``, ``task_macro`` etc.) are now hidden by default in the
+  when printing the object witht the default `__repr__()`
+- The ``return_task_info`` argument to ``AnyPyProcess`` class is now deprecated and task information is 
+  always include in the output. 
 
 
 
