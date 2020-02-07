@@ -208,6 +208,23 @@ def pytest_configure(config):
         config.pluginmanager.register(DeferPlugin())
 
 
+def pytest_collection_modifyitems(items, config):
+    selected_items = []
+    deselected_items = []
+    if config.getoption("--anytest-output"):
+    # Deselect all test items which doesn't save data.
+        for item in items:
+            if getattr(item, "hdf5_outputs", False):
+                selected_items.append(item)
+            else:
+                deselected_items.append(item)
+        config.hook.pytest_deselected(items=deselected_items)
+        items[:] = selected_items
+
+
+
+
+
 def pytest_unconfigure(config):
     """Finialize the test session."""
     pass  # pytest.anytest.finalize(config)

@@ -12,6 +12,14 @@ v1.4.0
 
 
 
+v1.4.0
+=============
+
+**Changed:**
+- Running the pytest plugin with the ``--anytest-save`` argument now deselects 
+  all tests which doesn't save data to HDF 5 files.
+
+
 v1.3.0
 =============
 
