@@ -58,7 +58,7 @@ class TestAnyPyProcess:
         assert os.path.isfile(logfile)
 
     def test_with_gui(self, init_simple_model, default_macro):
-        app = AnyPyProcess(silent=True, use_gui=True)
+        app = AnyPyProcess(silent=True, use_gui=False)
         default_macro[0].append("run")
         output = app.start_macro(default_macro)
         assert not "ERROR" in output[0]
