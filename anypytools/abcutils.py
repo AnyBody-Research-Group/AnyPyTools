@@ -412,8 +412,6 @@ class AnyPyProcess(object):
     fatal_warnings: bool, optional
         Treat warnings as errors. This only triggers for specific warnings given
         by ``warnings_to_include`` argument.
-    return_task_info : bool, optional
-        Return the task status information when running macros. Defaults to False.
     keep_logfiles : bool, optional
         If True logfile will never be removed. Even if a simulations successeds
         without error. (Defautls to False)
@@ -448,7 +446,7 @@ class AnyPyProcess(object):
     -------
     The following example shows how to instantiate a AnyPyProcess object.
 
-    >>> app = AnyPyProcess(num_processes=8, return_task_info=True)
+    >>> app = AnyPyProcess(num_processes=8)
 
     The `app` object has methods for launching macros, saving results etc.
 
@@ -466,7 +464,7 @@ class AnyPyProcess(object):
         ignore_errors=None,
         warnings_to_include=None,
         fatal_warnings=False,
-        return_task_info=True,
+        return_task_info=None,
         keep_logfiles=False,
         logfile_prefix=None,
         python_env=None,
@@ -475,6 +473,13 @@ class AnyPyProcess(object):
         priority=BELOW_NORMAL_PRIORITY_CLASS,
         **kwargs,
     ):
+
+        if return_task_info is not None:
+            warnings.warn(
+                "return_task_info is deprecated, and task meta information is always included in the output.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
         if len(kwargs):
             warnings.warn(
                 "The following input arguments are not supported/understood:\n"
@@ -505,7 +510,6 @@ class AnyPyProcess(object):
         self.counter = 0
         self.debug_mode = debug_mode
         self.fatal_warnings = fatal_warnings
-        self.return_task_info = return_task_info
         self.ignore_errors = ignore_errors
         self.warnings_to_include = warnings_to_include
         self.keep_logfiles = keep_logfiles
@@ -774,10 +778,7 @@ class AnyPyProcess(object):
         # Cache the processed tasklist for restarting later
         self.cached_tasklist = tasklist
         # self.summery.final_summery(process_time, tasklist)
-        task_output = [
-            task.get_output(include_task_info=self.return_task_info)
-            for task in tasklist
-        ]
+        task_output = [task.get_output() for task in tasklist]
         return AnyPyProcessOutputList(task_output)
 
     def _worker(self, task, task_queue):

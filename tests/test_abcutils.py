@@ -41,19 +41,19 @@ def default_macro():
 
 class TestAnyPyProcess:
     def test_logfile_persistance(self, init_simple_model, default_macro):
-        app = AnyPyProcess(silent=True, keep_logfiles=True, return_task_info=True)
+        app = AnyPyProcess(silent=True, keep_logfiles=True)
         output = app.start_macro(default_macro)
         assert os.path.isfile(output[0]["task_logfile"])
 
     def test_explicit_logfiles_str(self, init_simple_model, default_macro):
         logfile = "test.log"
-        app = AnyPyProcess(silent=True, keep_logfiles=True, return_task_info=True)
+        app = AnyPyProcess(silent=True, keep_logfiles=True)
         output = app.start_macro(default_macro, logfile=logfile)
         assert os.path.isfile(logfile)
 
     def test_explicit_logfiles_path(self, init_simple_model, default_macro):
         logfile = pathlib.Path("test.log")
-        app = AnyPyProcess(silent=True, keep_logfiles=True, return_task_info=True)
+        app = AnyPyProcess(silent=True, keep_logfiles=True)
         output = app.start_macro(default_macro, logfile=logfile)
         assert os.path.isfile(logfile)
 
@@ -70,7 +70,7 @@ class TestAnyPyProcess:
             ['load "model.main.any"', "operation Main.ArmModelStudy.InverseDynamics"],
             ['load "model.main.any"', "operation Main.ArmModelStudy.InverseDynamics"],
         ]
-        app = AnyPyProcess(silent=True, keep_logfiles=True, return_task_info=True)
+        app = AnyPyProcess(silent=True, keep_logfiles=True)
         output = app.start_macro(macro, logfile=logfile)
         assert os.path.isfile("test_0.log")
         assert os.path.isfile("test_1.log")
@@ -78,7 +78,7 @@ class TestAnyPyProcess:
 
     def test_macro_with_erros(self, init_simple_model, default_macro):
         app = AnyPyProcess(
-            silent=True, return_task_info=True, ignore_errors=["Unresolved object"]
+            silent=True, ignore_errors=["Unresolved object"]
         )
         macro = [
             ['load "model.main.any"', "operation Main.ArmModelStudy.InverseDynamics"],
@@ -110,7 +110,7 @@ class TestAnyPyProcess:
         assert "ERROR" not in output[0]
 
     def test_start_macro_with_task_info(self, init_simple_model, default_macro):
-        app = AnyPyProcess(silent=True, return_task_info=True)
+        app = AnyPyProcess(silent=True)
 
         default_macro[0].extend(
             [
@@ -190,7 +190,7 @@ class TestAnyPyProcess:
             ],
         ]
 
-        app = AnyPyProcess(return_task_info=True)
+        app = AnyPyProcess()
         output = app.start_macro(macro)
         output["GlobalRef.t"]
         output["MaxMuscleActivity"]
@@ -205,7 +205,7 @@ class TestAnyPyProcess:
             ]
         ] * 5
 
-        app = AnyPyProcess(return_task_info=True)
+        app = AnyPyProcess()
         output = app.start_macro(macro)
         output["GlobalRef.t"]
         assert (
@@ -224,7 +224,7 @@ class TestAnyPyProcess:
             ]
         ]
 
-        app = AnyPyProcess(return_task_info=True)
+        app = AnyPyProcess()
         app.start_macro(macro)
         app.save_results("test.db")
 
@@ -245,7 +245,7 @@ class TestAnyPyProcess:
             ],
         ]
 
-        app = AnyPyProcess(return_task_info=True)
+        app = AnyPyProcess()
 
         output = app.start_macro(macro)
         output = app.start_macro()

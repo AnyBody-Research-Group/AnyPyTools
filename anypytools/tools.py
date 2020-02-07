@@ -494,6 +494,10 @@ def array2anyscript(arr):
 class AnyPyProcessOutput(collections.OrderedDict):
     """Subclassed OrderedDict which supports partial key access."""
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._task_info_in_repr = False
+
     def __getitem__(self, key):
         try:
             return super(AnyPyProcessOutput, self).__getitem__(key)
@@ -514,6 +518,9 @@ class AnyPyProcessOutput(collections.OrderedDict):
 
         indent = prefix + "{"
         for i, (key, val) in enumerate(items):
+            if not self._task_info_in_repr and key.startswith("task_"):
+                continue
+
             if i == len(self.keys()) - 1:
                 end = "}"
             else:

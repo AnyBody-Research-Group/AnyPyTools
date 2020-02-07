@@ -295,7 +295,6 @@ class AnyItem(pytest.Item):
             fatal_warnings = ["WARNING"] if fatal_warnings else []
 
         self.app_opts = {
-            "return_task_info": True,
             "silent": True,
             "debug_mode": self.config.getoption("--anybody_debug_mode"),
             "anybodycon_path": pytest.anytest.ams_path,
