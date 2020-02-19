@@ -894,7 +894,7 @@ class AnyPyProcess(object):
                         task.logfile = ""
             except OSError as e:
                 logger.debug("Could not remove " "{} {}".format(task.logfile, str(e)))
-            if not self.keep_logfiles:
+            if not self.keep_logfiles and task.logfile:
                 try:
                     macrofile = Path(task.logfile).with_suffix(".anymcr")
                     silentremove(macrofile)
