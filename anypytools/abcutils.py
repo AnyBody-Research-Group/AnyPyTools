@@ -359,9 +359,9 @@ def tasklist_summery(tasklist: List[_Task]) -> str:
     completed_tasks = [t for t in tasklist if not t.has_error() and t.processtime > 0]
     out += f"Completed: {len(completed_tasks)}"
     if len(failed_tasks):
-        out += f", Failed: {len(failed_tasks):d}\n"
+        out += f", Failed: {len(failed_tasks):d}"
     if len(unfinished_tasks):
-        out += f", Not processed: {len(unfinished_tasks):d}\n"
+        out += f", Not processed: {len(unfinished_tasks):d}"
     return out
 
 
