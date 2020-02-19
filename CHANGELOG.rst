@@ -2,6 +2,15 @@
 AnyPyTools Change Log
 =====================
 
+
+v1.4.1
+=============
+
+**Fixed:**
+
+* Fixed a bug where log files would be removed even if the processing failed.
+
+
 v1.4.0
 =============
 
