@@ -667,7 +667,7 @@ def silentremove(filename):
         os.remove(filename)
     except OSError as e:
         if e.errno != errno.ENOENT:  # errno.ENOENT : no such file or directory
-            logging.debug("Error removing file: " + filename)
+            logging.debug(f"Error removing file: {filename}")
             raise  # re-raise exception if a different error occured
 
 
