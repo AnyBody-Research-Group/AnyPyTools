@@ -2,6 +2,14 @@
 AnyPyTools Change Log
 =====================
 
+v1.4.2
+=============
+
+**Fixed:**
+
+* A potential bug when using the pytest plugin and expected errors in AnyScript test files. 
+
+
 
 v1.4.1
 =============
