@@ -3,6 +3,15 @@ AnyPyTools Change Log
 =====================
 
 
+v1.4.2
+=============
+
+**Fixed:**
+
+* Fixed a bug with the pytest plugin not working with pytest 5.4
+
+
+
 v1.4.1
 =============
 
