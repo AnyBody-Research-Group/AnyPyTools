@@ -351,10 +351,10 @@ class AnyItem(pytest.Item):
         if self.expect_errors:
             for xerr in self.expect_errors:
                 xerr_found = False
-                for i, error in enumerate(error_list):
+                for error in error_list[:]:
                     if xerr in error:
                         xerr_found = True
-                        del error_list[i]
+                        error_list.remove(error)
                 if not xerr_found:
                     self.errors.append(
                         "TEST ERROR: Expected error not " 'found: "{}"'.format(xerr)
