@@ -20,6 +20,8 @@ from traceback import format_list, extract_tb
 
 import pytest
 
+from _pytest.tmpdir import TempdirFactory, TempPathFactory
+
 from anypytools import AnyPyProcess, macro_commands
 from anypytools.tools import (
     get_anybodycon_path,
@@ -209,12 +211,11 @@ def pytest_configure(config):
         config.pluginmanager.register(DeferPlugin())
 
 
-
 def pytest_collection_modifyitems(items, config):
     selected_items = []
     deselected_items = []
     if config.getoption("--anytest-output"):
-    # Deselect all test items which doesn't save data.
+        # Deselect all test items which doesn't save data.
         for item in items:
             if getattr(item, "hdf5_outputs", False):
                 selected_items.append(item)
@@ -222,8 +223,6 @@ def pytest_collection_modifyitems(items, config):
                 deselected_items.append(item)
         config.hook.pytest_deselected(items=deselected_items)
         items[:] = selected_items
-
-
 
 
 
@@ -323,7 +322,16 @@ class AnyItem(pytest.Item):
 
     def runtest(self):
         """Run an AnyScript test item."""
-        tmpdir = Path(self.config._tmpdirhandler.mktemp(self.name).strpath)
+        import ptvsd
+
+        print("Waiting for debugger attach")
+        ptvsd.enable_attach(address=("localhost", 5678), redirect_output=True)
+        ptvsd.wait_for_attach()
+        breakpoint()
+
+        tmpdir = Path(
+            TempdirFactory(TempPathFactory.from_config(self.config)).mktemp(self.name)
+        )
 
         with change_dir(tmpdir):
             self.app = AnyPyProcess(**self.app_opts)
