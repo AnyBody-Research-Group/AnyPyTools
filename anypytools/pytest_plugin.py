@@ -225,7 +225,6 @@ def pytest_collection_modifyitems(items, config):
         items[:] = selected_items
 
 
-
 class AnyFile(pytest.File):
     """pytest.File subclass for AnyScript files."""
 
@@ -322,12 +321,6 @@ class AnyItem(pytest.Item):
 
     def runtest(self):
         """Run an AnyScript test item."""
-        import ptvsd
-
-        print("Waiting for debugger attach")
-        ptvsd.enable_attach(address=("localhost", 5678), redirect_output=True)
-        ptvsd.wait_for_attach()
-        breakpoint()
 
         tmpdir = Path(
             TempdirFactory(TempPathFactory.from_config(self.config)).mktemp(self.name)
