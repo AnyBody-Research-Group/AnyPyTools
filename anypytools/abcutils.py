@@ -220,6 +220,7 @@ def execute_anybodycon(
     _subprocess_container.add(proc.pid)
     try:
         proc.wait(timeout=timeout)
+        retcode = ctypes.c_int32(proc.returncode).value
     except TimeoutExpired:
         proc.terminate()
         proc.communicate()
@@ -228,9 +229,15 @@ def execute_anybodycon(
         logfile.write(
             "\nERROR: AnyPyTools : Timeout after {:d} sec.".format(int(timeout))
         )
-        proc.returncode = 0
-    _subprocess_container.remove(proc.pid)
-    retcode = ctypes.c_int32(proc.returncode).value
+        retcode = 0
+    except KeyboardInterrupt:
+        proc.terminate()
+        proc.communicate()
+        retcode = _KILLED_BY_ANYPYTOOLS
+        raise
+    finally:
+        _subprocess_container.remove(proc.pid)
+
     if retcode == _KILLED_BY_ANYPYTOOLS:
         logfile.write("\nAnybodycon.exe was interrupted by AnyPyTools")
     elif retcode == _NO_LICENSES_AVAILABLE:
@@ -768,6 +775,7 @@ class AnyPyProcess(object):
                             pbar.container.children[0].bar_style = "danger"
                     pbar.update()
         except KeyboardInterrupt as e:
+            _subprocess_container.stop_all = True
             tqdm.write("KeyboardInterrupt: User aborted")
             time.sleep(1)
         finally:
