@@ -2,22 +2,19 @@
 AnyPyTools Change Log
 =====================
 
+v1.4.3
+=============
+Fixed regression with Python 3.8 where model output could not be serialzed. This 
+happend because empty folders (represented by "...") would become the python elipsis object. 
+
+
 v1.4.2
 =============
 
 **Fixed:**
 
 * A potential bug when using the pytest plugin and expected errors in AnyScript test files. 
-
-
-
-v1.4.2
-=============
-
-**Fixed:**
-
 * Fixed a bug with the pytest plugin not working with pytest 5.4
-
 
 
 v1.4.1

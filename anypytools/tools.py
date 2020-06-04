@@ -558,11 +558,11 @@ def _parse_data(val):
     """Convert a str AnyBody data repr into Numpy array."""
     if val.startswith("{") and val.endswith("}"):
         val = val.replace("{", "[").replace("}", "]")
+    if val == "[...]":
+        val = '"..."'
     try:
         out = literal_eval(val)
     except (SyntaxError, ValueError):
-        if val == "[...]":
-            val = "..."
         val, _ = TRIPEL_QUOTE_WRAP.subn(r"'''\1'''", val)
         if val == "":
             val = "None"
