@@ -717,7 +717,7 @@ class AnyMacro(MutableSequence):
                 mcr = elem.get_macro(macro_idx)
                 if self.counter_token:
                     mcr = mcr.replace(self.counter_token, str(macro_idx))
-                if mcr is not "":
+                if mcr != "":
                     macro.extend(mcr.split("\n"))
             macro_list.append(macro)
         return macro_list
@@ -791,7 +791,7 @@ class AnyMacro(MutableSequence):
 
                 if self.counter_token:
                     mcr = mcr.replace(self.counter_token, str(macro_idx))
-                if mcr is not "":
+                if mcr != "":
                     macro.extend(mcr.split("\n"))
             macro_list.append(macro)
         return macro_list
