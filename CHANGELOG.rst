@@ -2,6 +2,11 @@
 AnyPyTools Change Log
 =====================
 
+v1.4.4
+=============
+Adressed a deprecation warning from pytest plugin due to API change in pytest 5.4
+
+
 v1.4.3
 =============
 Fixed regression with Python 3.8 where model output could not be serialzed. This 
