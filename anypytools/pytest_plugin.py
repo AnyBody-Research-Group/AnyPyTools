@@ -20,6 +20,7 @@ from traceback import format_list, extract_tb
 
 import pytest
 
+
 from _pytest.tmpdir import TempdirFactory, TempPathFactory
 
 from anypytools import AnyPyProcess, macro_commands
@@ -33,6 +34,8 @@ from anypytools.tools import (
     get_ammr_version,
     wraptext,
 )
+
+PYTEST_PRE_54 = tuple(map(int, pytest.__version__.split("."))) < (5, 4)
 
 
 @contextlib.contextmanager
@@ -120,7 +123,10 @@ def change_dir(path):
 def pytest_collect_file(parent, path):
     """Collect AnyScript test files."""
     if path.ext.lower() == ".any" and path.basename.lower().startswith("test_"):
-        return AnyFile(path, parent)
+        if PYTEST_PRE_54:
+            return AnyTestFile(path, parent)
+        else:
+            return AnyTestFile.from_parent(parent, fspath=path)
 
 
 def _format_switches(defs):
@@ -225,7 +231,7 @@ def pytest_collection_modifyitems(items, config):
         items[:] = selected_items
 
 
-class AnyFile(pytest.File):
+class AnyTestFile(pytest.File):
     """pytest.File subclass for AnyScript files."""
 
     def collect(self):
@@ -242,19 +248,29 @@ class AnyFile(pytest.File):
         # Run though the defines an create a test case for each
         for i, (defs, paths) in enumerate(combinations):
             if isinstance(defs, dict) and isinstance(paths, dict):
-                yield AnyItem(
-                    name=self.fspath.basename,
-                    id=i,
-                    parent=self,
-                    defs=defs,
-                    paths=paths,
-                    **header,
-                )
+                if PYTEST_PRE_54:
+                    yield AnyTestItem(
+                        name=self.fspath.basename,
+                        id=i,
+                        parent=self,
+                        defs=defs,
+                        paths=paths,
+                        **header,
+                    )
+                else:
+                    yield AnyTestItem.from_parent(
+                        name=self.fspath.basename,
+                        id=i,
+                        parent=self,
+                        defs=defs,
+                        paths=paths,
+                        **header,
+                    )
             else:
                 raise ValueError("Malformed input: ", header)
 
 
-class AnyItem(pytest.Item):
+class AnyTestItem(pytest.Item):
     """pytest.Item subclass representing individual collected tests."""
 
     def __init__(self, name, id, parent, defs, paths, **kwargs):
