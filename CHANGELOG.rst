@@ -2,6 +2,10 @@
 AnyPyTools Change Log
 =====================
 
+v1.4.5
+=============
+Fixed a small issue with using AnyPyTools with pytest 6.0.0rc1
+
 v1.4.4
 =============
 Adressed a deprecation warning from pytest plugin due to API change in pytest 5.4
