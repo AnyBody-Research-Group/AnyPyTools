@@ -35,7 +35,7 @@ from anypytools.tools import (
     wraptext,
 )
 
-PYTEST_PRE_54 = tuple(map(int, pytest.__version__.split("."))) < (5, 4)
+PYTEST_PRE_54 = tuple(map(int, pytest.__version__.split(".")[:2])) < (5, 4)
 
 
 @contextlib.contextmanager
