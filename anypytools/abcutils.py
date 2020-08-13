@@ -127,6 +127,7 @@ def execute_anybodycon(
     env=None,
     priority=BELOW_NORMAL_PRIORITY_CLASS,
     debug_mode=0,
+    folder=None,
 ):
     """Launch a single AnyBodyConsole applicaiton.
 
@@ -161,6 +162,7 @@ def execute_anybodycon(
     debug_mode : int
         The AMS debug mode to use. Defaults to 0 which is disabled. 1 correspond to 
         crashdump enabled
+    folder : the folder in which AnyBody is executed
 
     Returns
     -------
@@ -168,9 +170,11 @@ def execute_anybodycon(
         The return code from the AnyBody Console application.
 
     """
-
+    if folder is None:
+        folder = os.getcwd()
+        
     try:
-        macro_filename = os.path.splitext(logfile.name)[0] + ".anymcr"
+        macro_filename = Path(folder).resolve() / (Path(logfile.name).stem + ".anymcr")
     except AttributeError:
         macro_filename = "macrofile.anymcr"
 
@@ -831,6 +835,7 @@ class AnyPyProcess(object):
                     env=self.env,
                     priority=self.priority,
                     debug_mode=self.debug_mode,
+                    folder=task.folder,
                 )
                 try:
                     task.retcode = execute_anybodycon(**exe_args)
