@@ -136,7 +136,7 @@ class TestAnyPyProcess:
 
         app = AnyPyProcess(silent=True)
         with tmpdir.as_cwd():
-            output = app.start_macro(default_macro, search_subdirs="main.any")
+            output = app.start_macro(default_macro, search_subdirs="main.any", logfile="test.log")
 
         assert len(output) == number_of_models
         for result in output:
