@@ -2,6 +2,12 @@
 AnyPyTools Change Log
 =====================
 
+v1.4.6
+=============
+Fixed a bug when using explicit logfile arguments to ``start_macro`` did not work with the 
+``search_subdirs`` argument.
+
+
 v1.4.5
 =============
 Fixed a small issue with using AnyPyTools with pytest 6.0.0rc1
