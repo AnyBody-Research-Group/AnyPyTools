@@ -551,6 +551,15 @@ class AnyPyProcessOutput(collections.OrderedDict):
             del _repr_running[call_key]
 
 
+
+def _recursive_replace(iterable, old, new):
+    for i, elem in enumerate(iterable):
+        if isinstance(elem, list):
+            recursive_replace(elem, old, new)
+        elif elem == old:
+            iterable[i] = new
+
+
 TRIPEL_QUOTE_WRAP = re.compile(r'([^\[\]",\s]+)')
 
 
@@ -563,15 +572,25 @@ def _parse_data(val):
     try:
         out = literal_eval(val)
     except (SyntaxError, ValueError):
-        val, _ = TRIPEL_QUOTE_WRAP.subn(r"'''\1'''", val)
-        if val == "":
-            val = "None"
-        if val.startswith('"') and val.endswith('"'):
-            val = "'''" + val[1:-1] + r"'''"
-        out = literal_eval(val)
+        try:
+            if "nan," in val:
+                # handle the case where AnyBody has output 'nan' values
+                val2 = val.replace("nan,", ' "nan",')
+                out = literal_eval(val2)
+                recursive_replace(out, "nan", float("nan") )
+            else:
+                raise SyntaxError
+        except (SyntaxError, ValueError):
+            val, _ = TRIPEL_QUOTE_WRAP.subn(r"'''\1'''", val)
+            if val == "":
+                val = "None"
+            if val.startswith('"') and val.endswith('"'):
+                val = "'''" + val[1:-1] + r"'''"
+            out = literal_eval(val)
     if isinstance(out, list):
         out = np.array(out)
     return out
+
 
 
 ABOVE_NORMAL_PRIORITY_CLASS = 0x8000
