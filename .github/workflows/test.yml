@@ -1,0 +1,27 @@
+name: test 
+
+on: [push]
+
+jobs:
+  build-windows:
+    runs-on: self-hosted
+
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Setup conda
+      uses: conda-incubator/setup-miniconda@v2
+      with:
+        activate-environment: _anypytools
+        auto-update-conda: true
+        environment-file: environment.yml
+          
+    - name: build
+      run: |
+        conda activate _anypytools
+        pip install .
+    - name: Test with pytest
+      run: |
+        conda activate _anypytools
+        conda install -y pytest
+        pytest
