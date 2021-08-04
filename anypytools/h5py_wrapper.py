@@ -77,7 +77,7 @@ class File(h5py.File):  # noqa
         return Group(id)
 
     def __contains__(self, name):  # noqa
-        """ Test if a member name exists """
+        """Test if a member name exists"""
         if super(File, self).__contains__(name):
             return True
         else:
@@ -134,7 +134,7 @@ class Group(h5py.Group):  # noqa
         return Group(id)
 
     def __contains__(self, name):  # noqa
-        """ Test if a member name exists """
+        """Test if a member name exists"""
         if super(Group, self).__contains__(name):
             return True
         else:

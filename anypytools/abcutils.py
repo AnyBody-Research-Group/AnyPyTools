@@ -160,7 +160,7 @@ def execute_anybodycon(
         ``anypytools.NORMAL_PRIORITY_CLASS``, ``anypytools.HIGH_PRIORITY_CLASS``
         Default is BELOW_NORMAL_PRIORITY_CLASS.
     debug_mode : int
-        The AMS debug mode to use. Defaults to 0 which is disabled. 1 correspond to 
+        The AMS debug mode to use. Defaults to 0 which is disabled. 1 correspond to
         crashdump enabled
     folder : the folder in which AnyBody is executed
 
@@ -267,7 +267,7 @@ class _Task(object):
         macro: list of macro commands to execute
         number: id number of the task
         name: name of the task, which is used for printing status informations
-        logfile: If provided will specify an explicit logfile to use. 
+        logfile: If provided will specify an explicit logfile to use.
 
     """
 
@@ -687,7 +687,7 @@ class AnyPyProcess(object):
             subdirectories that match the regular expression.
             Defaults to None: No subdirectories are included.
         logfile: str, optional
-            If specified an explicit name will be used for the log files generated. 
+            If specified an explicit name will be used for the log files generated.
             Otherwise, random names are used for logfiles
 
         Returns
