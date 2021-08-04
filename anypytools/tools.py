@@ -551,7 +551,6 @@ class AnyPyProcessOutput(collections.OrderedDict):
             del _repr_running[call_key]
 
 
-
 def _recursive_replace(iterable, old, new):
     for i, elem in enumerate(iterable):
         if isinstance(elem, list):
@@ -577,7 +576,7 @@ def _parse_data(val):
                 # handle the case where AnyBody has output 'nan' values
                 val2 = val.replace("nan,", ' "nan",')
                 out = literal_eval(val2)
-                recursive_replace(out, "nan", float("nan") )
+                recursive_replace(out, "nan", float("nan"))
             else:
                 raise SyntaxError
         except (SyntaxError, ValueError):
@@ -590,7 +589,6 @@ def _parse_data(val):
     if isinstance(out, list):
         out = np.array(out)
     return out
-
 
 
 ABOVE_NORMAL_PRIORITY_CLASS = 0x8000

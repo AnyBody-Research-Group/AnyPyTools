@@ -172,7 +172,7 @@ def execute_anybodycon(
     """
     if folder is None:
         folder = os.getcwd()
-        
+
     try:
         macro_filename = Path(folder).resolve() / (Path(logfile.name).stem + ".anymcr")
     except AttributeError:
