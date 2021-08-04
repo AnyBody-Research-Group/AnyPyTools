@@ -1,0 +1,63 @@
+
+name: Documentation build and deploy
+
+on:
+  push:
+     branches: [ master ]
+     tags: ['*']
+  pull_request:
+     branches: [ master ]
+  workflow_dispatch:
+
+concurrency: 
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sphinx-build:
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    
+    steps:
+      - uses: actions/checkout@v2
+        
+      - name: Install mamba
+        uses: mamba-org/provision-with-micromamba@main
+        with:
+          environment-file: Docs/environment.yaml
+
+      - name: Build anypytools
+        run: pip install .
+
+      - uses: ammaraskar/sphinx-problem-matcher@master
+        if: github.ref != 'refs/heads/master'
+          
+      - name: Build Documentation
+        shell: bash -l {0}
+        run: |
+          set -e
+          cd Docs
+          make html-dev
+          cd ..
+          mkdir -p public/dev
+          cp -rT Docs/_build/html public/dev
+          
+      - name: Build last tagged version
+        if: github.ref == 'refs/heads/master'
+        shell: bash -l {0}
+        run: |
+          git checkout $(git describe --tags `git rev-list --tags --max-count=1`);
+          cd Docs
+          make clean
+          make html
+          cd ..
+          cp -rT Docs/_build/html public
+           
+      - name: Deploy 🚀
+        if: github.ref == 'refs/heads/master'
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          deploy_key: ${{ secrets.ACTIONS_DEPLOY_KEY }}
+          external_repository: AnyBody-Research-Group/anypytools-docs
+          publish_branch: gh-pages
+          publish_dir: ./public

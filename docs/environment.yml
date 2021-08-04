@@ -1,0 +1,17 @@
+name: _anypytools-docs
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - sphinx
+  - cloud_sptheme
+  - nbsphinx
+  - IPython
+  - numpy
+  - scipy
+  - tqdm
+  - h5py
+  - pytest
+
+
+# 

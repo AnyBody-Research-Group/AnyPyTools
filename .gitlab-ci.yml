@@ -1,7 +1,0 @@
-
-
-Tests:
-  script:
-    - python -m pytest
-  tags:
-    - ams
