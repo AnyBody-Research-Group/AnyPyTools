@@ -200,7 +200,7 @@ class DeferPlugin(object):
     """Simple plugin to defer pytest-xdist hook functions."""
 
     def pytest_xdist_setupnodes(self, config, specs):
-        """ called before any remote node is set up. """
+        """called before any remote node is set up."""
         print(
             "\n\nUsing AnyBodyCon: ",
             config.getoption("--anybodycon") or get_anybodycon_path(),
@@ -403,8 +403,8 @@ class AnyTestItem(pytest.Item):
         return
 
     def save_output_files(self, src_folder, target_folder, result, hdf5files):
-        """ Saves hdf5, macro, and log files from a test run
-            and copy it to the target_folder
+        """Saves hdf5, macro, and log files from a test run
+        and copy it to the target_folder
         """
         import h5py
 

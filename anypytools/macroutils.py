@@ -780,8 +780,8 @@ class AnyMacro(MutableSequence):
                 if isinstance(elem, SetValue_random):
                     if macro_idx == 0:
                         lower_tail_probability = (
-                            None
-                        )  # First macro get the default values
+                            None  # First macro get the default values
+                        )
                     else:
                         lower_tail_probability = np.random.random(elem.n_factors)
                     mcr = elem.get_macro(macro_idx, lower_tail_probability)

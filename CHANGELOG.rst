@@ -50,6 +50,7 @@ v1.4.0
 =============
 
 **Changed:**
+
 - Progressbars are now draw using `tqdm <https://github.com/tqdm/tqdm>`__. This enables error 
   messages while the progress bar is rendering, and solves a problem with detecting when the 
   code is running in Jupyter notebook and not. 
@@ -67,6 +68,7 @@ v1.3.0
 =============
 
 **Changed:**
+
 - Changed the interface for the pytest plugin when saving hdf5 files from anybody tests. 
 
 
@@ -74,6 +76,7 @@ v1.2.2
 =============
 
 **Fixed:** 
+
 - Fixed problem with Ctrl-C events not working. ``scipy.stats`` used
   some fortran routines which hijacked the key event and caused a crash instead. 
   
@@ -89,6 +92,7 @@ v1.2.1
 =============
 
 **Fixed:**
+
 - Add a work-around for a bug in AnyBody < 7.2.2 which cause the AnyBody console  
   to start in interactive mode when launched from AnyPyTools. This could cause the 
   console application to hang if something fails in AnyBody. 
@@ -99,6 +103,7 @@ v1.2.0
 =============
 
 **Added:**
+
 - Pytest plugin: Option to set the ``faltal_warnings`` variable as a list 
   to select the warnings which should trigger an error. 
 

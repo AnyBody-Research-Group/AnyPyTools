@@ -1,0 +1,14 @@
+name: _anypytools
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - h5py
+  - setuptools
+  - pydoe
+  - tqdm
+  - scipy
+  - pygments_anyscript
+
+
+# 

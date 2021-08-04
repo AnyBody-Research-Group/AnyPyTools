@@ -45,8 +45,7 @@ ON_WINDOWS = platform.system() == "Windows"
 
 
 def case_preserving_replace(string, old, new):
-    """ Replace string while preserving the case
-    """
+    """Replace string while preserving the case"""
 
     def repl(match):
         current = match.group()
@@ -551,7 +550,6 @@ class AnyPyProcessOutput(collections.OrderedDict):
             del _repr_running[call_key]
 
 
-
 def _recursive_replace(iterable, old, new):
     for i, elem in enumerate(iterable):
         if isinstance(elem, list):
@@ -577,7 +575,7 @@ def _parse_data(val):
                 # handle the case where AnyBody has output 'nan' values
                 val2 = val.replace("nan,", ' "nan",')
                 out = literal_eval(val2)
-                recursive_replace(out, "nan", float("nan") )
+                recursive_replace(out, "nan", float("nan"))
             else:
                 raise SyntaxError
         except (SyntaxError, ValueError):
@@ -592,7 +590,6 @@ def _parse_data(val):
     return out
 
 
-
 ABOVE_NORMAL_PRIORITY_CLASS = 0x8000
 BELOW_NORMAL_PRIORITY_CLASS = 0x4000
 IDLE_PRIORITY_CLASS = 0x0040
@@ -603,7 +600,7 @@ NAME_PATTERN = re.compile(r"Main\.[\w\.]*")
 
 
 def correct_dump_prefix(raw, idx):
-    """ Find the correct prefix to use in the output """
+    """Find the correct prefix to use in the output"""
     # The -1000 hack is to avoid coping large strings in memory,
     # since we really only need to access the previous line.
     dumpline = raw[max(0, idx - 1000) : idx].strip().rsplit("\n", 1)[-1]
@@ -623,9 +620,9 @@ DUMP_PATTERN = re.compile(r"^(Main.*?)\s=\s(.*?(?:\n\s\s.*?)*);", flags=re.M)
 def parse_anybodycon_output(
     raw, errors_to_ignore=None, warnings_to_include=None, fatal_warnings=False
 ):
-    """ Parse the output log file from AnyBodyConsole to
-        for data, errors and warnings. If fatal_warnins is
-        True, then warnings are also added to the error list.
+    """Parse the output log file from AnyBodyConsole to
+    for data, errors and warnings. If fatal_warnins is
+    True, then warnings are also added to the error list.
     """
     warnings_to_include = warnings_to_include or []
     errors_to_ignore = errors_to_ignore or []
