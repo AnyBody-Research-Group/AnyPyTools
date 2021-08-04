@@ -2,8 +2,8 @@ name: test
 
 on: [push]
 
-concurrency: 
-  group: ${{ github.head_ref }}
+concurrency:
+  group: ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
