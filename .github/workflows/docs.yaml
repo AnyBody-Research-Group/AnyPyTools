@@ -37,22 +37,22 @@ jobs:
         shell: bash -l {0}
         run: |
           set -e
-          cd Docs
+          cd docs
           make html-dev
           cd ..
           mkdir -p public/dev
-          cp -rT Docs/_build/html public/dev
+          cp -rT docs/_build/html public/dev
           
       - name: Build last tagged version
         if: github.ref == 'refs/heads/master'
         shell: bash -l {0}
         run: |
           git checkout $(git describe --tags `git rev-list --tags --max-count=1`);
-          cd Docs
+          cd docs
           make clean
           make html
           cd ..
-          cp -rT Docs/_build/html public
+          cp -rT docs/_build/html public
            
       - name: Deploy 🚀
         if: github.ref == 'refs/heads/master'
