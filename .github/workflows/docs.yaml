@@ -24,9 +24,10 @@ jobs:
       - name: Install mamba
         uses: mamba-org/provision-with-micromamba@main
         with:
-          environment-file: Docs/environment.yaml
+          environment-file: docs/environment.yml
 
       - name: Build anypytools
+        shell: bash -l {0}
         run: pip install .
 
       - uses: ammaraskar/sphinx-problem-matcher@master
