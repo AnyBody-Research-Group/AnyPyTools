@@ -39,7 +39,7 @@ jobs:
       run: |
         ~\micromamba.exe shell hook -s powershell | Out-String | iex
         micromamba activate _anypytools
-        pip install .
+        pip install --use-feature=in-tree-build .
 
     - name: Test with pytest
       run: |
