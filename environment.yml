@@ -9,6 +9,7 @@ dependencies:
   - tqdm
   - scipy
   - pygments_anyscript
+  - pandas
 
 
 # 

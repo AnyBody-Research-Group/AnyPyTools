@@ -11,7 +11,7 @@ import pathlib
 
 
 from anypytools.abcutils import AnyPyProcess
-from anypytools.abcutils import AnyPyProcessOutputList
+from anypytools.abcutils import AnyPyProcessOutputList, AnyPyProcessOutput
 
 demo_model_path = os.path.join(os.path.dirname(__file__), "Demo.Arm2D.any")
 
@@ -257,6 +257,47 @@ class TestAnyPyProcess:
         for result in output:
             assert "ERROR" not in result
 
+    def test_output_dataframe_with_time(self, init_simple_model):
+
+        macro = [
+            [
+                'load "model.main.any"',
+                "operation Main.ArmModelStudy.InverseDynamics",
+                "run",
+                'classoperation Main.ArmModelStudy.MaxMuscleActivity "Dump"',
+                'classoperation Main.ArmModelStudy.Output.Model.Segs.LowerArm.ElbowNode.r "Dump"',
+                'classoperation Main.ArmModelStudy.Ekin "Dump"',
+                'classoperation Main.ArmModelStudy.Output.Abscissa.t "Dump"',
+            ],
+        ]
+        app = AnyPyProcess(silent=True)
+        output: AnyPyProcessOutput = app.start_macro(macro)[0]
+        df = output.to_dataframe()
+        assert df.index.name == "Main.ArmModelStudy.Output.Abscissa.t"
+        assert df.shape == (100, 11)
+
+
+    def test_output_dataframe_without_time(self, init_simple_model):
+
+        macro = [
+            [
+                'load "model.main.any"',
+                "operation Main.ArmModelStudy.InverseDynamics",
+                "run",
+                'classoperation Main.ArmModelStudy.MaxMuscleActivity "Dump"',
+                'classoperation Main.ArmModelStudy.Output.Model.Segs.LowerArm.ElbowNode.r "Dump"',
+                'classoperation Main.ArmModelStudy.Ekin "Dump"',
+                'classoperation Main.Epot "Dump"',
+            ],
+        ]
+        app = AnyPyProcess(silent=True)
+
+        output: AnyPyProcessOutput = app.start_macro(macro)[0]
+        df = output.to_dataframe(index_var=None)
+        assert df.shape == (1, 308)
+        assert df.index.name == None
+
 
 if __name__ == "__main__":
-    pytest.main(str("test_abcutils.py"))
+    os.chdir(pathlib.Path(__file__).parent)
+    pytest.main([str("test_abcutils.py::TestAnyPyProcess::test_output_dataframe_with_time")])

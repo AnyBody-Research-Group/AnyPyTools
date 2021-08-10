@@ -2,6 +2,23 @@
 AnyPyTools Change Log
 =====================
 
+v1.5.0
+=============
+Add methods for exporing simuation output as a pandas dataframe. 
+
+.. code-block:: python
+
+  app =  AnyPyProcess()
+  results = app.start_marco(macro_list)
+
+  df = results.to_dataframe(index_var="Main.MyStudy.Output.Abscissa.t")
+
+The data has too be consistent across all macros. That means that the 
+`index_var` must be present in all simulations. Also note that since
+pandas dataframes are 2D any 3D data will be flattened. For example 3D vectors
+which will be saved into three columns in the dataframe. E.g. ``r[0]``, ``r[1]``, ``r[2]``.
+
+
 v1.4.7
 =============
 Ensure that 'nan' values returned from AnyBody are treated as "float('nan')" when returned to Python.

@@ -5,6 +5,8 @@ Created on Sun Jul 06 19:09:58 2014
 @author: Morten
 """
 import os
+from pathlib import Path
+
 import pytest
 import numpy as np
 
@@ -82,6 +84,42 @@ def test_AnyPyProcessOutput():
     assert out["A"].shape == (5,)
 
 
+def test_AnyPyProcessOutput_to_dataframe():
+    data = {
+        "Output.Abscissa.t": np.linspace(0, 1, 6),
+        "int": 8,
+        "float": 0.38,
+        "str": "Hello world",
+        "one_dim_data": np.ones(6),
+        "three_dim_data": np.ones((6, 3)),
+        "StringArray": np.array("Hello world"),
+        "speciel_length": np.arange(5),
+    }
+    anypydata = AnyPyProcessOutput(data)
+    df = anypydata.to_dataframe()
+    assert df.shape == (6, 13)
+    df2 = anypydata.to_dataframe(index_var="speciel_length")
+    assert df2.shape == (5, 34)
+    df3 = anypydata.to_dataframe(index_var=None)
+    assert df3.shape == (1, 39)
+
+
+def test_AnyPyProcessOutputList_to_dataframe():
+    time_len = 6
+    no_simulations = 10
+    data = {
+        "Output.Abscissa.t": np.linspace(0, 1, time_len),
+        "three_dim_data": np.ones((time_len, 3)),
+    }
+    appl = [AnyPyProcessOutput({**data, **{"test": i}}) for i in range(no_simulations)]
+    appl = AnyPyProcessOutputList(appl)
+    df = appl.to_dataframe(group_var="test")
+    assert df.shape == (no_simulations * time_len, 4)
+
+    df1 = appl.to_dataframe(group_var=None)
+    assert df1.shape == (no_simulations * time_len, 5)
+
+
 def test_get_anybodycon_path():
     abc = get_anybodycon_path()
 
@@ -89,4 +127,5 @@ def test_get_anybodycon_path():
 
 
 if __name__ == "__main__":
-    test_array2anyscript()
+    os.chdir(Path(__file__).parent)
+    pytest.main([str("test_tools.py::test_AnyPyProcessOutputList_to_dataframe")])

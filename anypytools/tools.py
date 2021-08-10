@@ -22,6 +22,8 @@ import pprint
 from ast import literal_eval
 from _thread import get_ident as _get_ident
 
+from typing import Mapping, Optional, Sequence, Union
+
 # external imports
 import numpy as np
 
@@ -378,6 +380,57 @@ class AnyPyProcessOutputList(collections.abc.MutableSequence):
             for elem in self
         ]
 
+    def to_dataframe(self, index_var="auto", group_var=None):
+        """Return output of all simuations as a concatenated pandas dataframe.
+
+        Parameters:
+        -----------
+        index_var: str
+            Name of the variable to use as axis 0 in the dataframe.
+            If not given system will look for variables ending with
+            "Ouput.Abcsissa.t"
+        group_var: str
+            Name of the variable which will be different across all
+            simulations. If not specified the index of the simuation will
+            be used, and a categorical 'group' column will be added to the
+            dataframe.
+
+        Returns:
+        --------
+        pandas.DataFrame
+        """
+        try:
+            import pandas as pd
+        except ImportError:
+            raise ImportError("pandas is required for this function")
+
+        dfs = []
+        index_name = None
+        for idx, elem in enumerate(self):
+            df = elem.to_dataframe(index_var)
+
+            if index_name and df.index.name != index_name:
+                raise ValueError(
+                    "The index of the dataframe is not consistant across all elements of the output. "
+                )
+            else:
+                index_name = df.index.name
+
+            if group_var is not None:
+                group = group_var
+                if group_var not in df.columns:
+                    raise KeyError(
+                        f"The group variable {group_var} is not available element {idx}"
+                    )
+            else:
+                group = "group"
+                df[group] = idx
+            dfs.append(df)
+        df_out = pd.concat(dfs, ignore_index=True, sort=False)
+        df_out[group] = pd.Categorical(df_out[group])
+
+        return df_out
+
 
 def _expand_short_path_name(short_path_name):
     from ctypes import create_unicode_buffer, windll
@@ -549,11 +602,97 @@ class AnyPyProcessOutput(collections.OrderedDict):
         finally:
             del _repr_running[call_key]
 
+    def to_dataframe(self, index_var: Optional[str] = "auto"):
+        """Convert the output to a pandas dataframe.
+
+        Parameters:
+        -----------
+        index_var: str
+            Name of the variable to use as axis 0 in the dataframe.
+            If "auto" is given the system will look for variables ending with
+            "Ouput.Abcsissa.t". If 'None' no index variable is used an only a single
+            row is returned in the dataframe.
+
+        Returns:
+        --------
+        df: pandas.DataFrame
+            Dataframe with the output data.
+        """
+        try:
+            import pandas as pd
+        except ImportError:
+            raise ImportError("pandas is required for this function")
+
+        excluded_vars = ["task_macro"]
+
+        var_list = set(self.keys()) - set(excluded_vars)
+
+        if index_var == "auto":
+            timevars = [var for var in self if var.endswith("Output.Abscissa.t")]
+            if len(timevars) > 1:
+                raise ValueError(
+                    f"Multiple time variables found. Use 'index_var' argument to indicate which to use."
+                )
+            if len(timevars) == 0:
+                raise ValueError(
+                    "No time variable found. Use 'index_var' argument to indicate what variable should be used."
+                )
+            index_var = timevars[0]
+
+        if index_var is not None:
+            if index_var not in self:
+                raise ValueError(
+                    f"The index var {index_var} could not be found in the data "
+                )
+            index_data = np.array(self[index_var])
+            if index_data.ndim != 1:
+                raise ValueError(f"The index var {index_var} should be a 1D array")
+
+            index_len = index_data.shape[0]
+            df_output = pd.DataFrame({index_var: self[index_var]})
+            # columns = [abscissa]
+            var_list -= set([index_var])
+        else:
+            index_len = 1
+            df_output = pd.DataFrame()
+            # columns = []
+
+        for var in var_list:
+            data = self[var]
+            # col_names = [var]
+            if isinstance(data, (int, float, str)):
+                data = np.array(data)
+            if isinstance(data, np.ndarray):
+                indices = np.array(list(np.ndindex(data.shape)))
+                data = np.atleast_2d(data.T).T
+                # if np.issubdtype(data.dtype, np.number):
+                if data.shape[0] != index_len:
+                    data = data.flatten()
+                    data = np.repeat(data[np.newaxis, :], index_len, axis=0)
+                else:
+                    indices = np.array(list(np.ndindex(data.shape[1:])))
+
+                if len(indices) == 1:
+                    col_names = [var]
+                else:
+                    col_names = [
+                        var + "".join(f"[{i}]" for i in index) for index in indices
+                    ]
+                df_output = pd.concat(
+                    [df_output, pd.DataFrame(data, columns=col_names)], axis=1
+                )
+
+        df_output = df_output.convert_dtypes()
+        if index_var:
+            df_output.set_index(index_var, inplace=True)
+
+        return df_output
+
 
 def _recursive_replace(iterable, old, new):
     for i, elem in enumerate(iterable):
         if isinstance(elem, list):
-            recursive_replace(elem, old, new)
+            _recursive_replace(elem, old, new)
         elif elem == old:
             iterable[i] = new
 
