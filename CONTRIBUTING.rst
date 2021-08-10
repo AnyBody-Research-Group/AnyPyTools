@@ -182,7 +182,7 @@ Performing the Release
     1. Update and push the release log
     2. Update version number in ``anypytools.__init__.py``
     3. Ensure test pass
-    4. Make PR on GitHub, and check docs compile correctly on travis
+    4. Make PR on GitHub, and check docs compile correctly on Github Actions
     5. Create a tag with the version number and push it.
     6. Crate PYPI pckage 
         a. Run ``python setup.py sdist``

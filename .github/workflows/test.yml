@@ -33,7 +33,8 @@ jobs:
     - name: Create conda environments
       run: |
         ~\micromamba.exe shell hook -s powershell | Out-String | iex
-        micromamba env create -y -n _anypytools -f environment.yml
+        if (Test-Path -Path $Env:MAMBA_ROOT_PREFIX\envs\_anypytools) {$OPR = "update"} else {$OPR = "create"}
+        micromamba env $OPR -y -n _anypytools -f environment.yml
     
     - name: build
       run: |
