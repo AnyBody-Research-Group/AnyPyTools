@@ -2,6 +2,32 @@
 AnyPyTools Change Log
 =====================
 
+
+v1.6.0
+=============
+
+**Changed**:
+
+* The `to_dataframe()` methods have been updated.
+  They now return a dataframe without an index by default. 
+
+  They also nnow support interpolation of the data.
+
+  .. code-block:: python
+
+    app =  AnyPyProcess()
+    results = app.start_marco(macro_list)
+
+    df = results.to_dataframe(
+      interp_var="Main.MyStudy.Output.Abscissa.t",
+      interp_val=linspace(0,1,50)
+    )
+
+**Added**: 
+
+* Documenation on how to use the `to_dataframe()` method has been added to the tutorials. 
+
+
 v1.5.0
 =============
 Add methods for exporing simuation output as a pandas dataframe. 
