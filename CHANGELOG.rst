@@ -11,7 +11,7 @@ v1.6.0
 * The `to_dataframe()` methods have been updated.
   They now return a dataframe without an index by default. 
 
-  They also nnow support interpolation of the data.
+  They also now support interpolation of the data.
 
   .. code-block:: python
 
