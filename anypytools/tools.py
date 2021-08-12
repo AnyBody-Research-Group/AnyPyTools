@@ -408,7 +408,8 @@ class AnyPyProcessOutputList(collections.abc.MutableSequence):
 
         dfs = [elem.to_dataframe(index_var, **kwargs) for elem in self]
         dfout = pd.concat(dfs, keys=range(len(dfs)), sort=False)
-        dfout["task_id"] = pd.Categorical(dfout.task_id, ordered=True)
+        if "task_id" in dfout.columns:
+            dfout["task_id"] = pd.Categorical(dfout.task_id, ordered=True)
         return dfout
 
 

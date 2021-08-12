@@ -111,13 +111,11 @@ def test_AnyPyProcessOutputList_to_dataframe():
         "Output.Abscissa.t": np.linspace(0, 1, time_len),
         "three_dim_data": np.ones((time_len, 3)),
     }
-    appl = [AnyPyProcessOutput({**data, **{"test": i}}) for i in range(no_simulations)]
-    appl = AnyPyProcessOutputList(appl)
-    df = appl.to_dataframe(group_var="test")
+    appl = AnyPyProcessOutputList(
+        [AnyPyProcessOutput(data) for i in range(no_simulations)]
+    )
+    df = appl.to_dataframe()
     assert df.shape == (no_simulations * time_len, 4)
-
-    df1 = appl.to_dataframe()
-    assert df1.shape == (no_simulations * time_len, 5)
 
 
 def test_get_anybodycon_path():
