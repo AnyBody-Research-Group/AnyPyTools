@@ -97,9 +97,9 @@ def test_AnyPyProcessOutput_to_dataframe():
     }
     anypydata = AnyPyProcessOutput(data)
     df = anypydata.to_dataframe()
-    assert df.shape == (6, 13)
+    assert df.shape == (6, 14)
     df2 = anypydata.to_dataframe(index_var="speciel_length")
-    assert df2.shape == (5, 34)
+    assert df2.shape == (5, 35)
     df3 = anypydata.to_dataframe(index_var=None)
     assert df3.shape == (1, 39)
 
