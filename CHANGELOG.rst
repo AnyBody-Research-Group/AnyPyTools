@@ -25,7 +25,7 @@ v1.6.0
 
 **Added**: 
 
-* Documenation on how to use the `to_dataframe()` method has been added to the tutorials. 
+* Documentation on how to use the `to_dataframe()` method has been added to the tutorials. 
 
 
 v1.5.0
