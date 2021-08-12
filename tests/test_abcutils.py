@@ -273,8 +273,7 @@ class TestAnyPyProcess:
         app = AnyPyProcess(silent=True)
         output: AnyPyProcessOutput = app.start_macro(macro)[0]
         df = output.to_dataframe()
-        assert df.index.name == "Main.ArmModelStudy.Output.Abscissa.t"
-        assert df.shape == (100, 11)
+        assert df.shape == (100, 12)
 
 
     def test_output_dataframe_without_time(self, init_simple_model):
