@@ -116,7 +116,7 @@ def test_AnyPyProcessOutputList_to_dataframe():
     df = appl.to_dataframe(group_var="test")
     assert df.shape == (no_simulations * time_len, 4)
 
-    df1 = appl.to_dataframe(group_var=None)
+    df1 = appl.to_dataframe()
     assert df1.shape == (no_simulations * time_len, 5)
 
 
