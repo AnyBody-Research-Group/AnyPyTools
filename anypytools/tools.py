@@ -380,7 +380,7 @@ class AnyPyProcessOutputList(collections.abc.MutableSequence):
             for elem in self
         ]
 
-    def to_dataframe(self, index_var="auto", group_var=None):
+    def to_dataframe(self, index_var="auto", **kwargs):
         """Return output of all simuations as a concatenated pandas dataframe.
 
         Parameters:
@@ -389,11 +389,13 @@ class AnyPyProcessOutputList(collections.abc.MutableSequence):
             Name of the variable to use as axis 0 in the dataframe.
             If not given system will look for variables ending with
             "Ouput.Abcsissa.t"
-        group_var: str
-            Name of the variable which will be different across all
-            simulations. If not specified the index of the simuation will
-            be used, and a categorical 'group' column will be added to the
-            dataframe.
+        interp_var: str
+            Name of the variable on which the data is interpolating/resampled.
+        interp_val: np.ndarray
+            Values to use when re-interpolating/resampling the data.
+        interp_method: str
+            Method to use when re-interpolating/resampling the data. Defaults to 'cubic'.
+
 
         Returns:
         --------
@@ -404,32 +406,10 @@ class AnyPyProcessOutputList(collections.abc.MutableSequence):
         except ImportError:
             raise ImportError("pandas is required for this function")
 
-        dfs = []
-        index_name = None
-        for idx, elem in enumerate(self):
-            df = elem.to_dataframe(index_var)
-
-            if index_name and df.index.name != index_name:
-                raise ValueError(
-                    "The index of the dataframe is not consistant across all elements of the output. "
-                )
-            else:
-                index_name = df.index.name
-
-            if group_var is not None:
-                group = group_var
-                if group_var not in df.columns:
-                    raise KeyError(
-                        f"The group variable {group_var} is not available element {idx}"
-                    )
-            else:
-                group = "group"
-                df[group] = idx
-            dfs.append(df)
-        df_out = pd.concat(dfs, ignore_index=True, sort=False)
-        df_out[group] = pd.Categorical(df_out[group])
-
-        return df_out
+        dfs = [elem.to_dataframe(index_var, **kwargs) for elem in self]
+        dfout = pd.concat(dfs, keys=range(len(dfs)), sort=False)
+        dfout["task_id"] = pd.Categorical(dfout.task_id, ordered=True)
+        return dfout
 
 
 def _expand_short_path_name(short_path_name):
@@ -602,31 +582,10 @@ class AnyPyProcessOutput(collections.OrderedDict):
         finally:
             del _repr_running[call_key]
 
-    def to_dataframe(self, index_var: Optional[str] = "auto"):
-        """Convert the output to a pandas dataframe.
-
-        Parameters:
-        -----------
-        index_var: str
-            Name of the variable to use as axis 0 in the dataframe.
-            If "auto" is given the system will look for variables ending with
-            "Ouput.Abcsissa.t". If 'None' no index variable is used an only a single
-            row is returned in the dataframe.
-
-        Returns:
-        --------
-        df: pandas.DataFrame
-            Dataframe with the output data.
+    def _get_index_length(self, index_var="auto"):
+        """Find the length of the index_var variable or look for a
+        time dimension in the data set if index_var="auto"
         """
-        try:
-            import pandas as pd
-        except ImportError:
-            raise ImportError("pandas is required for this function")
-
-        excluded_vars = ["task_macro"]
-
-        var_list = set(self.keys()) - set(excluded_vars)
-
         if index_var == "auto":
             timevars = [var for var in self if var.endswith("Output.Abscissa.t")]
             if len(timevars) > 1:
@@ -649,23 +608,57 @@ class AnyPyProcessOutput(collections.OrderedDict):
                 raise ValueError(f"The index var {index_var} should be a 1D array")
 
             index_len = index_data.shape[0]
-            df_output = pd.DataFrame({index_var: self[index_var]})
-            # columns = [abscissa]
-            var_list -= set([index_var])
         else:
             index_len = 1
-            df_output = pd.DataFrame()
-            # columns = []
+        return index_len
 
+    def to_dataframe(
+        self,
+        index_var: Optional[str] = "auto",
+        interp_var=None,
+        interp_val=None,
+        interp_method="cubic",
+    ):
+        """Convert the output to a pandas dataframe.
+
+        Parameters:
+        -----------
+        index_var: str
+            Name of the variable to use as axis 0 in the dataframe.
+            If "auto" is given the system will look for variables ending with
+            "Ouput.Abcsissa.t". If 'None' no index variable is used an only a single
+            row is returned in the dataframe.
+        interp_var: str
+            Name of the variable on which the data is interpolating/resampled.
+        interp_val: np.ndarray
+            Values to use when re-interpolating/resampling the data.
+        interp_method: str
+            Method to use when re-interpolating/resampling the data. Defaults to 'cubic'.
+
+        Returns:
+        --------
+        df: pandas.DataFrame
+            Dataframe with the output data.
+        """
+        try:
+            import pandas as pd
+        except ImportError:
+            raise ImportError("pandas is required for this function")
+
+        excluded_vars = ["task_macro"]
+
+        var_list = set(self.keys()) - set(excluded_vars)
+
+        index_len = self._get_index_length(index_var)
+
+        dfs = []
         for var in var_list:
             data = self[var]
-            # col_names = [var]
             if isinstance(data, (int, float, str)):
                 data = np.array(data)
             if isinstance(data, np.ndarray):
                 indices = np.array(list(np.ndindex(data.shape)))
                 data = np.atleast_2d(data.T).T
-                # if np.issubdtype(data.dtype, np.number):
                 if data.shape[0] != index_len:
                     data = data.flatten()
                     data = np.repeat(data[np.newaxis, :], index_len, axis=0)
@@ -678,15 +671,33 @@ class AnyPyProcessOutput(collections.OrderedDict):
                     col_names = [
                         var + "".join(f"[{i}]" for i in index) for index in indices
                     ]
-                df_output = pd.concat(
-                    [df_output, pd.DataFrame(data, columns=col_names)], axis=1
+                dfs.append(pd.DataFrame(data, columns=col_names))
+
+        dfout = pd.concat(dfs, axis=1).convert_dtypes(
+            convert_integer=False, convert_floating=False
+        )
+
+        if interp_var is not None:
+            if interp_var not in dfout.columns:
+                raise ValueError(
+                    f"The `interp_var` {interp_var} could not be found in the data"
                 )
+            if interp_val is None:
+                interp_val = dfout[interp_var]
+            time_columns = list(dfout.columns[dfout.apply(pd.Series.nunique) > 1])
+            constant_columns = dfout.columns.difference(time_columns)
+            if interp_var not in time_columns:
+                raise ValueError("The `interp_var` should not be a constant")
 
-        df_output = df_output.convert_dtypes()
-        if index_var:
-            df_output.set_index(index_var, inplace=True)
+            dfout = dfout.set_index(interp_var, drop=True)
+            dfout = dfout.reindex(dfout.index.union(interp_val))
+            dfout[time_columns] = dfout[time_columns].interpolate(interp_method)
+            dfout[constant_columns] = dfout[constant_columns].fillna(method="bfill")
 
-        return df_output
+            dfout = dfout.loc[interp_val]
+            dfout.reset_index(inplace=True)
+
+        return dfout
 
 
 def _recursive_replace(iterable, old, new):
