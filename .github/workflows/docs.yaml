@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: CI-docs-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:

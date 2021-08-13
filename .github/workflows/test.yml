@@ -1,9 +1,9 @@
 name: test 
 
-on: [push]
+on: [push, pull_request]
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-test-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
