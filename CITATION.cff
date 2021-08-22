@@ -1,0 +1,32 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Lund"
+  given-names: "Morten Enemark"
+  orcid: "https://orcid.org/0000-0001-9920-4051"
+title: "AnyPyTools"
+version: 2.0.4
+doi: 10.5281/zenodo.5187643
+date-released: 2021-08-12
+url: "https://github.com/AnyBody-Research-Group/AnyPyTools"
+preferred-citation:
+  type: article
+  authors:
+  - family-names: "Lund"
+    given-names: "Morten Enemark"
+    orcid: "https://orcid.org/0000-0001-9920-4051"
+  - family-names: "Rasmussen"
+    given-names: "John"
+    orcid: "https://orcid.org/0000-0003-3257-5653"
+  - family-names: "Andersen"
+    given-names: "Michael Skipper"
+    orcid: "https://orcid.org/0000-0001-8275-9472"
+  doi: "10.21105/joss.01108"
+  journal: "Journal of Open Source Software"
+  month: 1
+  start: 1108 # First page number
+  title: "AnyPyTools: A Python package for reproducible research with the AnyBody Modeling System"
+  issue: 33
+  volume: 4
+  year: 2018
+
