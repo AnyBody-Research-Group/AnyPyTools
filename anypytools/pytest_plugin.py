@@ -150,11 +150,12 @@ def _format_switches(defs):
 
 def _as_absolute_paths(d, start=os.getcwd()):
     import ntpath as os_path
+
     out = {}
     start = start if ON_WINDOWS else winepath(start, "-w")
     for key, val in d.items():
-            val = val if ON_WINDOWS else winepath(val, "-w")
-            out[key] = os_path.abspath(os_path.relpath(val, start))
+        val = val if ON_WINDOWS else winepath(val, "-w")
+        out[key] = os_path.abspath(os_path.relpath(val, start))
     return out
 
 
