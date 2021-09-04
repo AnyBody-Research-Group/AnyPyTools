@@ -45,15 +45,14 @@ require_list = ["numpy", "scipy", "tqdm"]
 
 entry_points = {}
 
-if sys.platform.startswith("win"):
-    entry_points["pytest11"] = ["anypytools = anypytools.pytest_plugin"]
+entry_points["pytest11"] = ["anypytools = anypytools.pytest_plugin"]
 
 
 setup(
     name="AnyPyTools",
     version=find_version("anypytools", "__init__.py"),
     install_requires=require_list,
-    python_requires=">=3.6",
+    python_requires=">=3.8",
     packages=find_packages(exclude=["docs", "tests*"]),
     package_data={"anypytools": ["test_models/Demo.Arm2D.any"]},
     # the following makes a plugin available to pytest
@@ -70,10 +69,11 @@ setup(
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
         "Framework :: Pytest",
         "Intended Audience :: Science/Research",
         "License :: OSI Approved :: MIT License",
-        "Environment :: Win32 (MS Windows)",
+        "Operating System :: OS Independent",
         "Topic :: Scientific/Engineering",
     ],
 )
