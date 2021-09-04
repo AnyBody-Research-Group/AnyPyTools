@@ -31,6 +31,7 @@ import numpy as np
 from tqdm.auto import tqdm
 
 from .tools import (
+    ON_WINDOWS,
     make_hash,
     AnyPyProcessOutputList,
     parse_anybodycon_output,
@@ -40,6 +41,7 @@ from .tools import (
     AnyPyProcessOutput,
     run_from_ipython,
     get_ncpu,
+    winepath,
     silentremove,
     case_preserving_replace,
 )
@@ -193,14 +195,24 @@ def execute_anybodycon(
     with open(macro_filename, "w+b") as macro_file:
         macro_file.write("\n".join(macro).encode("UTF-8"))
         macro_file.flush()
-    anybodycmd = [
-        str(anybodycon_path.resolve()),
-        "--macro=",
-        macro_file.name,
-        "/deb",
-        str(debug_mode),
-        "/ni",
-    ]
+
+    if ON_WINDOWS:
+        anybodycmd = []
+        macro_file_str = str(macro_file)
+    else:
+        anybodycmd = ["wine"]
+        macro_file_str = winepath(macro_file, "--windows")
+
+    anybodycmd.extend(
+        [
+            str(anybodycon_path.resolve()),
+            "--macro=",
+            macro_file_str,
+            "/deb",
+            str(debug_mode),
+            "/ni",
+        ]
+    )
     if sys.platform.startswith("win"):
         # Don't display the Windows GPF dialog if the invoked program dies.
         # See comp.os.ms-windows.programmer.win32
@@ -220,6 +232,7 @@ def execute_anybodycon(
         stderr=logfile,
         creationflags=subprocess_flags,
         env=env,
+        cwd=folder,
     )
     _subprocess_container.add(proc.pid)
     try:

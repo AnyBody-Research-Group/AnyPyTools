@@ -20,6 +20,7 @@ import subprocess
 import collections
 import pprint
 from ast import literal_eval
+from pathlib import Path
 from _thread import get_ident as _get_ident
 
 from typing import Mapping, Optional, Sequence, Union
@@ -72,18 +73,33 @@ def case_preserving_replace(string, old, new):
     return regex.sub(repl, string)
 
 
-def anybodycon_version(anybodyconpath):
+def winepath(path, opts=None):
+    """ " Wrapper for the winepath commandline tool"""
+    if not opts:
+        opts = ["-u"]
+    try:
+        out = subprocess.check_output(
+            ["winepath", *opts, str(path)], universal_newlines=True
+        )
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return ""
+    return out.strip()
+
+
+def anybodycon_version(anybodyconpath=None):
     """Return the AnyBodyCon version."""
     anybodyconpath = anybodyconpath or get_anybodycon_path()
     if anybodyconpath is None:
         return "0.0.0"
-    try:
-        out = subprocess.check_output([anybodyconpath, "-ni"], universal_newlines=True)
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        return "0.0.0"
+    cmd = [anybodyconpath, "-ni"]
+    if not ON_WINDOWS:
+        cmd.insert(0, "wine")
+    out = subprocess.run(cmd, universal_newlines=True, stdout=subprocess.PIPE).stdout
     m = ANYBODYCON_VERSION_RE.search(out)
-    if m is not None:
+    if m:
         return m.groupdict()["version"]
+    else:
+        return "0.0.0"
 
 
 AMMR_VERSION_RE = re.compile(r'.*AMMR_VERSION\s"(?P<version>.*)"')
@@ -427,7 +443,13 @@ def _expand_short_path_name(short_path_name):
 def get_anybodycon_path():
     """Return the path to default AnyBody console application."""
     if not ON_WINDOWS:
-        return None
+        wineprefix = Path(os.environ.get("WINEPREFIX", Path.home() / ".wine"))
+        abtpath = wineprefix / "drive_c/Program Files/AnyBody Technology"
+        anybodycon_paths = list(abtpath.glob("*/AnyBodyCon.exe"))
+        if anybodycon_paths:
+            return str(anybodycon_paths[-1])
+        else:
+            return None
     try:
         import winreg
     except ImportError:
