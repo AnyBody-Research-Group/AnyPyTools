@@ -3,6 +3,14 @@ AnyPyTools Change Log
 =====================
 
 
+v1.7.0
+=============
+
+**Added:**
+
+* AnyPyTools can now be used on linux if the AnyBody Modeling System is installed using wine.
+
+
 v1.6.0
 =============
 

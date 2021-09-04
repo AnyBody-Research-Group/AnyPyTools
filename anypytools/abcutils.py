@@ -31,6 +31,7 @@ import numpy as np
 from tqdm.auto import tqdm
 
 from .tools import (
+    ON_WINDOWS,
     make_hash,
     AnyPyProcessOutputList,
     parse_anybodycon_output,
@@ -40,6 +41,7 @@ from .tools import (
     AnyPyProcessOutput,
     run_from_ipython,
     get_ncpu,
+    winepath,
     silentremove,
     case_preserving_replace,
 )
@@ -193,14 +195,23 @@ def execute_anybodycon(
     with open(macro_filename, "w+b") as macro_file:
         macro_file.write("\n".join(macro).encode("UTF-8"))
         macro_file.flush()
-    anybodycmd = [
-        str(anybodycon_path.resolve()),
-        "--macro=",
-        macro_file.name,
-        "/deb",
-        str(debug_mode),
-        "/ni",
-    ]
+
+    anybodycmd = []
+    macro_filename = str(macro_filename)
+    if not ON_WINDOWS:
+        anybodycmd.append("wine")
+        macro_filename = winepath(str(macro_filename), "--windows")
+
+    anybodycmd.extend(
+        [
+            str(anybodycon_path.resolve()),
+            "--macro=",
+            macro_filename,
+            "/deb",
+            str(debug_mode),
+            "/ni",
+        ]
+    )
     if sys.platform.startswith("win"):
         # Don't display the Windows GPF dialog if the invoked program dies.
         # See comp.os.ms-windows.programmer.win32
@@ -209,17 +220,14 @@ def execute_anybodycon(
         SEM_NOGPFAULTERRORBOX = 0x0002  # From MSDN
         ctypes.windll.kernel32.SetErrorMode(SEM_NOGPFAULTERRORBOX)
         subprocess_flags = 0x8000000  # win32con.CREATE_NO_WINDOW?
+        subprocess_flags |= priority
+        creationflags = {"creationflags": subprocess_flags}
     else:
-        subprocess_flags = 0
-    subprocess_flags |= priority
+        creationflags = {}
     # Check global module flag to avoid starting processes after
     # the user cancelled the processes
     proc = Popen(
-        anybodycmd,
-        stdout=logfile,
-        stderr=logfile,
-        creationflags=subprocess_flags,
-        env=env,
+        anybodycmd, stdout=logfile, stderr=logfile, env=env, cwd=folder, **creationflags
     )
     _subprocess_container.add(proc.pid)
     try:
@@ -255,7 +263,7 @@ def execute_anybodycon(
             " Return code: " + str(retcode)
         )
     if not keep_macrofile:
-        silentremove(macro_file.name)
+        silentremove(macro_filename)
     return retcode
 
 
@@ -291,7 +299,7 @@ class _Task(object):
         if taskname:
             self.name = taskname
         else:
-            self.name = f"{folder.parent.name}-{folder.name}-{number}"
+            self.name = f"{folder.parent.name}-{folder.name}-{number}".lstrip("-")
 
     def has_error(self):
         return "ERROR" in self.output
