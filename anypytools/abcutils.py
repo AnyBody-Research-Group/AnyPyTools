@@ -299,7 +299,7 @@ class _Task(object):
         if taskname:
             self.name = taskname
         else:
-            self.name = f"{folder.parent.name}-{folder.name}-{number}"
+            self.name = f"{folder.parent.name}-{folder.name}-{number}".lstrip("-")
 
     def has_error(self):
         return "ERROR" in self.output
