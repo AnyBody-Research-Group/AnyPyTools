@@ -301,7 +301,10 @@ class AnyTestItem(pytest.Item):
 
         self.timeout = self.config.getoption("--timeout")
         self.errors = []
-        self.macro = [macro_commands.Load(self.fspath.strpath, self.defs, self.paths)]
+        mainfile = self.fspath.strpath
+        if not ON_WINDOWS:
+            mainfile = winepath(mainfile, "-w")
+        self.macro = [macro_commands.Load(mainfile, self.defs, self.paths)]
 
         fatal_warnings = kwargs.get("fatal_warnings", False)
         warnings_to_include = kwargs.get("warnings_to_include", None)

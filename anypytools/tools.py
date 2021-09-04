@@ -16,6 +16,7 @@ import textwrap
 import datetime
 import warnings
 import platform
+import functools
 import subprocess
 import collections
 import pprint
@@ -73,6 +74,7 @@ def case_preserving_replace(string, old, new):
     return regex.sub(repl, string)
 
 
+@functools.lru_cache(maxsize=None)
 def winepath(path, opts=None):
     """ " Wrapper for the winepath commandline tool"""
     if not opts:
