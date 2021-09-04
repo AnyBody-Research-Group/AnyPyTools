@@ -43,9 +43,6 @@ def find_version(*file_paths):
 
 require_list = ["numpy", "scipy", "tqdm"]
 
-entry_points = {}
-
-entry_points["pytest11"] = ["anypytools = anypytools.pytest_plugin"]
 
 
 setup(
@@ -56,7 +53,7 @@ setup(
     packages=find_packages(exclude=["docs", "tests*"]),
     package_data={"anypytools": ["test_models/Demo.Arm2D.any"]},
     # the following makes a plugin available to pytest
-    entry_points=entry_points,
+    entry_points={"pytest11": ["anypytools = anypytools.pytest_plugin"]},
     author="Morten Lund",
     author_email="melund@gmail.com",
     description="Python tools and utilities for working with the AnyBody Modeling System",
