@@ -25,6 +25,7 @@ from _pytest.tmpdir import TempdirFactory, TempPathFactory
 
 from anypytools import AnyPyProcess, macro_commands
 from anypytools.tools import (
+    ON_WINDOWS,
     get_anybodycon_path,
     replace_bm_constants,
     get_bm_constants,
@@ -32,6 +33,7 @@ from anypytools.tools import (
     find_ammr_path,
     get_tag,
     get_ammr_version,
+    winepath,
     wraptext,
 )
 
@@ -147,7 +149,13 @@ def _format_switches(defs):
 
 
 def _as_absolute_paths(d, start=os.getcwd()):
-    return {k: os.path.abspath(os.path.relpath(v, start)) for k, v in d.items()}
+    import ntpath as os_path
+    out = {}
+    start = start if ON_WINDOWS else winepath(start, "-w")
+    for key, val in d.items():
+            val = val if ON_WINDOWS else winepath(val, "-w")
+            out[key] = os_path.abspath(os_path.relpath(val, start))
+    return out
 
 
 HEADER_ENSURES = (
