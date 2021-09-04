@@ -196,18 +196,17 @@ def execute_anybodycon(
         macro_file.write("\n".join(macro).encode("UTF-8"))
         macro_file.flush()
 
-    if ON_WINDOWS:
-        anybodycmd = []
-        macro_file_str = str(macro_file)
-    else:
-        anybodycmd = ["wine"]
-        macro_file_str = winepath(macro_file, "--windows")
+    anybodycmd = []
+    macro_filename = str(macro_filename)
+    if not ON_WINDOWS:
+        anybodycmd.append("wine")
+        macro_filename = winepath(str(macro_filename), "--windows")
 
     anybodycmd.extend(
         [
             str(anybodycon_path.resolve()),
             "--macro=",
-            macro_file_str,
+            macro_filename,
             "/deb",
             str(debug_mode),
             "/ni",
@@ -221,18 +220,14 @@ def execute_anybodycon(
         SEM_NOGPFAULTERRORBOX = 0x0002  # From MSDN
         ctypes.windll.kernel32.SetErrorMode(SEM_NOGPFAULTERRORBOX)
         subprocess_flags = 0x8000000  # win32con.CREATE_NO_WINDOW?
+        subprocess_flags |= priority
+        creationflags = {"creationflags": subprocess_flags}
     else:
-        subprocess_flags = 0
-    subprocess_flags |= priority
+        creationflags = {}
     # Check global module flag to avoid starting processes after
     # the user cancelled the processes
     proc = Popen(
-        anybodycmd,
-        stdout=logfile,
-        stderr=logfile,
-        creationflags=subprocess_flags,
-        env=env,
-        cwd=folder,
+        anybodycmd, stdout=logfile, stderr=logfile, env=env, cwd=folder, **creationflags
     )
     _subprocess_container.add(proc.pid)
     try:
@@ -268,7 +263,7 @@ def execute_anybodycon(
             " Return code: " + str(retcode)
         )
     if not keep_macrofile:
-        silentremove(macro_file.name)
+        silentremove(macro_filename)
     return retcode
 
 

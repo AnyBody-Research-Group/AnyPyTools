@@ -77,9 +77,11 @@ def winepath(path, opts=None):
     """ " Wrapper for the winepath commandline tool"""
     if not opts:
         opts = ["-u"]
+    if isinstance(opts, str):
+        opts = [opts]
     try:
         out = subprocess.check_output(
-            ["winepath", *opts, str(path)], universal_newlines=True
+            ["winepath", *opts, f"{path}"], universal_newlines=True
         )
     except (subprocess.CalledProcessError, FileNotFoundError):
         return ""
