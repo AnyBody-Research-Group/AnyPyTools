@@ -37,7 +37,7 @@ __all__ = [
     "NORMAL_PRIORITY_CLASS",
 ]
 
-__version__ = "1.7.0"
+__version__ = "1.7.1"
 
 
 def print_versions():
