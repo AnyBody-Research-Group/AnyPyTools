@@ -1,0 +1,4 @@
+(devguide)=
+
+```{include} ../CONTRIBUTING.md
+```

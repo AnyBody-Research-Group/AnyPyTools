@@ -748,6 +748,10 @@ class AnyPyProcess(object):
         # Extend the folderlist if search_subdir is given
         if isinstance(search_subdirs, str) and isinstance(folderlist[0], str):
             folderlist = sum([getsubdirs(d, search_subdirs) for d in folderlist], [])
+            if len(folderlist) == 0:
+                raise ValueError(
+                    f"No subdirectories found, which match the file:{search_subdirs}"
+                )
         # Check for explicit logfile
         if not isinstance(logfile, (type(None), str, os.PathLike)):
             raise ValueError("logfile must be a str or path")

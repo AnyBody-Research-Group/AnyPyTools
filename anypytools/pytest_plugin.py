@@ -21,7 +21,7 @@ from traceback import format_list, extract_tb
 import pytest
 
 
-from _pytest.tmpdir import TempdirFactory, TempPathFactory
+from pytest import TempdirFactory, TempPathFactory
 
 from anypytools import AnyPyProcess, macro_commands
 from anypytools.tools import (

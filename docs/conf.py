@@ -50,6 +50,7 @@ extensions = [
     "cloud_sptheme.ext.escaped_samp_literals",
     "cloud_sptheme.ext.issue_tracker",
     "cloud_sptheme.ext.table_styling",
+    "myst_parser",
 ]
 
 
@@ -59,6 +60,13 @@ napoleon_use_admonition_for_examples = True
 napoleon_use_admonition_for_notes = True
 napoleon_use_admonition_for_references = True
 
+myst_enable_extensions = [
+    "colon_fence",
+    "deflist",
+    "dollarmath",
+    "amsmath",
+    "html_image",
+]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -67,14 +75,14 @@ templates_path = ["_templates"]
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
 #
-source_suffix = [".rst"]
+source_suffix = [".rst", ".md"]
 
 # The master toctree document.
 master_doc = "index"
 
 # General information about the project.
 project = "AnyPyTools"
-copyright = "2017, Morten Enemark Lund"
+copyright = "2021, Morten Enemark Lund"
 author = "Morten Enemark Lund"
 
 github_doc_root = (
@@ -105,7 +113,7 @@ language = None
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
-exclude_patterns = ["_build", "**.ipynb_checkpoints", "slides", "Tutorial/00_*.ipynb"]
+exclude_patterns = ["_build", "**.ipynb_checkpoints", "slides", "Tutorial/00_*.ipynb", "README.md", "paper/paper.md"]
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = "sphinx"
