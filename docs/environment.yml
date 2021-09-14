@@ -14,7 +14,3 @@ dependencies:
   - pytest
   - myst
   - ipywidgets
-  - anypytools
-
-
-# 
