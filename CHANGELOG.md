@@ -1,5 +1,13 @@
 # AnyPyTools Change Log
 
+
+## v1.7.2
+
+**Changed:**
+- Update documentation to use markdown.
+- Add error message when no files are found with
+  `search_subdir` arguments (fixes [#69](https://github.com/AnyBody-Research-Group/AnyPyTools/issues/69)). 
+
 ## v1.7.1
 
 **Fixed:**
