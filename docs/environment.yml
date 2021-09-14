@@ -12,6 +12,9 @@ dependencies:
   - tqdm
   - h5py
   - pytest
+  - myst
+  - ipywidgets
+  - anypytools
 
 
 # 
