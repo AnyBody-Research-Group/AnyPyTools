@@ -12,5 +12,5 @@ dependencies:
   - tqdm
   - h5py
   - pytest
-  - myst
+  - myst-parser
   - ipywidgets
