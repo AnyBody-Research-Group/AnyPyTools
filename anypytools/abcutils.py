@@ -247,7 +247,6 @@ def execute_anybodycon(
         from shlex import quote
 
         cmd = ["wine", "cmd", "/c", str(batfile) + " & exit"]
-        print(cmd)
         proc = Popen(cmd, env=env, cwd=folder)
 
     _subprocess_container.add(proc.pid)

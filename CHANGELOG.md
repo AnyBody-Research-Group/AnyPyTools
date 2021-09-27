@@ -1,6 +1,11 @@
 # AnyPyTools Change Log
 
 
+## v1.7.4
+
+**Fixed:**
+- Fixed pytest deprecation warnings.
+
 ## v1.7.3
 
 **Fixed:**
