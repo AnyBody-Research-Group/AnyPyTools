@@ -53,6 +53,7 @@ _thread_lock = RLock()
 _KILLED_BY_ANYPYTOOLS = 10
 _TIMEDOUT_BY_ANYPYTOOLS = 11
 _NO_LICENSES_AVAILABLE = -22
+_UNABLE_TO_ACQUIRE_LICENSE = 234  # May indicate wrong password
 
 
 class _SubProcessContainer(object):
@@ -273,6 +274,12 @@ def execute_anybodycon(
         logfile.write(
             "\nERROR: anybodycon.exe existed unexpectedly. "
             "Return code: " + str(_NO_LICENSES_AVAILABLE) + " : No license available."
+        )
+    elif retcode == _UNABLE_TO_ACQUIRE_LICENSE:
+        logfile.write(
+            "\nERROR: anybodycon.exe existed unexpectedly. "
+            f"Return code {_UNABLE_TO_ACQUIRE_LICENSE}: "
+            "Unable to aquire license from server"
         )
     elif retcode:
         logfile.write(
