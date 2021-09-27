@@ -49,9 +49,11 @@ jobs:
         micromamba install -y pytest -c conda-forge
         pytest
 
-  test-linux:
+
+  test-linux-cloud:
     runs-on: ubuntu-latest
     container: ghcr.io/anybody/anybodycon-linux:latest
+    needs: lint
 
     steps:
       - uses: actions/checkout@v2
