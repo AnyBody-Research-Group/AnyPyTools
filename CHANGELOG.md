@@ -1,6 +1,12 @@
 # AnyPyTools Change Log
 
 
+## v1.7.3
+
+**Fixed:**
+- Fixed a bug on linux when anybody was using it own internal Python hooks. Redirecting the output on the linux would cause
+  python initialization to fail. 
+
 ## v1.7.2
 
 **Changed:**

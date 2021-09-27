@@ -51,7 +51,9 @@ logger = logging.getLogger("abt.anypytools")
 
 _thread_lock = RLock()
 _KILLED_BY_ANYPYTOOLS = 10
+_TIMEDOUT_BY_ANYPYTOOLS = 11
 _NO_LICENSES_AVAILABLE = -22
+_UNABLE_TO_ACQUIRE_LICENSE = 234  # May indicate wrong password
 
 
 class _SubProcessContainer(object):
@@ -176,9 +178,11 @@ def execute_anybodycon(
         folder = os.getcwd()
 
     try:
-        macro_filename = Path(folder).resolve() / (Path(logfile.name).stem + ".anymcr")
+        macrofile_path = Path(folder).resolve() / (Path(logfile.name).stem + ".anymcr")
     except AttributeError:
-        macro_filename = "macrofile.anymcr"
+        macrofile_path = Path("macrofile.anymcr")
+
+    macrofile_cleanup = [macrofile_path]
 
     if logfile is None:
         logfile = sys.stdout
@@ -192,27 +196,11 @@ def execute_anybodycon(
     if not os.path.isfile(anybodycon_path):
         raise IOError(f"Can not find anybodycon.exe: {anybodycon_path}")
 
-    with open(macro_filename, "w+b") as macro_file:
-        macro_file.write("\n".join(macro).encode("UTF-8"))
-        macro_file.flush()
+    with open(macrofile_path, "w+b") as fh:
+        fh.write("\n".join(macro).encode("UTF-8"))
+        fh.flush()
 
-    anybodycmd = []
-    macro_filename = str(macro_filename)
-    if not ON_WINDOWS:
-        anybodycmd.append("wine")
-        macro_filename = winepath(str(macro_filename), "--windows")
-
-    anybodycmd.extend(
-        [
-            str(anybodycon_path.resolve()),
-            "--macro=",
-            macro_filename,
-            "/deb",
-            str(debug_mode),
-            "/ni",
-        ]
-    )
-    if sys.platform.startswith("win"):
+    if ON_WINDOWS:
         # Don't display the Windows GPF dialog if the invoked program dies.
         # See comp.os.ms-windows.programmer.win32
         # How to suppress crash notification dialog?, Jan 14,2004 -
@@ -221,27 +209,55 @@ def execute_anybodycon(
         ctypes.windll.kernel32.SetErrorMode(SEM_NOGPFAULTERRORBOX)
         subprocess_flags = 0x8000000  # win32con.CREATE_NO_WINDOW?
         subprocess_flags |= priority
-        creationflags = {"creationflags": subprocess_flags}
+        extra_kwargs = {"creationflags": subprocess_flags}
+
+        anybodycmd = [
+            str(anybodycon_path.resolve()),
+            "--macro=",
+            str(macrofile_path),
+            "/deb",
+            str(debug_mode),
+            "/ni",
+        ]
+        proc = Popen(
+            anybodycmd,
+            stdout=logfile,
+            stderr=logfile,
+            env=env,
+            cwd=folder,
+            **extra_kwargs,
+        )
+
     else:
-        creationflags = {}
-    # Check global module flag to avoid starting processes after
-    # the user cancelled the processes
-    proc = Popen(
-        anybodycmd, stdout=logfile, stderr=logfile, env=env, cwd=folder, **creationflags
-    )
+        # ON Linux/Wine we use a bat file to redirect the output into a file on wine/windows
+        # side. This prevents a bug with AnyBody starts it's builtin python.
+        anybodycmd = (
+            f'@call "{winepath(anybodycon_path.resolve(), "--windows")}"'
+            f' -m "{winepath(macrofile_path, "--windows")}"'
+            f" -deb {str(debug_mode)}"
+            " -ni"
+            f' >> "{winepath(str(logfile.name), "--windows")}"'
+        )
+        # Wine can have problems with arbitrary names. Create simple uniqe name for the file
+        hash_id = abs(hash(logfile.name)) % (10 ** 8)
+        batfile = macrofile_path.with_name(f"wine_{hash_id}.bat")
+        batfile.write_text(anybodycmd)
+        macrofile_cleanup.append(batfile)
+
+        from shlex import quote
+
+        cmd = ["wine", "cmd", "/c", str(batfile) + " & exit"]
+        print(cmd)
+        proc = Popen(cmd, env=env, cwd=folder)
+
     _subprocess_container.add(proc.pid)
     try:
         proc.wait(timeout=timeout)
         retcode = ctypes.c_int32(proc.returncode).value
     except TimeoutExpired:
-        proc.terminate()
+        proc.kill()
         proc.communicate()
-        if logfile.seekable():
-            logfile.seek(0, os.SEEK_END)
-        logfile.write(
-            "\nERROR: AnyPyTools : Timeout after {:d} sec.".format(int(timeout))
-        )
-        retcode = 0
+        retcode = _TIMEDOUT_BY_ANYPYTOOLS
     except KeyboardInterrupt:
         proc.terminate()
         proc.communicate()
@@ -250,12 +266,20 @@ def execute_anybodycon(
     finally:
         _subprocess_container.remove(proc.pid)
 
-    if retcode == _KILLED_BY_ANYPYTOOLS:
+    if retcode == _TIMEDOUT_BY_ANYPYTOOLS:
+        logfile.write(f"\nERROR: AnyPyTools : Timeout after {int(timeout)} sec.")
+    elif retcode == _KILLED_BY_ANYPYTOOLS:
         logfile.write("\nAnybodycon.exe was interrupted by AnyPyTools")
     elif retcode == _NO_LICENSES_AVAILABLE:
         logfile.write(
             "\nERROR: anybodycon.exe existed unexpectedly. "
             "Return code: " + str(_NO_LICENSES_AVAILABLE) + " : No license available."
+        )
+    elif retcode == _UNABLE_TO_ACQUIRE_LICENSE:
+        logfile.write(
+            "\nERROR: anybodycon.exe existed unexpectedly. "
+            f"Return code {_UNABLE_TO_ACQUIRE_LICENSE}: "
+            "Unable to aquire license from server"
         )
     elif retcode:
         logfile.write(
@@ -263,7 +287,8 @@ def execute_anybodycon(
             " Return code: " + str(retcode)
         )
     if not keep_macrofile:
-        silentremove(macro_filename)
+        for fname in macrofile_cleanup:
+            silentremove(str(fname))
     return retcode
 
 

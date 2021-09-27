@@ -356,7 +356,13 @@ class AnyTestItem(pytest.Item):
 
         with change_dir(tmpdir):
             self.app = AnyPyProcess(**self.app_opts)
-            result = self.app.start_macro(self.macro)[0]
+            if ON_WINDOWS:
+                result = self.app.start_macro(self.macro)[0]
+            else:
+                # Disable caputure on linux due to a bug when AMS lauches it own python
+                capmanager = self.config.pluginmanager.getplugin("capturemanager")
+                with capmanager.global_and_fixture_disabled():
+                    result = self.app.start_macro(self.macro)[0]
 
         # Ignore error due to missing Main.RunTest
         if "ERROR" in result:

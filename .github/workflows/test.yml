@@ -48,3 +48,21 @@ jobs:
         micromamba activate _anypytools
         micromamba install -y pytest -c conda-forge
         pytest
+
+
+  test-linux-cloud:
+    runs-on: ubuntu-latest
+    container: ghcr.io/anybody/anybodycon-linux:latest
+    needs: lint
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: install 
+        run: pip install --use-feature=in-tree-build .
+
+      - name: test
+        env:
+          RLM_LICENSE_PASSWORD: ${{ secrets.LICENSE_PASSWORD }}
+          RLM_LICENSE: 5053@104.46.46.229          
+        run: pytest tests
