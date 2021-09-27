@@ -21,7 +21,7 @@ from traceback import format_list, extract_tb
 import pytest
 
 
-from pytest import TempdirFactory, TempPathFactory
+from pytest import TempPathFactory
 
 from anypytools import AnyPyProcess, macro_commands
 from anypytools.tools import (
@@ -350,8 +350,8 @@ class AnyTestItem(pytest.Item):
     def runtest(self):
         """Run an AnyScript test item."""
 
-        tmpdir = Path(
-            TempdirFactory(TempPathFactory.from_config(self.config)).mktemp(self.name)
+        tmpdir = TempPathFactory.from_config(self.config, _ispytest=True).mktemp(
+            self.name
         )
 
         with change_dir(tmpdir):
