@@ -236,7 +236,8 @@ def execute_anybodycon(
             f' -m "{winepath(macrofile_path, "--windows")}"'
             f" -deb {str(debug_mode)}"
             " -ni"
-            f' >> "{winepath(str(logfile.name), "--windows")}"'
+            f' >> "{winepath(str(logfile.name), "--windows")}"\n'
+            r"@exit /b %ERRORLEVEL%"
         )
         # Wine can have problems with arbitrary names. Create simple uniqe name for the file
         hash_id = abs(hash(logfile.name)) % (10 ** 8)
@@ -246,7 +247,7 @@ def execute_anybodycon(
 
         from shlex import quote
 
-        cmd = ["wine", "cmd", "/c", str(batfile) + " & exit"]
+        cmd = ["wine", "cmd", "/c", str(batfile)]
         proc = Popen(cmd, env=env, cwd=folder)
 
     _subprocess_container.add(proc.pid)
