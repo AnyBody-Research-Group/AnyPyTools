@@ -1,5 +1,15 @@
 # AnyPyTools Change Log
 
+## v1.7.5
+
+**Fixed:**
+- Return code on linux is now correctly intercepted and reported.
+
+
+## v1.7.4
+
+**Fixed:**
+- Fixed pytest deprecation warnings.
 
 ## v1.7.3
 
