@@ -245,9 +245,7 @@ def execute_anybodycon(
         batfile.write_text(anybodycmd)
         macrofile_cleanup.append(batfile)
 
-        from shlex import quote
-
-        cmd = ["wine", "cmd", "/c", str(batfile)]
+        cmd = ["wine", "cmd", "/c", "/q", str(batfile)]
         proc = Popen(cmd, env=env, cwd=folder)
 
     _subprocess_container.add(proc.pid)
