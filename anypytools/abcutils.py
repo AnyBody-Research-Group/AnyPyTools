@@ -229,24 +229,40 @@ def execute_anybodycon(
         )
 
     else:
-        # ON Linux/Wine we use a bat file to redirect the output into a file on wine/windows
-        # side. This prevents a bug with AnyBody starts it's builtin python.
-        anybodycmd = (
-            f'@call "{winepath(anybodycon_path.resolve(), "--windows")}"'
-            f' -m "{winepath(macrofile_path, "--windows")}"'
-            f" -deb {str(debug_mode)}"
-            " -ni"
-            f' >> "{winepath(str(logfile.name), "--windows")}"\n'
-            r"@exit /b %ERRORLEVEL%"
-        )
-        # Wine can have problems with arbitrary names. Create simple uniqe name for the file
-        hash_id = abs(hash(logfile.name)) % (10 ** 8)
-        batfile = macrofile_path.with_name(f"wine_{hash_id}.bat")
-        batfile.write_text(anybodycmd)
-        macrofile_cleanup.append(batfile)
+        if os.environ.get("WINE_REDIRECT_OUTPUT", 0):
+            cmd = [
+                "wine",
+                str(anybodycon_path.resolve()),
+                "--macro=",
+                str(macrofile_path),
+                "/deb",
+                str(debug_mode),
+                "/ni",
+            ]
+            proc = Popen(cmd, env=env, cwd=folder, stdout=logfile)
+        else:
+            # ON Linux/Wine we use a bat file to redirect the output into a file on wine/windows
+            # side. This prevents a bug with AnyBody starts it's builtin python.
+            anybodycmd = (
+                f'@call "{winepath(anybodycon_path.resolve(), "--windows")}"'
+                f' -m "{winepath(macrofile_path, "--windows")}"'
+                f" -deb {str(debug_mode)}"
+                " -ni"
+                f' >> "{winepath(str(logfile.name), "--windows")}"\n'
+                r"@exit /b %ERRORLEVEL%"
+            )
+            # Wine can have problems with arbitrary names. Create simple uniqe name for the file
+            hash_id = abs(hash(logfile.name)) % (10 ** 8)
+            batfile = macrofile_path.with_name(f"wine_{hash_id}.bat")
+            batfile.write_text(anybodycmd)
+            macrofile_cleanup.append(batfile)
 
-        cmd = ["wine", "cmd", "/c", "/q", str(batfile)]
-        proc = Popen(cmd, env=env, cwd=folder)
+            cmd = ["wine", "cmd", "/c", "/q", str(batfile)]
+            proc = Popen(
+                cmd,
+                env=env,
+                cwd=folder,
+            )
 
     _subprocess_container.add(proc.pid)
     try:
