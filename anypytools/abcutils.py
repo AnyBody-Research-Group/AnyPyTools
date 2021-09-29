@@ -234,12 +234,12 @@ def execute_anybodycon(
                 "wine",
                 str(anybodycon_path.resolve()),
                 "--macro=",
-                str(macrofile_path),
+                winepath(macrofile_path, "--windows"),
                 "/deb",
                 str(debug_mode),
                 "/ni",
             ]
-            proc = Popen(cmd, env=env, cwd=folder, stdout=logfile)
+            proc = Popen(cmd, env=env, cwd=folder, close_fds=False, stdout=logfile)
         else:
             # ON Linux/Wine we use a bat file to redirect the output into a file on wine/windows
             # side. This prevents a bug with AnyBody starts it's builtin python.
@@ -257,7 +257,7 @@ def execute_anybodycon(
             batfile.write_text(anybodycmd)
             macrofile_cleanup.append(batfile)
 
-            cmd = ["wine", "cmd", "/c", "/q", str(batfile)]
+            cmd = ["wine", "cmd", "/c", str(batfile)]
             proc = Popen(
                 cmd,
                 env=env,
