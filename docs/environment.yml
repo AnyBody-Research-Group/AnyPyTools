@@ -3,6 +3,7 @@ channels:
   - conda-forge
   - defaults
 dependencies:
+  - python=3.9
   - sphinx<4
   - cloud_sptheme
   - nbsphinx
