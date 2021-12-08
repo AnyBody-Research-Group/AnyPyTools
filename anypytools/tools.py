@@ -727,13 +727,12 @@ class AnyPyProcessOutput(collections.OrderedDict):
         return dfout
 
 
-def _recursive_replace(iterable: Iterable, old:Any, new:Any):
+def _recursive_replace(iterable: Iterable, old: Any, new: Any):
     for i, elem in enumerate(iterable):
         if isinstance(elem, list):
             _recursive_replace(elem, old, new)
         elif elem == old:
             iterable[i] = new
-
 
 
 TRIPEL_QUOTE_WRAP = re.compile(r'([^\[\]",\s]+)')
