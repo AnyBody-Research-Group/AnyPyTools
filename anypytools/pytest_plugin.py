@@ -357,7 +357,9 @@ class AnyTestItem(pytest.Item):
         with change_dir(tmpdir):
             self.app = AnyPyProcess(**self.app_opts)
             if ON_WINDOWS:
-                result = self.app.start_macro(self.macro)[0]
+                result = self.app.start_macro(
+                    self.macro, logfile=Path(self.name).with_suffix(".txt")
+                )[0]
             else:
                 # Disable caputure on linux due to a bug when AMS lauches it own python
                 capmanager = self.config.pluginmanager.getplugin("capturemanager")
@@ -406,14 +408,11 @@ class AnyTestItem(pytest.Item):
             self.save_output_files(tmpdir, target, result, self.hdf5_outputs)
 
         if self.errors and self.config.getoption("--create-macros"):
-            logfile = result["task_logfile"]
-            shutil.copyfile(logfile, self.fspath / (self.name + ".txt"))
-            shutil.copyfile(
-                logfile.with_suffix(".anymcr"), self.fspath / (self.name + ".anymcr")
-            )
-            macro_name = _write_macro_file(self.fspath.dirname, self.name, self.macro)
+            logfile = Path(result["task_logfile"])
+            shutil.copy(logfile, Path(self.fspath).parent)
+            shutil.copy(logfile.with_suffix(".anymcr"), Path(self.fspath).parent)
 
-        shutil.rmtree(tmpdir, ignore_errors=True)
+        # shutil.rmtree(tmpdir, ignore_errors=True)
 
         if len(self.errors) > 0:
             raise AnyException(self)
