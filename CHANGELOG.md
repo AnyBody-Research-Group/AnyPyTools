@@ -1,5 +1,12 @@
 # AnyPyTools Change Log
 
+## v1.7.6
+
+**Fixed:**
+- Fix small issues in tutorials.
+- Fix issues when reading NaNs produced by AnyBody
+
+
 ## v1.7.5
 
 **Fixed:**
