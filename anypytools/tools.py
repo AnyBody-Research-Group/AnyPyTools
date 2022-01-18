@@ -93,7 +93,7 @@ def winepath(path, opts=None):
 def anybodycon_version(anybodyconpath=None):
     """Return the AnyBodyCon version."""
     if not anybodyconpath:
-       anybodyconpath = get_anybodycon_path()
+        anybodyconpath = get_anybodycon_path()
     if anybodyconpath:
         anybodyconpath = str(Path(anybodyconpath).absolute())
     return _anybodycon_version(anybodyconpath)
@@ -108,7 +108,9 @@ def _anybodycon_version(anybodyconpath):
     if not ON_WINDOWS:
         cmd.insert(0, "wine")
     try:
-        out = subprocess.run(cmd, universal_newlines=True, stdout=subprocess.PIPE).stdout
+        out = subprocess.run(
+            cmd, universal_newlines=True, stdout=subprocess.PIPE
+        ).stdout
     except (subprocess.CalledProcessError, FileNotFoundError):
         out = ""
     m = ANYBODYCON_VERSION_RE.search(out)
