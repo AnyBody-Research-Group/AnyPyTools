@@ -4,7 +4,7 @@
 
 **Fixed:**
 - Fix minor problem in repr for AnyPyProcessOutput.
-
+- Fix a problem where the pytest plugin would crash if AnyBody could not be found
 
 
 ## v1.7.6
