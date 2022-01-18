@@ -131,7 +131,7 @@ def wraptext(elem, initial_indent="", subsequent_indent=None):
     )
 
 
-def amm_xml_version(fpath):
+def ammr_xml_version(fpath):
     try:
         tree = xml.etree.ElementTree.parse(fpath)
         version = tree.getroot()
@@ -174,7 +174,7 @@ def get_ammr_version(folder=None):
     if any_version_file in files:
         return ammr_any_version(os.path.join(folder, any_version_file))
     elif xml_version_file in files:
-        return amm_xml_version(os.path.join(folder, xml_version_file))
+        return ammr_xml_version(os.path.join(folder, xml_version_file))
     else:
         return ""
 
