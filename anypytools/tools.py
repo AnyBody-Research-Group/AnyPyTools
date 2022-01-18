@@ -76,7 +76,7 @@ def case_preserving_replace(string, old, new):
 
 @functools.lru_cache(maxsize=None)
 def winepath(path, opts=None):
-    """ " Wrapper for the winepath commandline tool"""
+    """Wrapper for the winepath commandline tool"""
     if not opts:
         opts = ["-u"]
     if isinstance(opts, str):
@@ -90,16 +90,27 @@ def winepath(path, opts=None):
     return out.strip()
 
 
-@functools.lru_cache(maxsize=None)
 def anybodycon_version(anybodyconpath=None):
     """Return the AnyBodyCon version."""
-    anybodyconpath = anybodyconpath or get_anybodycon_path()
-    if anybodyconpath is None:
+    if not anybodyconpath:
+       anybodyconpath = get_anybodycon_path()
+    if anybodyconpath:
+        anybodyconpath = str(Path(anybodyconpath).absolute())
+    return _anybodycon_version(anybodyconpath)
+
+
+@functools.lru_cache(maxsize=None)
+def _anybodycon_version(anybodyconpath):
+    """Return the AnyBodyCon version."""
+    if not anybodyconpath:
         return "0.0.0"
     cmd = [anybodyconpath, "-ni"]
     if not ON_WINDOWS:
         cmd.insert(0, "wine")
-    out = subprocess.run(cmd, universal_newlines=True, stdout=subprocess.PIPE).stdout
+    try:
+        out = subprocess.run(cmd, universal_newlines=True, stdout=subprocess.PIPE).stdout
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        out = ""
     m = ANYBODYCON_VERSION_RE.search(out)
     if m:
         return m.groupdict()["version"]
