@@ -571,17 +571,21 @@ class AnyPyProcessOutput(collections.OrderedDict):
             raise KeyError(msg) from None
 
     def _repr_gen(self, prefix):
-        items = self.items()
-        if not items:
+
+        kv_values = {
+            k: v
+            for k, v in self.items()
+            if not k.startswith("task_") or self._task_info_in_repr
+        }
+
+        if not kv_values:
             yield prefix + "{}"
             return
 
         indent = prefix + "{"
-        for i, (key, val) in enumerate(items):
-            if not self._task_info_in_repr and key.startswith("task_"):
-                continue
+        for i, (key, val) in enumerate(kv_values.items()):
 
-            if i == len(self.keys()) - 1:
+            if i == len(kv_values) - 1:
                 end = "}"
             else:
                 end = ","

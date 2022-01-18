@@ -1,5 +1,12 @@
 # AnyPyTools Change Log
 
+## v1.7.7
+
+**Fixed:**
+- Fix minor problem in repr for AnyPyProcessOutput.
+
+
+
 ## v1.7.6
 
 **Fixed:**
