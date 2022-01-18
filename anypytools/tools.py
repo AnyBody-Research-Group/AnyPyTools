@@ -90,6 +90,7 @@ def winepath(path, opts=None):
     return out.strip()
 
 
+@functools.lru_cache(maxsize=None)
 def anybodycon_version(anybodyconpath=None):
     """Return the AnyBodyCon version."""
     anybodyconpath = anybodyconpath or get_anybodycon_path()
