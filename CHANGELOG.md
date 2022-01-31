@@ -1,5 +1,11 @@
 # AnyPyTools Change Log
 
+## v1.7.8
+
+**Fixed:**
+- Fix a bug with pytest plugin when saving output data from files.
+
+
 ## v1.7.7
 
 **Fixed:**

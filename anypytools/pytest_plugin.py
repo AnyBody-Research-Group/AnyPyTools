@@ -427,7 +427,7 @@ class AnyTestItem(pytest.Item):
 
         target_folder = Path(target_folder)
         src_folder = Path(src_folder)
-        src_log = Path(result["task_logfile"])
+        src_log = src_folder / Path(result["task_logfile"]).name
 
         if target_folder.exists():
             shutil.rmtree(target_folder)
