@@ -140,7 +140,10 @@ def wraptext(elem, initial_indent="", subsequent_indent=None):
         width = max(width, shutil.get_terminal_size().columns - 1)
     subsequent_indent = subsequent_indent or initial_indent
     return textwrap.fill(
-        str(elem), width, initial_indent=initial_indent, subsequent_indent=subsequent_indent
+        str(elem),
+        width,
+        initial_indent=initial_indent,
+        subsequent_indent=subsequent_indent,
     )
 
 

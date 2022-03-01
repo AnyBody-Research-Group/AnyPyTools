@@ -37,6 +37,7 @@ from anypytools.tools import (
     wraptext,
 )
 
+
 @contextlib.contextmanager
 def cwd(path):
     oldpwd = os.getcwd()
@@ -145,6 +146,7 @@ def _format_switches(defs):
 
 def _as_absolute_paths(d, start=os.getcwd()):
     import ntpath as os_path
+
     start = str(start)
     out = {}
     start = start if ON_WINDOWS else winepath(start, "-w")
