@@ -140,7 +140,7 @@ def wraptext(elem, initial_indent="", subsequent_indent=None):
         width = max(width, shutil.get_terminal_size().columns - 1)
     subsequent_indent = subsequent_indent or initial_indent
     return textwrap.fill(
-        elem, width, initial_indent=initial_indent, subsequent_indent=subsequent_indent
+        str(elem), width, initial_indent=initial_indent, subsequent_indent=subsequent_indent
     )
 
 
@@ -165,7 +165,7 @@ def find_ammr_path(folder=None):
     The function will walk up a directory tree looking
     for a ammr_verion.any file to parse.
     """
-    folder = folder or os.getcwd()
+    folder = Path(folder or os.getcwd())
     version_files = ("AMMR.version.any", "AMMR.version.xml")
     for basedir, _, files in walk_up(folder):
         if any(fn in files for fn in version_files):

@@ -37,9 +37,6 @@ from anypytools.tools import (
     wraptext,
 )
 
-PYTEST_PRE_54 = tuple(map(int, pytest.__version__.split(".")[:2])) < (5, 4)
-
-
 @contextlib.contextmanager
 def cwd(path):
     oldpwd = os.getcwd()
@@ -69,7 +66,7 @@ class AnyTestSession(object):
         early in the pytest startup.
         """
 
-        ammr_path = find_ammr_path(config.getoption("--ammr") or config.rootdir.strpath)
+        ammr_path = find_ammr_path(config.getoption("--ammr") or config.rootdir)
         self.ammr_version = get_ammr_version(ammr_path)
         self.ams_path = config.getoption("--anybodycon") or get_anybodycon_path()
         self.ams_path = os.path.abspath(self.ams_path) if self.ams_path else ""
@@ -124,11 +121,9 @@ def change_dir(path):
 
 def pytest_collect_file(parent, path):
     """Collect AnyScript test files."""
-    if path.ext.lower() == ".any" and path.basename.lower().startswith("test_"):
-        if PYTEST_PRE_54:
-            return AnyTestFile(path, parent)
-        else:
-            return AnyTestFile.from_parent(parent, fspath=path)
+    path = Path(path)
+    if path.suffix.lower() == ".any" and path.stem.lower().startswith("test_"):
+        return AnyTestFile.from_parent(parent, path=path)
 
 
 def _format_switches(defs):
@@ -150,7 +145,7 @@ def _format_switches(defs):
 
 def _as_absolute_paths(d, start=os.getcwd()):
     import ntpath as os_path
-
+    start = str(start)
     out = {}
     start = start if ON_WINDOWS else winepath(start, "-w")
     for key, val in d.items():
@@ -246,7 +241,7 @@ class AnyTestFile(pytest.File):
     def collect(self):
         """Yield test cases from a AnyScript test file."""
         # Collect define statements from the header
-        strheader = _read_header(self.fspath.strpath)
+        strheader = _read_header(self.path)
         header = _parse_header(strheader)
         def_list = _format_switches(header.pop("define", None))
         def_list = [
@@ -255,26 +250,16 @@ class AnyTestFile(pytest.File):
         path_list = _format_switches(header.pop("path", None))
         combinations = itertools.product(def_list, path_list)
         # Run though the defines an create a test case for each
-        for i, (defs, paths) in enumerate(combinations):
-            if isinstance(defs, dict) and isinstance(paths, dict):
-                if PYTEST_PRE_54:
-                    yield AnyTestItem(
-                        name=self.fspath.basename,
-                        id=i,
-                        parent=self,
-                        defs=defs,
-                        paths=paths,
-                        **header,
-                    )
-                else:
-                    yield AnyTestItem.from_parent(
-                        name=self.fspath.basename,
-                        id=i,
-                        parent=self,
-                        defs=defs,
-                        paths=paths,
-                        **header,
-                    )
+        for i, (any_defs, any_paths) in enumerate(combinations):
+            if isinstance(any_defs, dict) and isinstance(any_paths, dict):
+                yield AnyTestItem.from_parent(
+                    name=self.path.stem,
+                    id=i,
+                    parent=self,
+                    any_defs=any_defs,
+                    any_paths=any_paths,
+                    **header,
+                )
             else:
                 raise ValueError("Malformed input: ", header)
 
@@ -282,17 +267,17 @@ class AnyTestFile(pytest.File):
 class AnyTestItem(pytest.Item):
     """pytest.Item subclass representing individual collected tests."""
 
-    def __init__(self, name, id, parent, defs, paths, **kwargs):
+    def __init__(self, name, id, parent, any_defs, any_paths, **kwargs):
         test_name = "{}_{}".format(name, id)
         super().__init__(test_name, parent)
-        self.defs = defs
+        self.any_defs = any_defs
         for k, v in self.config.getoption("define_kw") or {}:
             self.defs[k] = v
-        self.defs["TEST_NAME"] = '"{}"'.format(test_name)
+        self.any_defs["TEST_NAME"] = '"{}"'.format(test_name)
         if self.config.getoption("--ammr"):
-            paths["AMMR_PATH"] = self.config.getoption("--ammr")
-            paths["ANYBODY_PATH_AMMR"] = self.config.getoption("--ammr")
-        self.paths = _as_absolute_paths(paths, start=self.config.rootdir.strpath)
+            any_paths["AMMR_PATH"] = self.config.getoption("--ammr")
+            any_paths["ANYBODY_PATH_AMMR"] = self.config.getoption("--ammr")
+        self.any_paths = _as_absolute_paths(any_paths, start=self.config.rootdir)
         self.name = test_name
         self.expect_errors = kwargs.get("expect_errors", [])
 
@@ -301,10 +286,10 @@ class AnyTestItem(pytest.Item):
 
         self.timeout = self.config.getoption("--timeout")
         self.errors = []
-        mainfile = self.fspath.strpath
+        mainfile = self.path
         if not ON_WINDOWS:
             mainfile = winepath(mainfile, "-w")
-        self.macro = [macro_commands.Load(mainfile, self.defs, self.paths)]
+        self.macro = [macro_commands.Load(mainfile, self.any_defs, self.any_paths)]
 
         fatal_warnings = kwargs.get("fatal_warnings", False)
         warnings_to_include = kwargs.get("warnings_to_include", None)
@@ -409,8 +394,8 @@ class AnyTestItem(pytest.Item):
 
         if self.errors and self.config.getoption("--create-macros"):
             logfile = Path(result["task_logfile"])
-            shutil.copy(logfile, Path(self.fspath).parent)
-            shutil.copy(logfile.with_suffix(".anymcr"), Path(self.fspath).parent)
+            shutil.copy(logfile, self.path.parent)
+            shutil.copy(logfile.with_suffix(".anymcr"), self.path.parent)
 
         # shutil.rmtree(tmpdir, ignore_errors=True)
 
@@ -461,11 +446,11 @@ class AnyTestItem(pytest.Item):
         """Print a representation when a test failes."""
         if isinstance(excinfo.value, AnyException):
             rtn = "Main file:\n"
-            rtn += wraptext(self.fspath.strpath, initial_indent="  ")
+            rtn += wraptext(self.path, initial_indent="  ")
             rtn += "\nSpecial model configuration:"
-            for k, v in self.defs.items():
+            for k, v in self.any_defs.items():
                 rtn += "\n  #define {} {}".format(k, v)
-            for k, v in self.paths.items():
+            for k, v in self.any_paths.items():
                 rtn += "\n  #path {} {}".format(k, v)
             rtn += "\nErrors:"
             for elem in self.errors:
@@ -476,7 +461,7 @@ class AnyTestItem(pytest.Item):
             return str(excinfo.value)
 
     def reportinfo(self):
-        return self.fspath, 0, "AnyBody Simulation: %s" % self.name
+        return self.path, 0, "AnyBody Simulation: %s" % self.name
 
 
 class AnyException(Exception):
