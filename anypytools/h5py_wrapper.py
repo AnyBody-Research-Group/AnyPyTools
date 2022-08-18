@@ -66,6 +66,14 @@ class File(h5py.File):  # noqa
         elif isinstance(elem, h5py.File):
             return File(elem.id)
 
+    def get(self, path, *args):
+        try:
+            return self.__getitem__(path)
+        except KeyError:
+            if len(args) == 0:
+                raise
+            return args[0]
+
     @property
     def file(self):  # noqa
         id = super(File, self).file.id
@@ -87,6 +95,11 @@ class File(h5py.File):  # noqa
             except KeyError:
                 pass
         return False
+
+    def resolve_anyreference(self, path):
+        """Resolve anyreference in the file."""
+        elem = self.__getitem__(path)
+        return elem.id
 
 
 class Group(h5py.Group):  # noqa
@@ -122,6 +135,14 @@ class Group(h5py.Group):  # noqa
             return Dataset(elem.id)
         elif isinstance(elem, h5py.File):
             return File(elem.id)
+
+    def get(self, path, *args):
+        try:
+            return self.__getitem__(path)
+        except KeyError:
+            if len(args) == 0:
+                raise
+            return args[0]
 
     @property
     def file(self):  # noqa
