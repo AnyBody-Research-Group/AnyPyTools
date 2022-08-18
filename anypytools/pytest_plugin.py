@@ -171,16 +171,14 @@ HEADER_ENSURES = (
 )
 
 
-def _parse_header(header, **kwargs):
+def _parse_header(header, test_file):
+    ns = {"self": test_file}
     try:
-        exec(header, globals(), kwargs)
+        exec(header, globals(), ns)
     except SyntaxError:
         pass
-    if len(ns) == 0:
-        try:
-            ns["define"] = ast.literal_eval(header)
-        except SyntaxError:
-            pass
+    # Remove test-file object from namespace since it should not be passed on
+    ns.pop("self", None)
     for name, types in HEADER_ENSURES:
         if name in ns and not isinstance(ns[name], types):
             typestr = ", ".join([t.__name__ for t in types])
@@ -244,7 +242,7 @@ class AnyTestFile(pytest.File):
 
         # Collect define statements from the header
         strheader = _read_header(self.path)
-        header = _parse_header(strheader, self=self)
+        header = _parse_header(strheader, test_file=self)
         def_list = _format_switches(header.pop("define", None))
         def_list = [
             replace_bm_constants(d, pytest.anytest.bm_constants_map) for d in def_list
