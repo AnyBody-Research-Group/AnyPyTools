@@ -1,5 +1,20 @@
 # AnyPyTools Change Log
 
+
+## v1.8
+
+**Fixed:**
+- Fixed deprecation warning from the pytest plugin
+
+**Added:**
+- When writting AnyScript test files it is now possible to access the 
+  pytest test-file object in the header section of the AnyScript file. 
+  The file object is available in the name space as the `self` variable. 
+
+**Removed:**
+- Removed the option of implicitly writting `defines` in the headers
+  of any test files. 
+
 ## v1.7.8
 
 **Fixed:**
