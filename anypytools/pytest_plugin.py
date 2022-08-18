@@ -171,10 +171,9 @@ HEADER_ENSURES = (
 )
 
 
-def _parse_header(header):
-    ns = dict()
+def _parse_header(header, **kwargs):
     try:
-        exec(header, globals(), ns)
+        exec(header, globals(), kwargs)
     except SyntaxError:
         pass
     if len(ns) == 0:
@@ -242,9 +241,10 @@ class AnyTestFile(pytest.File):
 
     def collect(self):
         """Yield test cases from a AnyScript test file."""
+
         # Collect define statements from the header
         strheader = _read_header(self.path)
-        header = _parse_header(strheader)
+        header = _parse_header(strheader, self=self)
         def_list = _format_switches(header.pop("define", None))
         def_list = [
             replace_bm_constants(d, pytest.anytest.bm_constants_map) for d in def_list
