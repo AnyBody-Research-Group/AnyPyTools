@@ -470,6 +470,10 @@ class AnyException(Exception):
     """Custom exception for error reporting."""
 
 
+def split_string_eq_1(kv):
+    return kv.split("=", 1)
+
+
 def pytest_addoption(parser):
     group = parser.getgroup("anypytools", "testing AnyBody models")
 
@@ -501,7 +505,7 @@ def pytest_addoption(parser):
     group.addoption(
         "--define",
         action="append",
-        type=lambda kv: kv.split("=", 1),
+        type=split_string_eq_1,
         dest="define_kw",
         help="Add custom define statements parse to all AnyScript models. "
         "Must be given in the form: --define MYDEF=6",
@@ -533,6 +537,7 @@ def pytest_addoption(parser):
         default=None,
         const=os.path.join(os.getcwd(), "anytest-output"),
         help=(
-            "Specify if hdf5 files are saved from the tests. Can be assined a value to specify the base folder where data will be saved. Default save directory is %(const)r."
+            "Specify if hdf5 files are saved from the tests. Can be assined a value to specify the base "
+            "folder where data will be saved. Default save directory is %(const)r."
         ),
     )
