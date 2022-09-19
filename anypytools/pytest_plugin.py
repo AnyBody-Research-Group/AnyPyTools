@@ -227,7 +227,7 @@ def pytest_collection_modifyitems(items, config):
     selected_items = []
     deselected_items = []
     if (
-        config.getoption("anytest-deselect")
+        config.getoption("--anytest-deselect")
         and config.getoption("--anytest-output") is not None
     ):
         # Deselect all test items which doesn't save data.
@@ -538,6 +538,7 @@ def pytest_addoption(parser):
 
     group.addoption(
         "--anytest-deselect",
+        dest="anytest_deselect",
         default=True,
         action=argparse.BooleanOptionalAction,
         help="Will deselect any test which does not produce hdf5 output.",
