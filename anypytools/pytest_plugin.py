@@ -48,6 +48,9 @@ def cwd(path):
         os.chdir(oldpwd)
 
 
+DEFAULT_ANYTEST_OUTPUT = Path.cwd() / "anytest-output"
+
+
 class AnyTestSession(object):
     """Class for storing configuation of the AnyTest plugin to pytest."""
 
@@ -223,7 +226,10 @@ def pytest_configure(config):
 def pytest_collection_modifyitems(items, config):
     selected_items = []
     deselected_items = []
-    if config.getoption("--anytest-output"):
+    if (
+        config.getoption("anytest-deselect")
+        and config.getoption("--anytest-output") is not None
+    ):
         # Deselect all test items which doesn't save data.
         for item in items:
             if getattr(item, "hdf5_outputs", False):
@@ -322,7 +328,7 @@ class AnyTestItem(pytest.Item):
 
         self.hdf5_outputs = []
         save_study = kwargs.get("save_study", None)
-        if self.config.getoption("--anytest-output") and save_study:
+        if save_study and self.config.getoption("--anytest-output") is not None:
             save_study = [save_study] if isinstance(save_study, str) else save_study
             for study in save_study:
                 fname = f"{study}.anydata.h5"
@@ -387,7 +393,9 @@ class AnyTestItem(pytest.Item):
 
         # Add info to the hdf5 file if compare output was set
         if self.hdf5_outputs:
-            base = Path(self.config.getoption("--anytest-output"))
+            base = Path(
+                self.config.getoption("--anytest-output") or DEFAULT_ANYTEST_OUTPUT
+            )
             subfolder = Path(self.config.getoption("--anytest-name"))
             target = base / subfolder / self.name
             self.save_output_files(tmpdir, target, result, self.hdf5_outputs)
@@ -529,11 +537,18 @@ def pytest_addoption(parser):
     )
 
     group.addoption(
+        "--anytest-deselect",
+        default=True,
+        action=argparse.BooleanOptionalAction,
+        help="Will deselect any test which does not produce hdf5 output.",
+    )
+
+    group.addoption(
         "--anytest-output",
         metavar="path",
         nargs="?",
         default=None,
-        const=os.path.join(os.getcwd(), "anytest-output"),
+        const=str(DEFAULT_ANYTEST_OUTPUT),
         help=(
             "Specify if hdf5 files are saved from the tests. Can be assined a value to specify the base "
             "folder where data will be saved. Default save directory is %(const)r."
