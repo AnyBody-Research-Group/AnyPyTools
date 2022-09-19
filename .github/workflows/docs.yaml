@@ -28,7 +28,7 @@ jobs:
 
       - name: Build anypytools
         shell: bash -l {0}
-        run: pip install --use-feature=in-tree-build .
+        run: pip install .
 
       - uses: ammaraskar/sphinx-problem-matcher@master
         if: github.ref != 'refs/heads/master'
