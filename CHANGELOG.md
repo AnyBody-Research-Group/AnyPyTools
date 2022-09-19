@@ -1,5 +1,14 @@
 # AnyPyTools Change Log
 
+## v1.8.1
+
+**Added:**
+- pytest plugin: Added an option to avoid deselecting tests which doesn't 
+  save hdf5 files when using the `--anytest-output` option. 
+
+  ```
+  pytest --anytest-output=some-folder --no-anytest-deselect
+  ```
 
 ## v1.8
 
