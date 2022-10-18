@@ -1,5 +1,12 @@
 # AnyPyTools Change Log
 
+## v1.8.2
+
+**Fixed:**
+- Fix a bug in {meth}`anypytools.tools.AnyPyProcessOutput.to_dataframe`    
+ function when also specifying interpolation. 
+  Now interpolation actually works again. Thanks to [Enrico De Pieri](https://github.com/depierie) and [Marc Bandi](https://github.com/marcbandi) for spotting and fixing this. 
+
 ## v1.8.1
 
 **Added:**
