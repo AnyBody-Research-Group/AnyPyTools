@@ -259,7 +259,7 @@ def execute_anybodycon(
                 r"@exit /b %ERRORLEVEL%"
             )
             # Wine can have problems with arbitrary names. Create simple uniqe name for the file
-            hash_id = abs(hash(logfile.name)) % (10 ** 8)
+            hash_id = abs(hash(logfile.name)) % (10**8)
             batfile = macrofile_path.with_name(f"wine_{hash_id}.bat")
             batfile.write_text(anybodycmd)
             macrofile_cleanup.append(batfile)
