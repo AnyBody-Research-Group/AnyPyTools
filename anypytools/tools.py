@@ -738,6 +738,7 @@ class AnyPyProcessOutput(collections.OrderedDict):
                 raise ValueError("The `interp_var` should not be a constant")
 
             dfout = dfout.set_index(interp_var, drop=True)
+            time_columns.remove(interp_var)
             dfout = dfout.reindex(dfout.index.union(interp_val))
             dfout[time_columns] = dfout[time_columns].interpolate(interp_method)
             dfout[constant_columns] = dfout[constant_columns].fillna(method="bfill")
