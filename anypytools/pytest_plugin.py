@@ -469,6 +469,7 @@ class AnyTestItem(pytest.Item):
             return str(excinfo.value)
 
     def reportinfo(self):
+        """ """
         return self.path, 0, "AnyBody Simulation: %s" % self.name
 
 

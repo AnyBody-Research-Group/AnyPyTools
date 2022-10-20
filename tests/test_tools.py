@@ -104,6 +104,28 @@ def test_AnyPyProcessOutput_to_dataframe():
     assert df3.shape == (1, 39)
 
 
+def test_AnyPyProcessOutput_to_dataframe_interp():
+    """Test that we can interpolate the data using 'Output.percent_var'
+    from 0 to 100
+    """
+    time_var = np.linspace(0, 4, 200)
+    data = {
+        "Output.Abscissa.t": time_var,
+        "Output.percent_var": np.linspace(-10, 140, len(time_var)),
+        "Output.SomeData": np.sin(time_var),
+        "contant": 0.38,
+        "contant_str": "Hello world",
+    }
+    anypydata = AnyPyProcessOutput(data)
+    interpolation_values = np.linspace(0, 99, 100)
+    df = anypydata.to_dataframe(
+        interp_var="Output.percent_var",
+        interp_val=interpolation_values,
+    )
+    assert df.shape == (100, 5)
+    assert all(df["Output.percent_var"] == interpolation_values)
+
+
 def test_AnyPyProcessOutputList_to_dataframe():
     time_len = 6
     no_simulations = 10
