@@ -1,5 +1,12 @@
 # AnyPyTools Change Log
 
+## v1.9.0
+
+**Added:**
+- Added a `interactive_mode` argument to the {class}`AnyPyProcess <anypytools.AnPyProcess>` class. Setting this argument will automaticially lauch the GUI version
+of AnyBody with the macro commands. Futher it will not automatically exit AnyBody once the macro commands has finished. This must be done manually by the user. 
+
+
 ## v1.8.2
 
 **Fixed:**
