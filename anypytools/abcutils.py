@@ -132,6 +132,7 @@ def execute_anybodycon(
     priority=BELOW_NORMAL_PRIORITY_CLASS,
     debug_mode=0,
     folder=None,
+    interactive_mode=False,
 ):
     """Launch a single AnyBodyConsole applicaiton.
 
@@ -163,6 +164,9 @@ def execute_anybodycon(
         ``anypytools.IDLE_PRIORITY_CLASS``, ``anypytools.BELOW_NORMAL_PRIORITY_CLASS``,
         ``anypytools.NORMAL_PRIORITY_CLASS``, ``anypytools.HIGH_PRIORITY_CLASS``
         Default is BELOW_NORMAL_PRIORITY_CLASS.
+    interactive_mode : bool, optional
+        If set to True, the AnyBody Console application will be started in iteractive
+        mode, and will not shutdown autmaticaly after running the macro. (Defaults to False)
     debug_mode : int
         The AMS debug mode to use. Defaults to 0 which is disabled. 1 correspond to
         crashdump enabled
@@ -190,7 +194,7 @@ def execute_anybodycon(
     if anybodycon_path is None:
         anybodycon_path = Path(get_anybodycon_path())
 
-    if macro and macro[-1] != "exit":
+    if not interactive_mode and macro and macro[-1] != "exit":
         macro.append("exit")
 
     if not os.path.isfile(anybodycon_path):
@@ -217,8 +221,9 @@ def execute_anybodycon(
             str(macrofile_path),
             "/deb",
             str(debug_mode),
-            "/ni",
+            "/ni" if not interactive_mode else "",
         ]
+
         proc = Popen(
             anybodycmd,
             stdout=logfile,
@@ -290,22 +295,22 @@ def execute_anybodycon(
     if retcode == _TIMEDOUT_BY_ANYPYTOOLS:
         logfile.write(f"\nERROR: AnyPyTools : Timeout after {int(timeout)} sec.")
     elif retcode == _KILLED_BY_ANYPYTOOLS:
-        logfile.write("\nAnybodycon.exe was interrupted by AnyPyTools")
+        logfile.write(f"\n{anybodycon_path.name} was interrupted by AnyPyTools")
     elif retcode == _NO_LICENSES_AVAILABLE:
         logfile.write(
-            "\nERROR: anybodycon.exe existed unexpectedly. "
+            f"\nERROR: {anybodycon_path.name} existed unexpectedly. "
             "Return code: " + str(_NO_LICENSES_AVAILABLE) + " : No license available."
         )
     elif retcode == _UNABLE_TO_ACQUIRE_LICENSE:
         logfile.write(
-            "\nERROR: anybodycon.exe existed unexpectedly. "
+            f"\nERROR: {anybodycon_path.name} existed unexpectedly. "
             f"Return code {_UNABLE_TO_ACQUIRE_LICENSE}: "
             "Unable to aquire license from server"
         )
     elif retcode:
         logfile.write(
-            "\nERROR: AnyPyTools : anybodycon.exe exited unexpectedly."
-            " Return code: " + str(retcode)
+            f"\nERROR: AnyPyTools : {anybodycon_path.name} exited unexpectedly."
+            f" Return code: {retcode}"
         )
     if not keep_macrofile:
         for fname in macrofile_cleanup:
@@ -494,6 +499,9 @@ class AnyPyProcess(object):
     use_gui : bool, optional
         Swictch to use the GUI instead of the console version of AMS. This works by replacing the 'anybodycon' part
         of the executable with 'anybody' of the `anybodycon_path` arguments. I.e. ".../anybdoycon.exe" becomes ".../anybody.exe"
+    interactive_mode : bool, optional
+        If set to True, AnyBody will be started in iteractive mode, and will not shutdown
+        autmaticaly after running the macro. This automatically enables the `use_gui` argument  (Defaults to False)
     priority : int, optional
         The priority of the subprocesses. This can be on of the following:
         ``anypytools.IDLE_PRIORITY_CLASS``, ``anypytools.BELOW_NORMAL_PRIORITY_CLASS``,
@@ -536,6 +544,7 @@ class AnyPyProcess(object):
         debug_mode=0,
         use_gui=False,
         priority=BELOW_NORMAL_PRIORITY_CLASS,
+        interactive_mode=False,
         **kwargs,
     ):
 
@@ -559,7 +568,7 @@ class AnyPyProcess(object):
         if anybodycon_path is None:
             anybodycon_path = get_anybodycon_path()
         anybodycon_path = Path(anybodycon_path)
-        if use_gui:
+        if use_gui or interactive_mode:
             anybodycon_path = anybodycon_path.with_name(
                 case_preserving_replace(anybodycon_path.name, "anybodycon", "anybody")
             )
@@ -579,6 +588,7 @@ class AnyPyProcess(object):
         self.warnings_to_include = warnings_to_include
         self.keep_logfiles = keep_logfiles
         self.logfile_prefix = logfile_prefix
+        self.interactive_mode = interactive_mode
         self.cached_arg_hash = None
         self.cached_tasklist = None
         if python_env is not None:
@@ -894,6 +904,7 @@ class AnyPyProcess(object):
                     priority=self.priority,
                     debug_mode=self.debug_mode,
                     folder=task.folder,
+                    interactive_mode=self.interactive_mode,
                 )
                 try:
                     task.retcode = execute_anybodycon(**exe_args)
