@@ -146,7 +146,7 @@ def read_anyoutputfile(filepath):
 
 
     """
-    with open(filepath, "rU") as anyoutputfile:
+    with open(filepath, "r") as anyoutputfile:
         constants = {}
         reader = iter(anyoutputfile.readline, b"")
         # Check when the header section ends
