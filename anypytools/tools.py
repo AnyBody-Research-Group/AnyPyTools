@@ -22,6 +22,7 @@ import collections
 import pprint
 from ast import literal_eval
 from pathlib import Path
+from contextlib import suppress
 from _thread import get_ident as _get_ident
 
 from typing import Mapping, Optional, Sequence, Union, Any, Iterable
@@ -116,8 +117,7 @@ def _anybodycon_version(anybodyconpath):
     m = ANYBODYCON_VERSION_RE.search(out)
     if m:
         return m.groupdict()["version"]
-    else:
-        return "0.0.0"
+    return "0.0.0"
 
 
 AMMR_VERSION_RE = re.compile(r'.*AMMR_VERSION\s"(?P<version>.*)"')
@@ -129,8 +129,7 @@ def ammr_any_version(fpath):
     match = AMMR_VERSION_RE.search(out)
     if match:
         return match.groupdict()["version"]
-    else:
-        return "Unknown AMMR version"
+    return "Unknown AMMR version"
 
 
 def wraptext(elem, initial_indent="", subsequent_indent=None):
@@ -1011,11 +1010,9 @@ def get_bm_constants(ammr_path=None, ammr_version=2):
         filename = os.path.join(
             ammr_path, "Body/AAUHuman/Documentation/bm_constants.py"
         )
-        try:
+        with suppress(IOError):
             with open(filename) as fh:
                 bm_constants = literal_eval(fh.read())
-        except IOError:
-            pass
     if not isinstance(bm_constants, dict):
         bm_constants = _BM_CONSTANTS if ammr_version >= 2 else _BM_CONSTANTS_AMMR1
     return bm_constants
