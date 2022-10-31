@@ -21,6 +21,7 @@ import warnings
 import collections
 from pathlib import Path
 from subprocess import Popen, TimeoutExpired
+from contextlib import suppress
 from tempfile import NamedTemporaryFile
 from threading import Thread, RLock
 from queue import Queue
@@ -110,11 +111,9 @@ class _SubProcessContainer(object):
         with _thread_lock:
             killed = []
             for pid in self._pids:
-                try:
+                with suppress(Exception):
                     os.kill(pid, _KILLED_BY_ANYPYTOOLS)
                     killed.append(str(pid))
-                except Exception:
-                    pass
             self._pids.clear()
 
 
@@ -545,7 +544,7 @@ class AnyPyProcess(object):
                 DeprecationWarning,
                 stacklevel=2,
             )
-        if len(kwargs):
+        if kwargs:
             warnings.warn(
                 "The following input arguments are not supported/understood:\n"
                 + str(list(kwargs.keys()))
