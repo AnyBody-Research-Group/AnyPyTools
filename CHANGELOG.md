@@ -2,6 +2,9 @@
 
 ## v1.9.0
 
+**Fixed:**
+- Fixed issue which would cauase macros to execute twice when running the GUI version of AnyBody. 
+
 **Added:**
 - Added a `interactive_mode` argument to the {class}`AnyPyProcess <anypytools.AnPyProcess>` class. Setting this argument will automaticially lauch the GUI version
 of AnyBody with the macro commands. Futher it will not automatically exit AnyBody once the macro commands has finished. This must be done manually by the user. 
