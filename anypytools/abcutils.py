@@ -216,7 +216,7 @@ def execute_anybodycon(
 
         anybodycmd = [
             str(anybodycon_path.resolve()),
-            "--macro=",
+            "-m",
             str(macrofile_path),
             "/deb",
             str(debug_mode),
@@ -237,7 +237,7 @@ def execute_anybodycon(
             cmd = [
                 "wine",
                 str(anybodycon_path.resolve()),
-                "--macro=",
+                "-m",
                 winepath(macrofile_path, "--windows"),
                 "/deb",
                 str(debug_mode),
