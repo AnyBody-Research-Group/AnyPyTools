@@ -4,7 +4,7 @@
 
 ### The easy way
 
-The easiest way to install AnyPyTools on windows is through the Anaconda Python
+The easiest way to install AnyPyTools on Windows (along with all dependencies) is through the Anaconda Python
 Distribution and the conda package manager.
 
 Install AnyPyTools with the following command:
@@ -14,26 +14,25 @@ Install AnyPyTools with the following command:
 > conda install anypytools
 ```
 
-This will install xonsh and all the recommended dependencies. Next, try to launch the
+This will install `anypytools` and all the recommended dependencies. Next, try to launch the
 interactive AnyPyTools notebook tutorial :
 
 ```bat
 > AnyPyToolsTutorial.bat
 ```
 
-### Install from source
+### Other installations options
 
-To install xonsh from source on Windows, first install [Python]. Remember to select "Add python to PATH" during installation.
-
-Download the latest [anypytools-master.zip] from github and unzip it
-to `anypytools-master`.
-
-Now install anypytools:
+It is also possible to install directly from the python package index. 
 
 ```bat
-> cd anypytools-master
-> pip install -e
+> pip install AnyPyTools 
 ```
 
-[anypytools-master.zip]: https://github.com/anybody-research-group/anypytools/archive/master.zip
-[python]: https://www.python.org/downloads/windows/
+or clone/download the source files from [GitHub](https://github.com/AnyBody-Research-Group/AnyPyTools):  
+
+To install run the following command in the source folder: 
+
+```bat
+> pip install -e .
+```

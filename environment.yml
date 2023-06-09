@@ -1,9 +1,12 @@
 name: _anypytools
 channels:
+  - anybody
   - conda-forge
   - defaults
 dependencies:
+  - python=3.11
   - h5py
+  - cloud_sptheme=1.10.1.post20200504175005
   - setuptools
   - pydoe
   - tqdm
@@ -12,5 +15,3 @@ dependencies:
   - pandas
   - ipywidgets
 
-
-# 

@@ -912,7 +912,6 @@ class AnyMacro(MutableSequence):
 
 
 if __name__ == "__main__":
-
     #    mg = PertubationMacroGenerator()
     #    mg.add_set_value_designvar('test',1)
     #    mg.add_set_value_designvar('test',2)

@@ -32,7 +32,6 @@ def _check_input_path(path):
 
 
 class File(h5py.File):  # noqa
-
     __doc__ = h5py.File.__doc__
 
     def __init__(self, *args, **kwargs):  # noqa
@@ -104,7 +103,6 @@ class File(h5py.File):  # noqa
 
 
 class Group(h5py.Group):  # noqa
-
     __doc__ = h5py.Group.__doc__
 
     def __init__(self, arg):  # noqa
