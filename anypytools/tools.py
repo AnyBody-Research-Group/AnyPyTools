@@ -586,7 +586,6 @@ class AnyPyProcessOutput(collections.OrderedDict):
             raise KeyError(msg) from None
 
     def _repr_gen(self, prefix):
-
         kv_values = {
             k: v
             for k, v in self.items()
@@ -599,7 +598,6 @@ class AnyPyProcessOutput(collections.OrderedDict):
 
         indent = prefix + "{"
         for i, (key, val) in enumerate(kv_values.items()):
-
             if i == len(kv_values) - 1:
                 end = "}"
             else:
@@ -894,11 +892,9 @@ def make_hash(o):
     http://stackoverflow.com/questions/5884066/hashing-a-python-dictionary
     """
     if isinstance(o, (set, tuple, list)):
-
         return hash(tuple([make_hash(e) for e in o]))
 
     elif not isinstance(o, dict):
-
         return hash(o)
 
     new_o = copy.deepcopy(o)

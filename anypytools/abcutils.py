@@ -546,7 +546,6 @@ class AnyPyProcess(object):
         interactive_mode=False,
         **kwargs,
     ):
-
         if return_task_info is not None:
             warnings.warn(
                 "return_task_info is deprecated, and task meta information is always included in the output.",
