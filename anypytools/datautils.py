@@ -121,7 +121,7 @@ def open_anyoutputfile(filepath):
 def _is_scinum(str):
     """Check if a string is a number acording to numpy."""
     try:
-        np.float(str)
+        float(str)
         return True
     except ValueError:
         return False
