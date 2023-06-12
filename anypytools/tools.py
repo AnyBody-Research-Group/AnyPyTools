@@ -155,7 +155,7 @@ def ammr_xml_version(fpath):
             version.find("v2").text,
             version.find("v3").text,
         )
-        return "{}.{}.{}".format(v1, v2, v3)
+        return f"{v1}.{v2}.{v3}"
     except Exception:
         vstring = "Unknown AMMR version"
     return vstring
@@ -286,7 +286,7 @@ def _get_first_key_match(key, names):
 
     if len(matching) > 1:
         print(
-            'WARNING: "{}" key is not unique.' " Using the first match".format(key),
+            f'WARNING: "{key}" key is not unique. Using the first match',
             file=sys.stderr,
         )
         print("-> " + matching[0], file=sys.stderr)
@@ -501,11 +501,11 @@ def define2str(key, value=None):
         if value.startswith('"') and value.endswith('"'):
             defstr = '-def %s=---"\\"%s\\""' % (key, value[1:-1].replace("\\", "\\\\"))
         else:
-            defstr = '-def %s="%s"' % (key, value)
+            defstr = f'-def {key}="{value}"'
     elif value is None:
-        defstr = '-def %s=""' % (key)
+        defstr = f'-def {key}=""'
     elif isinstance(value, float):
-        defstr = '-def %s="%g"' % (key, value)
+        defstr = f'-def {key}="{value:g}"'
     else:
         defstr = '-def %s="%d"' % (key, value)
     return defstr
@@ -548,9 +548,9 @@ def array2anyscript(arr):
     def tostr(v):
         # pylint: disable=no-member
         if np.isreal(v):
-            return "{:.12g}".format(v)
+            return f"{v:.12g}"
         elif isinstance(v, (str, np.str_)):
-            return '"{}"'.format(v)
+            return f'"{v}"'
 
     def createsubarr(arr):
         outstr = ""
@@ -591,7 +591,7 @@ class AnyPyProcessOutput(collections.OrderedDict):
         try:
             return super(AnyPyProcessOutput, self).__getitem__(key)
         except KeyError:
-            msg = "The key {} could not be found in the data".format(key)
+            msg = f"The key {key} could not be found in the data"
             raise KeyError(msg) from None
 
     def _repr_gen(self, prefix):
@@ -631,7 +631,7 @@ class AnyPyProcessOutput(collections.OrderedDict):
         _repr_running[call_key] = 1
         try:
             if self is None:
-                return "%s()" % (self.__class__.__name__,)
+                return f"{self.__class__.__name__}()"
             return "\n".join(self._repr_gen(prefix))
         finally:
             del _repr_running[call_key]

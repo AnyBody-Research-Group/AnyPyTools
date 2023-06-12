@@ -46,14 +46,14 @@ def print_versions():
     import scipy as sp
 
     print("-=" * 38)
-    print("AnyPyTools version: %s" % __version__)
-    print("NumPy version: %s" % np.__version__)
-    print("SciPy version: %s" % sp.__version__)
-    print("Python version: %s" % sys.version)
+    print(f"AnyPyTools version: {__version__}")
+    print(f"NumPy version: {np.__version__}")
+    print(f"SciPy version: {sp.__version__}")
+    print(f"Python version: {sys.version}")
     (sysname, _, release, version, machine, processor) = platform.uname()
-    print("Platform: %s-%s-%s (%s)" % (sysname, release, machine, version))
+    print(f"Platform: {sysname}-{release}-{machine} ({version})")
     if not processor:
         processor = "not recognized"
-    print("Processor: %s" % processor)
-    print("Byte-ordering: %s" % sys.byteorder)
+    print(f"Processor: {processor}")
+    print(f"Byte-ordering: {sys.byteorder}")
     print("-=" * 38)

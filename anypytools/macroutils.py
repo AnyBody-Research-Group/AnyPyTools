@@ -122,7 +122,7 @@ class Load(MacroCommand):
         self.paths = paths.copy()
 
     def get_macro(self, index, **kwarg):
-        cmd = ['load "{}"'.format(self.filename)]
+        cmd = [f'load "{self.filename}"']
 
         for key in sorted(self.defs):
             value = self.defs[key]
@@ -223,10 +223,10 @@ class SetValue(MacroCommand):
         if isinstance(val, np.ndarray):
             val = array2anyscript(val)
         elif isinstance(val, float):
-            val = "{:.12g}".format(val)
+            val = f"{val:.12g}"
         elif isinstance(val, int):
-            val = "{:d}".format(val)
-        return 'classoperation {0} "Set Value" --value="{1}"'.format(self.var, val)
+            val = f"{val:d}"
+        return f'classoperation {self.var} "Set Value" --value="{val}"'
 
 
 class SetValue_random(SetValue):
@@ -369,7 +369,7 @@ class Dump(MacroCommand):
         cmd = []
         if self._include_in_macro is None or index in self._include_in_macro:
             for var in self.var_list:
-                cmd.append('classoperation {0} "Dump"'.format(var))
+                cmd.append(f'classoperation {var} "Dump"')
         return "\n".join(cmd)
 
 
@@ -395,9 +395,7 @@ class SaveDesign(MacroCommand):
         self.operation = operation
 
     def get_macro(self, index, **kwarg):
-        return 'classoperation {} "Save design" --file="{}"'.format(
-            self.operation, self.filename
-        )
+        return f'classoperation {self.operation} "Save design" --file="{self.filename}"'
 
 
 class LoadDesign(MacroCommand):
@@ -422,9 +420,7 @@ class LoadDesign(MacroCommand):
         self.operation = operation
 
     def get_macro(self, index, **kwarg):
-        return 'classoperation {} "Load design" --file="{}"'.format(
-            self.operation, self.filename
-        )
+        return f'classoperation {self.operation} "Load design" --file="{self.filename}"'
 
 
 class SaveValues(MacroCommand):
@@ -446,7 +442,7 @@ class SaveValues(MacroCommand):
         self.filename = filename
 
     def get_macro(self, index, **kwarg):
-        return 'classoperation Main "Save Values" --file="{}"'.format(self.filename)
+        return f'classoperation Main "Save Values" --file="{self.filename}"'
 
 
 class SaveData(MacroCommand):
@@ -497,7 +493,7 @@ class LoadValues(MacroCommand):
         self.filename = filename
 
     def get_macro(self, index, **kwarg):
-        return 'classoperation Main "Load Values" --file="{}"'.format(self.filename)
+        return f'classoperation Main "Load Values" --file="{self.filename}"'
 
 
 class UpdateValues(MacroCommand):
@@ -538,7 +534,7 @@ class OperationRun(MacroCommand):
         self.operation = operation
 
     def get_macro(self, index, **kwarg):
-        return "operation {}".format(self.operation) + "\n" + "run"
+        return f"operation {self.operation}" + "\n" + "run"
 
 
 class AnyMacro(MutableSequence):

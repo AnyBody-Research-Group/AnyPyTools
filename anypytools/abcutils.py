@@ -871,7 +871,7 @@ class AnyPyProcess(object):
                 return
 
         if not os.path.exists(task.folder):
-            raise (ValueError("The folder does not exists: {}".format(task.folder)))
+            raise (ValueError(f"The folder does not exists: {task.folder}"))
 
         try:
             if not task.logfile:
@@ -973,7 +973,7 @@ class AnyPyProcess(object):
                         silentremove(task.logfile)
                         task.logfile = ""
             except OSError as e:
-                logger.debug("Could not remove " "{} {}".format(task.logfile, str(e)))
+                logger.debug(f"Could not remove {task.logfile} {str(e)}")
             if not self.keep_logfiles and task.logfile:
                 try:
                     macrofile = Path(task.logfile).with_suffix(".anymcr")
