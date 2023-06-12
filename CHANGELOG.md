@@ -1,5 +1,10 @@
 # AnyPyTools Change Log
 
+## v1.9.1
+
+**Fixed:**
+- Fixed an regression with newer Numpy version, when combining output data from multiple AnyBody runs where some are missing values. 
+
 ## v1.9.0
 
 **Fixed:**
