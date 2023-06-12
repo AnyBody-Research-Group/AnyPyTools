@@ -318,43 +318,52 @@ class AnyPyProcessOutputList(collections.abc.MutableSequence):
     def __len__(self):
         return len(self.list)
 
-    def __getitem__(self, i):
-        if isinstance(i, str):
+    def __getitem__(self, item):
+        if isinstance(item, str):
             # Find the entries where i matches the keys
-            key = _get_first_key_match(i, self.list[0])
+            key = _get_first_key_match(item, self.list[0])
+            key_in_all_elements = all(
+                super(AnyPyProcessOutput, e).__contains__(key) for e in self.list
+            )
+            if not key_in_all_elements:
+                raise KeyError(
+                    f" The key: '{key}' is not present in all elements of the output."
+                ) from None
             try:
                 data = np.array(
                     [super(AnyPyProcessOutput, e).__getitem__(key) for e in self.list]
                 )
-            except KeyError:
-                msg = " The key: '{}' is not present in all elements of the output."
-                raise KeyError(msg.format(key)) from None
-            if data.dtype == np.dtype("O"):
-                # Data will be stacked as an array of objects, if the length of the
-                # time dimension is not consistant across simulations. Warn that some numpy
-                # featurs will not be avaiable.
+            except ValueError:
                 warnings.warn(
                     "\nThe length of the time variable varies across macros. "
                     "Numpy does not support ragged arrays. Data is returned  "
                     "as an array of array objects"
                 )
+                data = np.array(
+                    [super(AnyPyProcessOutput, e).__getitem__(key) for e in self.list],
+                    dtype=object,
+                )
             return data
         else:
-            return type(self)(self.list[i]) if isinstance(i, slice) else self.list[i]
+            return (
+                type(self)(self.list[item])
+                if isinstance(item, slice)
+                else self.list[item]
+            )
 
-    def __delitem__(self, i):
-        del self.list[i]
+    def __delitem__(self, item):
+        del self.list[item]
 
-    def __setitem__(self, i, v):
+    def __setitem__(self, item, v):
         self.check(v)
-        if isinstance(i, slice):
-            self.list[i] = v
+        if isinstance(item, slice):
+            self.list[item] = v
         else:
-            self.list[i] = v
+            self.list[item] = v
 
-    def insert(self, i, v):
+    def insert(self, item, v):
         self.check(v)
-        self.list.insert(i, v)
+        self.list.insert(item, v)
 
     def __str__(self):
         return str(self.list)
