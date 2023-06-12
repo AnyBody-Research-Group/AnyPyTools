@@ -29,9 +29,7 @@ It is also possible to install directly from the python package index.
 > pip install AnyPyTools 
 ```
 
-or clone/download the source files from [GitHub](https://github.com/AnyBody-Research-Group/AnyPyTools):  
-
-To install run the following command in the source folder: 
+or clone/download the source files from [GitHub](https://github.com/AnyBody-Research-Group/AnyPyTools), and then run the following command in the source folder to install: 
 
 ```bat
 > pip install -e .

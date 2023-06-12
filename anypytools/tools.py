@@ -155,7 +155,7 @@ def ammr_xml_version(fpath):
             version.find("v2").text,
             version.find("v3").text,
         )
-        return "{}.{}.{}".format(v1, v2, v3)
+        return f"{v1}.{v2}.{v3}"
     except Exception:
         vstring = "Unknown AMMR version"
     return vstring
@@ -286,7 +286,7 @@ def _get_first_key_match(key, names):
 
     if len(matching) > 1:
         print(
-            'WARNING: "{}" key is not unique.' " Using the first match".format(key),
+            f'WARNING: "{key}" key is not unique. Using the first match',
             file=sys.stderr,
         )
         print("-> " + matching[0], file=sys.stderr)
@@ -318,43 +318,52 @@ class AnyPyProcessOutputList(collections.abc.MutableSequence):
     def __len__(self):
         return len(self.list)
 
-    def __getitem__(self, i):
-        if isinstance(i, str):
+    def __getitem__(self, item):
+        if isinstance(item, str):
             # Find the entries where i matches the keys
-            key = _get_first_key_match(i, self.list[0])
+            key = _get_first_key_match(item, self.list[0])
+            key_in_all_elements = all(
+                super(AnyPyProcessOutput, e).__contains__(key) for e in self.list
+            )
+            if not key_in_all_elements:
+                raise KeyError(
+                    f" The key: '{key}' is not present in all elements of the output."
+                ) from None
             try:
                 data = np.array(
                     [super(AnyPyProcessOutput, e).__getitem__(key) for e in self.list]
                 )
-            except KeyError:
-                msg = " The key: '{}' is not present in all elements of the output."
-                raise KeyError(msg.format(key)) from None
-            if data.dtype == np.dtype("O"):
-                # Data will be stacked as an array of objects, if the length of the
-                # time dimension is not consistant across simulations. Warn that some numpy
-                # featurs will not be avaiable.
+            except ValueError:
                 warnings.warn(
                     "\nThe length of the time variable varies across macros. "
                     "Numpy does not support ragged arrays. Data is returned  "
                     "as an array of array objects"
                 )
+                data = np.array(
+                    [super(AnyPyProcessOutput, e).__getitem__(key) for e in self.list],
+                    dtype=object,
+                )
             return data
         else:
-            return type(self)(self.list[i]) if isinstance(i, slice) else self.list[i]
+            return (
+                type(self)(self.list[item])
+                if isinstance(item, slice)
+                else self.list[item]
+            )
 
-    def __delitem__(self, i):
-        del self.list[i]
+    def __delitem__(self, item):
+        del self.list[item]
 
-    def __setitem__(self, i, v):
+    def __setitem__(self, item, v):
         self.check(v)
-        if isinstance(i, slice):
-            self.list[i] = v
+        if isinstance(item, slice):
+            self.list[item] = v
         else:
-            self.list[i] = v
+            self.list[item] = v
 
-    def insert(self, i, v):
+    def insert(self, item, v):
         self.check(v)
-        self.list.insert(i, v)
+        self.list.insert(item, v)
 
     def __str__(self):
         return str(self.list)
@@ -492,11 +501,11 @@ def define2str(key, value=None):
         if value.startswith('"') and value.endswith('"'):
             defstr = '-def %s=---"\\"%s\\""' % (key, value[1:-1].replace("\\", "\\\\"))
         else:
-            defstr = '-def %s="%s"' % (key, value)
+            defstr = f'-def {key}="{value}"'
     elif value is None:
-        defstr = '-def %s=""' % (key)
+        defstr = f'-def {key}=""'
     elif isinstance(value, float):
-        defstr = '-def %s="%g"' % (key, value)
+        defstr = f'-def {key}="{value:g}"'
     else:
         defstr = '-def %s="%d"' % (key, value)
     return defstr
@@ -539,9 +548,9 @@ def array2anyscript(arr):
     def tostr(v):
         # pylint: disable=no-member
         if np.isreal(v):
-            return "{:.12g}".format(v)
+            return f"{v:.12g}"
         elif isinstance(v, (str, np.str_)):
-            return '"{}"'.format(v)
+            return f'"{v}"'
 
     def createsubarr(arr):
         outstr = ""
@@ -582,7 +591,7 @@ class AnyPyProcessOutput(collections.OrderedDict):
         try:
             return super(AnyPyProcessOutput, self).__getitem__(key)
         except KeyError:
-            msg = "The key {} could not be found in the data".format(key)
+            msg = f"The key {key} could not be found in the data"
             raise KeyError(msg) from None
 
     def _repr_gen(self, prefix):
@@ -622,7 +631,7 @@ class AnyPyProcessOutput(collections.OrderedDict):
         _repr_running[call_key] = 1
         try:
             if self is None:
-                return "%s()" % (self.__class__.__name__,)
+                return f"{self.__class__.__name__}()"
             return "\n".join(self._repr_gen(prefix))
         finally:
             del _repr_running[call_key]

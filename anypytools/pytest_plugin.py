@@ -185,7 +185,7 @@ def _parse_header(header, test_file):
     for name, types in HEADER_ENSURES:
         if name in ns and not isinstance(ns[name], types):
             typestr = ", ".join([t.__name__ for t in types])
-            msg = "{} must be one of the following type(s) ({})".format(name, typestr)
+            msg = f"{name} must be one of the following type(s) ({typestr})"
             raise TypeError(msg)
     return ns
 
@@ -274,12 +274,12 @@ class AnyTestItem(pytest.Item):
     """pytest.Item subclass representing individual collected tests."""
 
     def __init__(self, name, id, parent, any_defs, any_paths, **kwargs):
-        test_name = "{}_{}".format(name, id)
+        test_name = f"{name}_{id}"
         super().__init__(test_name, parent)
         self.any_defs = any_defs
         for k, v in self.config.getoption("define_kw") or {}:
             self.defs[k] = v
-        self.any_defs["TEST_NAME"] = '"{}"'.format(test_name)
+        self.any_defs["TEST_NAME"] = f'"{test_name}"'
         if self.config.getoption("--ammr"):
             any_paths["AMMR_PATH"] = self.config.getoption("--ammr")
             any_paths["ANYBODY_PATH_AMMR"] = self.config.getoption("--ammr")
@@ -384,7 +384,7 @@ class AnyTestItem(pytest.Item):
                         error_list.remove(error)
                 if not xerr_found:
                     self.errors.append(
-                        "TEST ERROR: Expected error not " 'found: "{}"'.format(xerr)
+                        f'TEST ERROR: Expected error not found: "{xerr}"'
                     )
 
         # Add remaining errors to item's error list
@@ -457,9 +457,9 @@ class AnyTestItem(pytest.Item):
             rtn += wraptext(self.path, initial_indent="  ")
             rtn += "\nSpecial model configuration:"
             for k, v in self.any_defs.items():
-                rtn += "\n  #define {} {}".format(k, v)
+                rtn += f"\n  #define {k} {v}"
             for k, v in self.any_paths.items():
-                rtn += "\n  #path {} {}".format(k, v)
+                rtn += f"\n  #path {k} {v}"
             rtn += "\nErrors:"
             for elem in self.errors:
                 rtn += "\n"
@@ -470,7 +470,7 @@ class AnyTestItem(pytest.Item):
 
     def reportinfo(self):
         """ """
-        return self.path, 0, "AnyBody Simulation: %s" % self.name
+        return self.path, 0, f"AnyBody Simulation: {self.name}"
 
 
 class AnyException(Exception):
