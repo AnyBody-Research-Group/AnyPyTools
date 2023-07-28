@@ -278,7 +278,7 @@ class AnyTestItem(pytest.Item):
         super().__init__(test_name, parent)
         self.any_defs = any_defs
         for k, v in self.config.getoption("define_kw") or {}:
-            self.defs[k] = v
+            self.any_defs[k] = v
         self.any_defs["TEST_NAME"] = f'"{test_name}"'
         if self.config.getoption("--ammr"):
             any_paths["AMMR_PATH"] = self.config.getoption("--ammr")
