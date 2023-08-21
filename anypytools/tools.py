@@ -818,8 +818,8 @@ def correct_dump_prefix(raw, idx):
 ERROR_PATTERN = re.compile(
     r"^((ERROR)|(Model loading skipped)).*$", flags=re.IGNORECASE | re.M
 )
-WARNING_PATTERN = re.compile(r"^(WARNING).*$", flags=re.IGNORECASE | re.M)
-DUMP_PATTERN = re.compile(r"^(Main.*?)\s=\s(.*?(?:\n\s\s.*?)*);", flags=re.M)
+WARNING_PATTERN = re.compile(r"^(WARNING|NOTICE).*$", flags=re.IGNORECASE | re.M)
+DUMP_PATTERN = re.compile(r"^((Main|Global).*?)\s=\s(.*?(?:\n\s\s.*?)*);", flags=re.M)
 
 
 def parse_anybodycon_output(

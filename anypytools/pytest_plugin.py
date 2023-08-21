@@ -295,7 +295,10 @@ class AnyTestItem(pytest.Item):
         mainfile = self.path
         if not ON_WINDOWS:
             mainfile = winepath(mainfile, "-w")
-        self.macro = [macro_commands.Load(mainfile, self.any_defs, self.any_paths)]
+        self.macro = [
+            macro_commands.Load(mainfile, self.any_defs, self.any_paths),
+            macro_commands.Dump("Global.System.LoadedModel.LoadDurationCPUThread"),
+        ]
 
         fatal_warnings = kwargs.get("fatal_warnings", False)
         warnings_to_include = kwargs.get("warnings_to_include", None)
@@ -324,7 +327,10 @@ class AnyTestItem(pytest.Item):
             "use_gui": kwargs.get("use_gui", False),
         }
         if not self.config.getoption("--only-load"):
-            self.macro.append(macro_commands.OperationRun("Main.RunTest"))
+            self.macro += [
+                macro_commands.OperationRun("Main.RunTest"),
+                macro_commands.Dump("Main.RunTest.RunDurationCPUThread"),
+            ]
 
         self.hdf5_outputs = []
         save_study = kwargs.get("save_study", None)
