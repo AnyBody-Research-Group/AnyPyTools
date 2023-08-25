@@ -23,6 +23,7 @@ import pprint
 from ast import literal_eval
 from pathlib import Path
 from contextlib import suppress
+from dataclasses import dataclass
 from _thread import get_ident as _get_ident
 
 from typing import Mapping, Optional, Sequence, Union, Any, Iterable
@@ -98,6 +99,55 @@ def anybodycon_version(anybodyconpath=None):
     if anybodyconpath:
         anybodyconpath = str(Path(anybodyconpath).absolute())
     return _anybodycon_version(anybodyconpath)
+
+
+@dataclass
+class AMSVersion:
+    major: int
+    minor: int
+    patch: int
+    build: int
+
+    @classmethod
+    def from_string(cls, version_string):
+        major, minor, patch, build = version_string.split(".")
+        return cls(
+            major=int(major),
+            minor=int(minor),
+            patch=int(patch),
+            build=int(build.strip().split(" ")[0]),
+        )
+
+    def _as_tuple(self):
+        return self.major, self.minor, self.patch, self.build
+
+    def __eq__(self, other):
+        if isinstance(other, AMSVersion):
+            return self._as_tuple() == other._as_tuple()
+        elif isinstance(other, str):
+            return self == AMSVersion.from_string(other)
+        elif isinstance(other, tuple):
+            return self._as_tuple() == other
+
+    def __lt__(self, other):
+        if isinstance(other, AMSVersion):
+            return self._as_tuple() < other._as_tuple()
+        elif isinstance(other, str):
+            return self < AMSVersion.from_string(other)
+        elif isinstance(other, tuple):
+            return self._as_tuple() < other
+
+    def __ne__(self, other):
+        return not self == other
+
+    def __le__(self, other):
+        return self < other or self == other
+
+    def __ge__(self, other):
+        return not self < other
+
+    def __gt__(self, other):
+        return not self <= other
 
 
 @functools.lru_cache(maxsize=None)
@@ -801,7 +851,7 @@ IDLE_PRIORITY_CLASS = 0x0040
 NORMAL_PRIORITY_CLASS = 0x0020
 
 
-NAME_PATTERN = re.compile(r"Main\.[\w\.]*")
+NAME_PATTERN = re.compile(r"(Main|Global)\.[\w\.]*")
 
 
 def correct_dump_prefix(raw, idx):
@@ -835,13 +885,13 @@ def parse_anybodycon_output(
     # Find all data in logfile
     prefix_replacement = ("", "")
     for dump in DUMP_PATTERN.finditer(raw):
-        name, val = dump.group(1), dump.group(2)
+        name, val = dump.group(1), dump.group(3)
         new_prefix = correct_dump_prefix(raw, dump.start())
         if new_prefix:
             prefix_replacement = (name, new_prefix)
         name = name.replace(*prefix_replacement)
         try:
-            val = _parse_data(dump.group(2))
+            val = _parse_data(dump.group(3))
         except (SyntaxError, ValueError):
             warnings.warn("\n\nCould not parse console output:\n" + name)
         output[name] = val

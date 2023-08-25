@@ -20,6 +20,9 @@ from traceback import format_list, extract_tb
 
 import pytest
 
+# from _pytest.fixtures import FixtureRequest
+# from _pytest.fixtures import TopRequest
+
 
 from pytest import TempPathFactory
 
@@ -35,6 +38,7 @@ from anypytools.tools import (
     get_ammr_version,
     winepath,
     wraptext,
+    AMSVersion,
 )
 
 
@@ -49,6 +53,10 @@ def cwd(path):
 
 
 DEFAULT_ANYTEST_OUTPUT = Path.cwd() / "anytest-output"
+
+
+def load_duration_supported():
+    return AMSVersion.from_string(pytest.anytest.ams_version) >= (7, 5, 0, 10759)
 
 
 class AnyTestSession(object):
@@ -297,8 +305,12 @@ class AnyTestItem(pytest.Item):
             mainfile = winepath(mainfile, "-w")
         self.macro = [
             macro_commands.Load(mainfile, self.any_defs, self.any_paths),
-            macro_commands.Dump("Global.System.LoadedModel.LoadDurationCPUThread"),
         ]
+
+        if load_duration_supported():
+            self.macro += [
+                macro_commands.Dump("Global.System.LoadedModel.LoadDurationCPUThread"),
+            ]
 
         fatal_warnings = kwargs.get("fatal_warnings", False)
         warnings_to_include = kwargs.get("warnings_to_include", None)
@@ -327,8 +339,10 @@ class AnyTestItem(pytest.Item):
             "use_gui": kwargs.get("use_gui", False),
         }
         if not self.config.getoption("--only-load"):
+            self.macro += [macro_commands.OperationRun("Main.RunTest")]
+
+        if load_duration_supported():
             self.macro += [
-                macro_commands.OperationRun("Main.RunTest"),
                 macro_commands.Dump("Main.RunTest.RunDurationCPUThread"),
             ]
 
@@ -343,6 +357,18 @@ class AnyTestItem(pytest.Item):
                 )
                 self.hdf5_outputs.append(fname)
         return
+
+    # def setup(self) -> None:
+    #     def func() -> None:
+    #         pass
+
+    #     self.funcargs = {}  # type: ignore[attr-defined]
+    #     fm = self.session._fixturemanager
+    #     self._fixtureinfo = fm.getfixtureinfo(  # type: ignore[attr-defined]
+    #         node=self, func=func, cls=None, funcargs=False
+    #     )
+    #     self.fixture_request = FixtureRequest(self, _ispytest=True)
+    #     self.fixture_request._fillfixtures()
 
     def runtest(self):
         """Run an AnyScript test item."""
@@ -361,8 +387,17 @@ class AnyTestItem(pytest.Item):
                 # Disable caputure on linux due to a bug when AMS lauches it own python
                 capmanager = self.config.pluginmanager.getplugin("capturemanager")
                 with capmanager.global_and_fixture_disabled():
-                    result = self.app.start_macro(self.macro)[0]
+                    result = self.app.start_macro(
+                        self.macro, logfile=Path(self.name).with_suffix(".txt")
+                    )[0]
 
+        if load_duration_supported():
+            loadtime = result["Global.System.LoadedModel.LoadDurationCPUThread"]
+            runtesttime = result["Main.RunTest.RunDurationCPUThread"]
+            self.user_properties += [
+                ("Load time", loadtime),
+                ("RunTest time", runtesttime),
+            ]
         # Ignore error due to missing Main.RunTest
         if "ERROR" in result:
             runtest_missing = any(
@@ -396,6 +431,9 @@ class AnyTestItem(pytest.Item):
         # Add remaining errors to item's error list
         if error_list:
             self.errors.extend(error_list)
+
+        if self.errors:
+            self.logfile = Path(result["task_work_dir"]) / result["task_logfile"]
 
         # Add info to the hdf5 file if compare output was set
         if self.hdf5_outputs:
@@ -470,6 +508,7 @@ class AnyTestItem(pytest.Item):
             for elem in self.errors:
                 rtn += "\n"
                 rtn += wraptext(elem, initial_indent="> ", subsequent_indent="  ")
+            rtn += f'\nFull logfile: "{self.logfile.absolute()}"'
             return rtn
         else:
             return str(excinfo.value)
