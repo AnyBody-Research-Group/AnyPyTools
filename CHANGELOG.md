@@ -1,5 +1,16 @@
 # AnyPyTools Change Log
 
+## v1.10.0
+
+**Added:**
+
+- When running with "AnyBody" > 7.5 the pytest plugin will now save the timing
+  information for how quickly the model loaded and how quickly the test ran. The output
+  is added to the xml output from pytest. 
+
+**Fixed:**
+- Fix regression when specifying "#defines" from the pytest plugin.
+
 ## v1.9.1
 
 **Fixed:**
