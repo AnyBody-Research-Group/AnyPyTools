@@ -56,7 +56,7 @@ jobs:
 
   test-linux-cloud:
     runs-on: ubuntu-latest
-    container: ghcr.io/anybody/anybodycon-github-actions:latest
+    container: ghcr.io/anybody/anybodycon-github-actions:latest_Beta
     needs: lint
 
     steps:
