@@ -54,6 +54,9 @@ def cwd(path):
 
 DEFAULT_ANYTEST_OUTPUT = Path.cwd() / "anytest-output"
 
+LOAD_TIME_VARIABLE = "Global.System.LoadedModel.LoadDurationCPUThread"
+RUN_TEST_TIME_VARIABLE = "Main.RunTest.RunDurationCPUThread"
+
 
 def load_duration_supported():
     return AMSVersion.from_string(pytest.anytest.ams_version) >= (7, 5, 0, 10759)
@@ -309,7 +312,7 @@ class AnyTestItem(pytest.Item):
 
         if load_duration_supported():
             self.macro += [
-                macro_commands.Dump("Global.System.LoadedModel.LoadDurationCPUThread"),
+                macro_commands.Dump(LOAD_TIME_VARIABLE),
             ]
 
         fatal_warnings = kwargs.get("fatal_warnings", False)
@@ -343,7 +346,7 @@ class AnyTestItem(pytest.Item):
 
         if load_duration_supported():
             self.macro += [
-                macro_commands.Dump("Main.RunTest.RunDurationCPUThread"),
+                macro_commands.Dump(RUN_TEST_TIME_VARIABLE),
             ]
 
         self.hdf5_outputs = []
@@ -392,12 +395,14 @@ class AnyTestItem(pytest.Item):
                     )[0]
 
         if load_duration_supported():
-            loadtime = result["Global.System.LoadedModel.LoadDurationCPUThread"]
-            runtesttime = result["Main.RunTest.RunDurationCPUThread"]
-            self.user_properties += [
-                ("Load time", loadtime),
-                ("RunTest time", runtesttime),
-            ]
+            load_time = result.get(LOAD_TIME_VARIABLE, None)
+            if load_time is not None:
+                self.user_properties.append(("Load time", load_time))
+
+            run_test_time = result.get(RUN_TEST_TIME_VARIABLE, None)
+            if run_test_time is not None:
+                self.user_properties.append(("Run time", run_test_time))
+
         # Ignore error due to missing Main.RunTest
         if "ERROR" in result:
             runtest_missing = any(
