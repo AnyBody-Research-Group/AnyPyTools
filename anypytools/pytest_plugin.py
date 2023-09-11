@@ -406,13 +406,14 @@ class AnyTestItem(pytest.Item):
         # Ignore error due to missing Main.RunTest
         if "ERROR" in result:
             runtest_missing = any(
-                "Error : Main.RunTest :" in err for err in result["ERROR"]
+                "Error : Main.RunTest" in err for err in result["ERROR"]
             )
             if runtest_missing:
                 runtest_errros = (
                     "Error : Main.RunTest : Unresolved",
                     "Main.RunTest : Select Operation",
                     "Error : run : command unexpected while",
+                    "Error : Main.RunTest.RunDurationCPUThread : Unresolved object",
                 )
                 result["ERROR"][:] = [
                     err
