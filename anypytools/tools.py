@@ -797,7 +797,7 @@ class AnyPyProcessOutput(collections.OrderedDict):
             time_columns.remove(interp_var)
             dfout = dfout.reindex(dfout.index.union(interp_val))
             dfout[time_columns] = dfout[time_columns].interpolate(interp_method)
-            dfout[constant_columns] = dfout[constant_columns].fillna(method="bfill")
+            dfout[constant_columns] = dfout[constant_columns].bfill()
 
             dfout = dfout.loc[interp_val]
             dfout.reset_index(inplace=True)

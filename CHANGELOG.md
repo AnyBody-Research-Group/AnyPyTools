@@ -1,5 +1,13 @@
 # AnyPyTools Change Log
 
+
+## v1.10.1
+
+**Fixed:**
+
+* Fixed an issue with the pytest plugin when running tests with `--load-only` option and the "RunDurationCPU" output. 
+
+
 ## v1.10.0
 
 **Added:**
