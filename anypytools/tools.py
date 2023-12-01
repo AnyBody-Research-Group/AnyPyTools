@@ -28,7 +28,7 @@ from contextlib import suppress
 from dataclasses import dataclass
 from _thread import get_ident as _get_ident
 
-from typing import Mapping, Optional, Sequence, Union, Any, Iterable
+from typing import Any, Iterable
 
 # external imports
 import numpy as np
@@ -727,7 +727,7 @@ class AnyPyProcessOutput(collections.OrderedDict):
 
     def to_dataframe(
         self,
-        index_var: Optional[str] = "auto",
+        index_var: str | None = "auto",
         interp_var=None,
         interp_val=None,
         interp_method="cubic",
