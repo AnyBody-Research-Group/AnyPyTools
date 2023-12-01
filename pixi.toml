@@ -1,0 +1,28 @@
+[project]
+name = "AnyPyTools"
+description = "Add a short description here"
+authors = ["Morten Enemark Lund <melund@gmail.com>"]
+channels = ["conda-forge"]
+platforms = ["win-64", "linux-64"]
+
+[tasks]
+test = {cmd = "pytest tests", depends_on = ["install"]}
+develop = "pip install -e ."
+install = "pip install ."
+
+
+[dependencies]
+python= ">=3.8"
+h5py="*"
+cloud_sptheme="1.10.1.post20200504175005"
+setuptools="*"
+pydoe="*"
+tqdm="*"
+scipy="*"
+pygments_anyscript="*"
+pandas="*"
+ipywidgets="*"
+build="*"
+twine="*"
+# Test
+pytest="*"
