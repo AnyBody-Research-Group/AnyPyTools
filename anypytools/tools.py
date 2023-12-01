@@ -4,6 +4,8 @@ Created on Sun Sep  7 13:25:38 2014.
 
 @author: Morten
 """
+from __future__ import annotations
+
 import os
 import re
 import sys
@@ -26,7 +28,7 @@ from contextlib import suppress
 from dataclasses import dataclass
 from _thread import get_ident as _get_ident
 
-from typing import Mapping, Optional, Sequence, Union, Any, Iterable
+from typing import Any, Iterable
 
 # external imports
 import numpy as np
@@ -519,8 +521,15 @@ def _expand_short_path_name(short_path_name):
     return long_path_name
 
 
-def get_anybodycon_path():
-    """Return the path to default AnyBody console application."""
+def get_anybodycon_path() -> str | None:
+    """Return the path to default AnyBody console application.
+    If AnyBodyCon.exe is on path it will take precedence over
+    the registry lookup.
+    """
+
+    if anybodycon_paths := shutil.which("AnyBodyCon.exe"):
+        return anybodycon_paths
+
     if not ON_WINDOWS:
         wineprefix = Path(os.environ.get("WINEPREFIX", Path.home() / ".wine"))
         abtpath = wineprefix / "drive_c/Program Files/AnyBody Technology"
@@ -540,10 +549,10 @@ def get_anybodycon_path():
     except WindowsError:
         raise WindowsError("Could not locate AnyBody in registry")
     abpath = abpath.rsplit(" ", 1)[0].strip('"')
-    abpath = os.path.join(os.path.dirname(abpath), "AnyBodyCon.exe")
-    if "~" in abpath:
-        abpath = _expand_short_path_name(abpath)
-    return abpath
+    anybodycon_paths = os.path.join(os.path.dirname(abpath), "AnyBodyCon.exe")
+    if "~" in anybodycon_paths:
+        anybodycon_paths = _expand_short_path_name(anybodycon_paths)
+    return anybodycon_paths
 
 
 def define2str(key, value=None):
@@ -718,7 +727,7 @@ class AnyPyProcessOutput(collections.OrderedDict):
 
     def to_dataframe(
         self,
-        index_var: Optional[str] = "auto",
+        index_var: str | None = "auto",
         interp_var=None,
         interp_val=None,
         interp_method="cubic",

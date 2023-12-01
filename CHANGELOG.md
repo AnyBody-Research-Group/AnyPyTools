@@ -3,6 +3,12 @@
 
 ## v1.10.1
 
+**Changed:**
+
+* If AnyBody is on the PATH variable, then AnyPyTools will no use that version, 
+  before looking for AnyBody in the registration database.  
+
+
 **Fixed:**
 
 * Fixed an issue with the pytest plugin when running tests with `--load-only` option and the "RunDurationCPU" output. 
