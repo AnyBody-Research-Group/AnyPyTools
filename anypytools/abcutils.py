@@ -885,7 +885,9 @@ class AnyPyProcess(object):
                     delete=False,
                 ) as fh:
                     task.logfile = fh.name
-            with open(task.logfile, "w+") as logfile:
+            with open(
+                task.logfile, "w+", encoding="utf8", errors="backslashreplace"
+            ) as logfile:
                 logfile.write("########### MACRO #############\n")
                 logfile.write("\n".join(task.macro))
                 logfile.write("\n\n######### OUTPUT LOG ##########")
@@ -915,9 +917,13 @@ class AnyPyProcess(object):
                     raise e
                 finally:
                     logfile.seek(0)
-
+                try:
+                    readout = logfile.read()
+                except Exception as e:
+                    print(logfile.name)
+                    raise e
                 task.output = parse_anybodycon_output(
-                    logfile.read(),
+                    readout,
                     self.ignore_errors,
                     self.warnings_to_include,
                     fatal_warnings=self.fatal_warnings,
