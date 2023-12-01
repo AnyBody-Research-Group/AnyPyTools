@@ -35,7 +35,7 @@ def test_define2str():
 
 
 def test_path2str():
-    assert path2str("test", "C:\hallo.txt") == '-p test=---"C:\\\\hallo.txt"'
+    assert path2str("test", r"C:\hallo.txt") == '-p test=---"C:\\\\hallo.txt"'
     assert path2str("Test", "C:/hallo.txt") == '-p Test=---"C:/hallo.txt"'
 
 

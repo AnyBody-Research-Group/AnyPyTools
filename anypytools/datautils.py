@@ -61,7 +61,7 @@ def anydatah5_generator(folder=None, match=r".*(\.h5)"):
             pass
 
 
-def anyoutputfile_generator(folder=None, match=".*\.(csv|txt)"):
+def anyoutputfile_generator(folder=None, match=r".*\.(csv|txt)"):
     """Create a generator which opens AnyOutput files.
 
     Parameters
