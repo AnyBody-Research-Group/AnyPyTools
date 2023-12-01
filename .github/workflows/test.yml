@@ -33,12 +33,10 @@ jobs:
         cache-write: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
       
     - name: build
-      run: |
-        pixi run --frozen pip install .
+      run: pixi run --frozen pip install .
 
     - name: Test with pytest
-      run: |
-        pixi run --frozen pytest tests
+      run: pixi run --frozen pytest tests
 
 
   test-linux-cloud:

@@ -13,6 +13,7 @@ install = "pip install ."
 
 [dependencies]
 python= ">=3.8"
+pip="*"
 h5py="*"
 cloud_sptheme="1.10.1.post20200504175005"
 setuptools="*"
