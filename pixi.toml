@@ -10,6 +10,11 @@ test = {cmd = "pytest tests", depends_on = ["install"]}
 develop = "pip install -e ."
 install = "pip install ."
 
+clean-build = "rm -rf build dist"
+build = {cmd="python -m build . --sdist"}
+pipy-upload = {cmd="twine upload dist/*"}
+release = {cmd="", depends_on=["test", "clean-build", "build", "pipy-upload"]}
+
 
 [dependencies]
 python= ">=3.8"
@@ -27,3 +32,4 @@ build="*"
 twine="*"
 # Test
 pytest="*"
+pytest-xdist = "*"
