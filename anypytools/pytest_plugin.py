@@ -212,7 +212,7 @@ def pytest_collection_finish(session):
     """Print the AnyBodyCon executable used in the test."""
     print("Using:")
     print("\n  AnyBodyCon: ", pytest.anytest.ams_path)
-    print("\n  Version   : ", get_ammr_version(pytest.anytest.ams_path))
+    print("\n  Version   : ", anybodycon_version(pytest.anytest.ams_path))
 
 
 class DeferPlugin(object):
