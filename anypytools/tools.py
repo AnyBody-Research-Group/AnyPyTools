@@ -156,7 +156,7 @@ class AMSVersion:
 def _anybodycon_version(anybodyconpath):
     """Return the AnyBodyCon version."""
     if not anybodyconpath:
-        return "0.0.0"
+        return "0.0.0.0"
     cmd = [anybodyconpath, "-ni"]
     if not ON_WINDOWS:
         cmd.insert(0, "wine")
@@ -169,7 +169,7 @@ def _anybodycon_version(anybodyconpath):
     m = ANYBODYCON_VERSION_RE.search(out)
     if m:
         return m.groupdict()["version"]
-    return "0.0.0"
+    return "0.0.0.0"
 
 
 AMMR_VERSION_RE = re.compile(r'.*AMMR_VERSION\s"(?P<version>.*)"')
@@ -526,9 +526,10 @@ def get_anybodycon_path() -> str | None:
     If AnyBodyCon.exe is on path it will take precedence over
     the registry lookup.
     """
-
-    if anybodycon_paths := shutil.which("AnyBodyCon.exe"):
-        return anybodycon_paths
+    anybodycon_path = shutil.which("AnyBodyCon.exe")
+    
+    if anybodycon_path:
+        return anybodycon_path
 
     if not ON_WINDOWS:
         wineprefix = Path(os.environ.get("WINEPREFIX", Path.home() / ".wine"))
@@ -538,10 +539,8 @@ def get_anybodycon_path() -> str | None:
             return str(anybodycon_paths[-1])
         else:
             return None
-    try:
-        import winreg
-    except ImportError:
-        import _winreg as winreg
+ 
+    import winreg
     try:
         abpath = winreg.QueryValue(
             winreg.HKEY_CLASSES_ROOT, "AnyBody.AnyScript\\shell\\open\\command"
@@ -549,10 +548,10 @@ def get_anybodycon_path() -> str | None:
     except WindowsError:
         raise WindowsError("Could not locate AnyBody in registry")
     abpath = abpath.rsplit(" ", 1)[0].strip('"')
-    anybodycon_paths = os.path.join(os.path.dirname(abpath), "AnyBodyCon.exe")
-    if "~" in anybodycon_paths:
-        anybodycon_paths = _expand_short_path_name(anybodycon_paths)
-    return anybodycon_paths
+    anybodycon_path = os.path.join(os.path.dirname(abpath), "AnyBodyCon.exe")
+    if "~" in anybodycon_path:
+        anybodycon_path = _expand_short_path_name(anybodycon_path)
+    return anybodycon_path
 
 
 def define2str(key, value=None):
