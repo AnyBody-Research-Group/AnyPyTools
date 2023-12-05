@@ -159,7 +159,7 @@ class AMSVersion:
 def _anybodycon_version(anybodyconpath):
     """Return the AnyBodyCon version."""
     if not anybodyconpath:
-        return "0.0.0.0"
+        return "0.0.0.1"
     cmd = [anybodyconpath, "-ni"]
     if not ON_WINDOWS:
         cmd.insert(0, "wine")
@@ -168,11 +168,11 @@ def _anybodycon_version(anybodyconpath):
             cmd, universal_newlines=True, stdout=subprocess.PIPE
         ).stdout
     except (subprocess.CalledProcessError, FileNotFoundError):
-        out = ""
+        out = "0.0.0.2"
     m = ANYBODYCON_VERSION_RE.search(out)
     if m:
         return m.groupdict()["version"]
-    return "0.0.0.0"
+    return "0.0.0.3"
 
 
 AMMR_VERSION_RE = re.compile(r'.*AMMR_VERSION\s"(?P<version>.*)"')
