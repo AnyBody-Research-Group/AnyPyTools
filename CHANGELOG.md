@@ -1,7 +1,14 @@
 # AnyPyTools Change Log
 
 
-## v1.10.1
+## v1.11.1
+
+**Fixed:**
+
+* Fix crash with version handling when AnyBody could not be found.
+
+
+## v1.11.0
 
 **Changed:**
 

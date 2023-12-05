@@ -112,7 +112,12 @@ class AMSVersion:
 
     @classmethod
     def from_string(cls, version_string):
-        major, minor, patch, build = version_string.split(".")
+        try:
+            major, minor, patch, build = version_string.split(".")
+        except ValueError as e:
+            raise ValueError(
+                f"Could not parse version string: {version_string}"
+            ) from e
         return cls(
             major=int(major),
             minor=int(minor),
