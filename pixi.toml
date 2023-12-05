@@ -32,4 +32,4 @@ build="*"
 twine="*"
 # Test
 pytest="*"
-anypytools = "1.11.0.*"
+pytest-xdist = "*"
