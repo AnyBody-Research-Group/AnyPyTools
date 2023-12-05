@@ -115,9 +115,7 @@ class AMSVersion:
         try:
             major, minor, patch, build = version_string.split(".")
         except ValueError as e:
-            raise ValueError(
-                f"Could not parse version string: {version_string}"
-            ) from e
+            raise ValueError(f"Could not parse version string: {version_string}") from e
         return cls(
             major=int(major),
             minor=int(minor),
@@ -532,7 +530,7 @@ def get_anybodycon_path() -> str | None:
     the registry lookup.
     """
     anybodycon_path = shutil.which("AnyBodyCon.exe")
-    
+
     if anybodycon_path:
         return anybodycon_path
 
@@ -544,8 +542,9 @@ def get_anybodycon_path() -> str | None:
             return str(anybodycon_paths[-1])
         else:
             return None
- 
+
     import winreg
+
     try:
         abpath = winreg.QueryValue(
             winreg.HKEY_CLASSES_ROOT, "AnyBody.AnyScript\\shell\\open\\command"
