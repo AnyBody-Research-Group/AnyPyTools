@@ -208,11 +208,15 @@ def _write_macro_file(path, name, macro):
     return filename
 
 
-def pytest_collection_finish(session):
+def _print_version_info():
     """Print the AnyBodyCon executable used in the test."""
-    print("Using:")
-    print("\n  AnyBodyCon: ", pytest.anytest.ams_path)
-    print("\n  Version   : ", anybodycon_version(pytest.anytest.ams_path))
+    print("\nUsing:")
+    print("  AnyBodyCon: ", pytest.anytest.ams_path)
+    print("  Version   : ", anybodycon_version(pytest.anytest.ams_path))
+
+
+def pytest_collection_finish(session):
+    _print_version_info()
 
 
 class DeferPlugin(object):
@@ -220,11 +224,7 @@ class DeferPlugin(object):
 
     def pytest_xdist_setupnodes(self, config, specs):
         """called before any remote node is set up."""
-        print(
-            "\n\nUsing AnyBodyCon: ",
-            config.getoption("--anybodycon") or get_anybodycon_path(),
-            "\n",
-        )
+        _print_version_info()
 
 
 def pytest_configure(config):
