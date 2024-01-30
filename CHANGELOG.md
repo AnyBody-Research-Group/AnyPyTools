@@ -1,5 +1,12 @@
 # AnyPyTools Change Log
 
+## v1.11.2
+
+**Fixed:**
+
+* Fix fix a backwards compatibiility problem when using the AnyPyTools Pytest plugin with 
+  old versions of AMMR (<2.3). 
+
 
 ## v1.11.1
 
