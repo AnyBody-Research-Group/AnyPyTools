@@ -179,7 +179,7 @@ HEADER_ENSURES = (
     ("keep_logfiles", (bool,)),
     ("logfile_prefix", (str,)),
     ("expect_errors", (collections.abc.Sequence,)),
-    ("save_study", (str, collections.abc.Sequence)),
+    ("save_study", (str, collections.abc.Sequence, type(None))),
     ("pytest_markers", (collections.abc.Sequence,)),
     ("use_gui", (bool,)),
 )
