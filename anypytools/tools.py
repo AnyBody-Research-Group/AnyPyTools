@@ -524,6 +524,21 @@ def _expand_short_path_name(short_path_name):
     return long_path_name
 
 
+def lookup_anybody_in_registry() -> str | None:
+    import winreg
+
+    try:
+        value = winreg.OpenKey(
+            winreg.HKEY_CLASSES_ROOT, "AnyBody.AnyScript\\shell\\open\\command"
+        )
+    except WindowsError:
+        warnings.warn("Could not locate AnyBody in registry")
+        return ""
+
+    anybodypath = value.rsplit(" ", 1)[0].strip('"')
+    return os.path.join(os.path.dirname(anybodypath), "AnyBodyCon.exe")
+
+
 def get_anybodycon_path() -> str | None:
     """Return the path to default AnyBody console application.
     If AnyBodyCon.exe is on path it will take precedence over
@@ -543,16 +558,7 @@ def get_anybodycon_path() -> str | None:
         else:
             return None
 
-    import winreg
-
-    try:
-        abpath = winreg.QueryValue(
-            winreg.HKEY_CLASSES_ROOT, "AnyBody.AnyScript\\shell\\open\\command"
-        )
-    except WindowsError:
-        raise WindowsError("Could not locate AnyBody in registry")
-    abpath = abpath.rsplit(" ", 1)[0].strip('"')
-    anybodycon_path = os.path.join(os.path.dirname(abpath), "AnyBodyCon.exe")
+    anybodycon_path = lookup_anybody_in_registry()
     if "~" in anybodycon_path:
         anybodycon_path = _expand_short_path_name(anybodycon_path)
     return anybodycon_path
