@@ -2,7 +2,7 @@
 name = "AnyPyTools"
 description = "Add a short description here"
 authors = ["Morten Enemark Lund <melund@gmail.com>"]
-channels = ["conda-forge"]
+channels = ["conda-forge", "anybody" ]
 platforms = ["win-64", "linux-64"]
 
 [tasks]
@@ -33,3 +33,8 @@ twine="*"
 # Test
 pytest="*"
 pytest-xdist = "*"
+
+
+[target.win-64.dependencies]
+anybody = "*"
+ #"file://D:/repos/anybody-recipe/output"
