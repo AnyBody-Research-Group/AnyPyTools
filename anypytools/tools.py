@@ -527,16 +527,20 @@ def _expand_short_path_name(short_path_name):
 def lookup_anybody_in_registry() -> str | None:
     import winreg
 
-    try:
-        value = winreg.OpenKey(
-            winreg.HKEY_CLASSES_ROOT, "AnyBody.AnyScript\\shell\\open\\command"
-        )
-    except WindowsError:
-        warnings.warn("Could not locate AnyBody in registry")
-        return ""
+    keys_to_try = [
+        "AnyBody.any\\shell\\open\\command",
+        "AnyBody.AnyScript\\shell\\open\\command",
+    ]
+    for key in keys_to_try:
+        try:
+            value = winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, key)
+        except WindowsError:
+            continue
+        anybodypath = value.rsplit(" ", 1)[0].strip('"')
+        return os.path.join(os.path.dirname(anybodypath), "AnyBodyCon.exe")
 
-    anybodypath = value.rsplit(" ", 1)[0].strip('"')
-    return os.path.join(os.path.dirname(anybodypath), "AnyBodyCon.exe")
+    warnings.warn("Could not locate AnyBody in registry")
+    return ""
 
 
 def get_anybodycon_path() -> str | None:
