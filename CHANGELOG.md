@@ -1,5 +1,16 @@
 # AnyPyTools Change Log
 
+## v1.11.3
+
+**Added:**
+
+* Correctly detect installations of AnyBody version 8 on the machines.
+
+**Fixed:**
+
+* Allow the pytest plugin to work even if the machine doesn't have AnyBody installed. 
+
+
 ## v1.11.2
 
 **Fixed:**
