@@ -1,5 +1,11 @@
 # AnyPyTools Change Log
 
+## v1.11.3
+
+**Fixed:**
+* Allow the pytest plugin to work even if the machine doesn't have AnyBody installed. 
+
+
 ## v1.11.2
 
 **Fixed:**
