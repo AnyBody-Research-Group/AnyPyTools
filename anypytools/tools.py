@@ -533,8 +533,8 @@ def lookup_anybody_in_registry() -> str | None:
     ]
     for key in keys_to_try:
         try:
-            value = winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, key)
-        except WindowsError:
+            value = winreg.QueryValue(winreg.HKEY_CLASSES_ROOT, key)
+        except OSError:
             continue
         anybodypath = value.rsplit(" ", 1)[0].strip('"')
         return os.path.join(os.path.dirname(anybodypath), "AnyBodyCon.exe")
