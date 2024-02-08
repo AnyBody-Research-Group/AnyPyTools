@@ -37,4 +37,3 @@ pytest-xdist = "*"
 
 [target.win-64.dependencies]
 anybodycon = "*"
- #"file://D:/repos/anybody-recipe/output"
