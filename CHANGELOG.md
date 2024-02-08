@@ -1,5 +1,12 @@
 # AnyPyTools Change Log
 
+## v1.11.4
+
+**Fixed:**
+
+* Fix regression in windows registry lookup which caused AnyPyTools to crash.
+
+
 ## v1.11.3
 
 **Added:**
