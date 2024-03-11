@@ -51,11 +51,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: install 
-        run: pip install .
+      - uses: prefix-dev/setup-pixi@v0.5.1
+        with:
+          post-cleanup: true
+          cache-write: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
+      
+      - name: build
+        run: pixi run --frozen pip install .
 
       - name: test
         env:
           RLM_LICENSE_PASSWORD: ${{ secrets.LICENSE_PASSWORD }}
           RLM_LICENSE: ${{ secrets.LICENSE_SERVER }}
-        run: pytest tests
+        run: pixi run --frozen  pytest tests
