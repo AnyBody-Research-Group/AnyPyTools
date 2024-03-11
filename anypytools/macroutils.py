@@ -12,7 +12,6 @@ from copy import deepcopy
 from collections.abc import MutableSequence
 
 import numpy as np
-from scipy.stats import distributions
 
 from anypytools.tools import define2str, path2str, array2anyscript
 
@@ -288,8 +287,10 @@ class SetValue_random(SetValue):
     """
 
     def __init__(self, var, frozen_distribution, default_lower_tail_probability=0.5):
+        from scipy.stats.distributions import rv_frozen
+
         self.var = var
-        if not isinstance(frozen_distribution, distributions.rv_frozen):
+        if not isinstance(frozen_distribution, rv_frozen):
             raise TypeError(
                 "frozen_distribution must be frozen distribtuion from \
                             scipy.stats.distributions"
