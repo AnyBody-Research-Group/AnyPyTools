@@ -44,11 +44,12 @@ jobs:
 
   test-linux-cloud:
     runs-on: ubuntu-latest
-    container: ghcr.io/anybody/anybodycon-github-actions:latest_Beta
+    container: ghcr.io/anybody/anybodycon-github-actions:latest
+    
     needs: lint
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: install 
         run: pip install .
