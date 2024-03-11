@@ -288,6 +288,7 @@ class SetValue_random(SetValue):
 
     def __init__(self, var, frozen_distribution, default_lower_tail_probability=0.5):
         from scipy.stats.distributions import rv_frozen
+
         self.var = var
         if not isinstance(frozen_distribution, rv_frozen):
             raise TypeError(
