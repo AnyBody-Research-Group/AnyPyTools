@@ -1,5 +1,12 @@
 # AnyPyTools Change Log
 
+## v1.11.5
+
+**Fixed:**
+
+* Speed up importing by avoiding importing scipy until it is needed. 
+
+
 ## v1.11.4
 
 **Fixed:**
