@@ -6,28 +6,27 @@ Created on Sun Sep  7 13:25:38 2014.
 """
 from __future__ import annotations
 
-import os
-import re
-import sys
-import xml
-import copy
-import errno
-import shutil
-import logging
-import textwrap
-import datetime
-import warnings
-import platform
-import functools
-import subprocess
 import collections
+import copy
+import datetime
+import errno
+import functools
+import logging
+import os
+import platform
 import pprint
+import re
+import shutil
+import subprocess
+import sys
+import textwrap
+import warnings
+import xml
+from _thread import get_ident as _get_ident
 from ast import literal_eval
-from pathlib import Path
 from contextlib import suppress
 from dataclasses import dataclass
-from _thread import get_ident as _get_ident
-
+from pathlib import Path
 from typing import Any, Iterable
 
 # external imports
@@ -527,10 +526,16 @@ def _expand_short_path_name(short_path_name):
 def lookup_anybody_in_registry() -> str | None:
     import winreg
 
+    try:
+        anybodykey = winreg.QueryValue(winreg.HKEY_CLASSES_ROOT, ".any")
+    except OSError:
+        anybodykey = "AnyBody.any"
+
     keys_to_try = [
-        "AnyBody.any\\shell\\open\\command",
+        f"{anybodykey}\\shell\\open\\command",
         "AnyBody.AnyScript\\shell\\open\\command",
     ]
+
     for key in keys_to_try:
         try:
             value = winreg.QueryValue(winreg.HKEY_CLASSES_ROOT, key)
@@ -716,7 +721,7 @@ class AnyPyProcessOutput(collections.OrderedDict):
             timevars = [var for var in self if var.endswith("Output.Abscissa.t")]
             if len(timevars) > 1:
                 raise ValueError(
-                    f"Multiple time variables found. Use 'index_var' argument to indicate which to use."
+                    "Multiple time variables found. Use 'index_var' argument to indicate which to use."
                 )
             if len(timevars) == 0:
                 raise ValueError(

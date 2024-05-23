@@ -1,23 +1,22 @@
 # -*- coding: utf-8 -*-
 """AnyPyTools library."""
-import os
-import sys
-import platform
 import logging
+import os
+import platform
+import sys
 
 if "FOR_DISABLE_CONSOLE_CTRL_HANDLER" not in os.environ:
     os.environ["FOR_DISABLE_CONSOLE_CTRL_HANDLER"] = "1"
 
+from anypytools import macro_commands
 from anypytools.abcutils import AnyPyProcess, execute_anybodycon
 from anypytools.macroutils import AnyMacro
-from anypytools import macro_commands
 from anypytools.tools import (
     ABOVE_NORMAL_PRIORITY_CLASS,
     BELOW_NORMAL_PRIORITY_CLASS,
     IDLE_PRIORITY_CLASS,
     NORMAL_PRIORITY_CLASS,
 )
-
 
 logger = logging.getLogger("abt.anypytools")
 logger.addHandler(logging.NullHandler())
@@ -37,7 +36,7 @@ __all__ = [
     "NORMAL_PRIORITY_CLASS",
 ]
 
-__version__ = "1.11.5"
+__version__ = "1.11.6"
 
 
 def print_versions():
