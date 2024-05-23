@@ -527,10 +527,16 @@ def _expand_short_path_name(short_path_name):
 def lookup_anybody_in_registry() -> str | None:
     import winreg
 
+    try:
+        anybodykey = winreg.QueryValue(winreg.HKEY_CLASSES_ROOT, ".any")
+    except OSError:
+        anybodykey = "AnyBody.any"
+
     keys_to_try = [
-        "AnyBody.any\\shell\\open\\command",
+        f"{anybodykey}\\shell\\open\\command",
         "AnyBody.AnyScript\\shell\\open\\command",
     ]
+
     for key in keys_to_try:
         try:
             value = winreg.QueryValue(winreg.HKEY_CLASSES_ROOT, key)
