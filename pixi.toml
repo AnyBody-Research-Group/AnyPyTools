@@ -42,6 +42,9 @@ pytest="*"
 pytest-xdist = "*"
 debugpy = ">=1.8.1,<1.9"
 
+[feature.test.target.win-64.dependencies]
+anybodycon = "*"
+
 
 [feature.docs.dependencies]
 python = "3.11.*"
