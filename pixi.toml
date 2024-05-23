@@ -6,21 +6,21 @@ channels = ["conda-forge", "anybody" ]
 platforms = ["win-64", "linux-64"]
 
 [tasks]
-test = {cmd = "pytest tests", depends_on = ["install"]}
+test = {cmd = "pytest tests", depends-on = ["install"]}
 develop = "pip install -e ."
 install = "pip install ."
 
 clean-build = "rm -rf build dist"
 build = {cmd="python -m build . --sdist"}
 pipy-upload = {cmd="twine upload dist/*"}
-release = {cmd="", depends_on=["test", "clean-build", "build", "pipy-upload"]}
+release = {cmd="", depends-on=["test", "clean-build", "build", "pipy-upload"]}
+
 
 
 [dependencies]
 python= ">=3.8"
 pip="*"
 h5py="*"
-cloud_sptheme="1.10.1.post20200504175005"
 setuptools="*"
 pydoe="*"
 tqdm="*"
@@ -28,12 +28,41 @@ scipy="*"
 pygments_anyscript="*"
 pandas="*"
 ipywidgets="*"
+
+[pypi-dependencies]
+anypytools = {path=".", editable=true}
+
+[feature.build.dependencies]
 build="*"
 twine="*"
-# Test
+
+
+[feature.test.dependencies]
 pytest="*"
 pytest-xdist = "*"
+debugpy = ">=1.8.1,<1.9"
 
 
-[target.win-64.dependencies]
-anybodycon = "*"
+[feature.docs.dependencies]
+python = "3.11.*"
+ipython = ">=8.21.0,<8.22"
+linkify-it-py = ">=2.0.2,<2.1"
+sphinx = "<5"
+myst-parser = ">=0.18.1,<0.19"
+markupsafe = ">=2.1.4,<2.2"
+make = ">=4.3,<5"
+sphinx-design = ">=0.4.1,<0.5"
+matplotlib = ">=3.8.2,<3.9"
+cloud_sptheme = "1.10.1.post20200504175005.*"
+pillow = ">=10.2.0,<10.3"
+tqdm = ">=4.66.4,<4.67"
+numpy = ">=1.26.4,<1.27"
+jinja2 = ">=3.1.4,<3.2"
+ipywidgets = ">=8.1.2,<8.2"
+nbsphinx = ">=0.9.4,<0.10"
+
+
+[environments]
+docs = ["docs"]
+test = ["test", "build"]
+build = ["build"]
