@@ -826,8 +826,8 @@ class AnyPyProcessOutput(collections.OrderedDict):
             dfout[time_columns] = dfout[time_columns].interpolate(interp_method)
             dfout[constant_columns] = dfout[constant_columns].bfill()
 
-            dfout = dfout.loc[interp_val]
-            dfout.reset_index(inplace=True)
+            dfout = dfout.loc[interp_val].copy()
+            dfout = dfout.reset_index()
 
         return dfout
 

@@ -29,13 +29,18 @@ pygments_anyscript="*"
 pandas="*"
 ipywidgets="*"
 
+[target.win-64.dependencies]
+pywin32="*"
+
 [pypi-dependencies]
-anypytools = {path=".", editable=true}
+anypytools = {path=".", editable=false}
 
 [feature.build.dependencies]
 build="*"
 twine="*"
 
+[feature.jupyter.dependencies]
+jupyterlab = "*"
 
 [feature.test.dependencies]
 pytest="*"
@@ -70,3 +75,4 @@ pytest = ">=8.2.1,<8.3"
 docs = ["docs"]
 test = ["test", "build"]
 build = ["build"]
+jupyter = ["jupyter"]
