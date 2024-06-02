@@ -1,5 +1,15 @@
 # AnyPyTools Change Log
 
+
+## v1.12.0
+
+**Added:**
+
+* Added a way of controlling AnyBodyCon processes, which forces the process to
+  automatically end wwhen the Python process ends. This prevents the need to
+  manually close the AnyBodyCon processes if the parent process was force killed. 
+
+
 ## v1.11.5
 
 **Fixed:**
