@@ -6,47 +6,49 @@ Created on Fri Oct 19 21:14:59 2012
 @author: Morten
 """
 
+import atexit
+import collections
+import copy
+import ctypes
+import logging
 import os
-import io
+import pathlib
+import shelve
 import sys
 import time
-import copy
 import types
-import ctypes
-import shelve
-import atexit
-import pathlib
-import logging
 import warnings
-import collections
-from pathlib import Path
-from subprocess import Popen, TimeoutExpired
 from contextlib import suppress
-from tempfile import NamedTemporaryFile
-from threading import Thread, RLock
+from pathlib import Path
 from queue import Queue
-
+from subprocess import CREATE_NEW_PROCESS_GROUP, TimeoutExpired
+from tempfile import NamedTemporaryFile
+from threading import RLock, Thread
 from typing import Generator, List
 
 import numpy as np
 from tqdm.auto import tqdm
 
-from .tools import (
-    ON_WINDOWS,
-    make_hash,
-    AnyPyProcessOutputList,
-    parse_anybodycon_output,
-    getsubdirs,
-    get_anybodycon_path,
-    BELOW_NORMAL_PRIORITY_CLASS,
-    AnyPyProcessOutput,
-    run_from_ipython,
-    get_ncpu,
-    winepath,
-    silentremove,
-    case_preserving_replace,
-)
 from .macroutils import AnyMacro, MacroCommand
+from .tools import (
+    BELOW_NORMAL_PRIORITY_CLASS,
+    ON_WINDOWS,
+    AnyPyProcessOutput,
+    AnyPyProcessOutputList,
+    case_preserving_replace,
+    get_anybodycon_path,
+    get_ncpu,
+    getsubdirs,
+    make_hash,
+    parse_anybodycon_output,
+    silentremove,
+    winepath,
+)
+
+if ON_WINDOWS:
+    from .jobpopen import JobPopen as Popen
+else:
+    from subprocess import Popen
 
 logger = logging.getLogger("abt.anypytools")
 
@@ -60,65 +62,40 @@ _UNABLE_TO_ACQUIRE_LICENSE = 234  # May indicate wrong password
 class _SubProcessContainer(object):
     """Class to hold a record of process pids from Popen.
 
-    Properties
-    ----------
-    stop_all: boolean
-        If set to True all process held by the object will be automatically
-        killed
-
     Methods
     -------
+    stop_all():
+        Kill all process held by the object
     add(pid):
         Add process id to the record of process
-
     remove(pid):
         Remove process id from the record
 
     """
 
     def __init__(self):
-        self._pids = set()
-        self._stop_all = False
+        self._pids: set = set()
 
     def add(self, pid):
         with _thread_lock:
             self._pids.add(pid)
-        if self.stop_all:
-            self._kill_running_processes()
 
     def remove(self, pid):
         with _thread_lock:
-            try:
-                self._pids.remove(pid)
-            except KeyError:
-                pass
+            self._pids.pop(pid, None)
 
-    @property
     def stop_all(self):
-        return self._stop_all
-
-    @stop_all.setter
-    def stop_all(self, value):
-        if value:
-            self._stop_all = True
-            self._kill_running_processes()
-        else:
-            self._stop_all = False
-
-    def _kill_running_processes(self):
         """Clean up and shut down any running processes."""
         # Kill any rouge processes that are still running.
         with _thread_lock:
-            killed = []
             for pid in self._pids:
                 with suppress(Exception):
                     os.kill(pid, _KILLED_BY_ANYPYTOOLS)
-                    killed.append(str(pid))
             self._pids.clear()
 
 
 _subprocess_container = _SubProcessContainer()
-atexit.register(_subprocess_container._kill_running_processes)
+atexit.register(_subprocess_container.stop_all)
 
 
 def execute_anybodycon(
@@ -212,6 +189,7 @@ def execute_anybodycon(
         ctypes.windll.kernel32.SetErrorMode(SEM_NOGPFAULTERRORBOX)
         subprocess_flags = 0x8000000  # win32con.CREATE_NO_WINDOW?
         subprocess_flags |= priority
+        subprocess_flags |= CREATE_NEW_PROCESS_GROUP
         extra_kwargs = {"creationflags": subprocess_flags}
 
         anybodycmd = [
@@ -275,6 +253,7 @@ def execute_anybodycon(
                 cwd=folder,
             )
 
+    retcode = None
     _subprocess_container.add(proc.pid)
     try:
         proc.wait(timeout=timeout)
@@ -283,13 +262,16 @@ def execute_anybodycon(
         proc.kill()
         proc.communicate()
         retcode = _TIMEDOUT_BY_ANYPYTOOLS
-    except KeyboardInterrupt:
+    except KeyboardInterrupt as e:
         proc.terminate()
         proc.communicate()
         retcode = _KILLED_BY_ANYPYTOOLS
-        raise
+        raise e
     finally:
-        _subprocess_container.remove(proc.pid)
+        if not retcode:
+            proc.kill()
+        else:
+            _subprocess_container.remove(proc.pid)
 
     if retcode == _TIMEDOUT_BY_ANYPYTOOLS:
         logfile.write(f"\nERROR: AnyPyTools : Timeout after {int(timeout)} sec.")
@@ -844,20 +826,17 @@ class AnyPyProcess(object):
                         if hasattr(pbar, "container"):
                             pbar.container.children[0].bar_style = "danger"
                     pbar.update()
-        except KeyboardInterrupt as e:
-            _subprocess_container.stop_all = True
+        except KeyboardInterrupt:
             tqdm.write("KeyboardInterrupt: User aborted")
-            time.sleep(1)
         finally:
+            _subprocess_container.stop_all()
             if not self.silent:
                 tqdm.write(tasklist_summery(tasklist))
 
         self.cleanup_logfiles(tasklist)
         # Cache the processed tasklist for restarting later
         self.cached_tasklist = tasklist
-        # self.summery.final_summery(process_time, tasklist)
-        task_output = [task.get_output() for task in tasklist]
-        return AnyPyProcessOutputList(task_output)
+        return AnyPyProcessOutputList(t.get_output() for t in tasklist)
 
     def _worker(self, task, task_queue):
         """Handle processing of the tasks."""
@@ -935,7 +914,6 @@ class AnyPyProcess(object):
             task_queue.put(task)
 
     def _schedule_processes(self, tasklist) -> Generator[_Task, None, None]:
-        _subprocess_container.stop_all = False
         # Make a shallow copy of the task list,
         # so we don't mess with the callers list.
         tasklist = copy.copy(tasklist)
