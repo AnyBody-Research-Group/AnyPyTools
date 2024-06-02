@@ -21,7 +21,7 @@ import warnings
 from contextlib import suppress
 from pathlib import Path
 from queue import Queue
-from subprocess import CREATE_NEW_PROCESS_GROUP, TimeoutExpired
+from subprocess import TimeoutExpired
 from tempfile import NamedTemporaryFile
 from threading import RLock, Thread
 from typing import Generator, List
@@ -47,6 +47,7 @@ from .tools import (
 
 if ON_WINDOWS:
     from .jobpopen import JobPopen as Popen
+    from subprocess import CREATE_NEW_PROCESS_GROUP
 else:
     from subprocess import Popen
 
