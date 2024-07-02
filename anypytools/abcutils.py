@@ -83,7 +83,7 @@ class _SubProcessContainer(object):
 
     def remove(self, pid):
         with _thread_lock:
-            self._pids.pop(pid, None)
+            self._pids.discard(pid)
 
     def stop_all(self):
         """Clean up and shut down any running processes."""
@@ -914,12 +914,13 @@ class AnyPyProcess(object):
                 task.logfile = ""
             task_queue.put(task)
 
-    def _schedule_processes(self, tasklist) -> Generator[_Task, None, None]:
+    def _schedule_processes(
+        self, tasklist: list[_Task]
+    ) -> Generator[_Task, None, None]:
         # Make a shallow copy of the task list,
         # so we don't mess with the callers list.
         tasklist = copy.copy(tasklist)
-        number_tasks = len(tasklist)
-        use_threading = number_tasks > 1 and self.num_processes > 1
+        use_threading = "ANPYTOOLS_DEBUG_NO_THREADING" not in os.environ
         task_queue: Queue = Queue()
         threads: List[Thread] = []
         # run while there is still threads, tasks or stuff in the queue

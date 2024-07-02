@@ -1,5 +1,16 @@
 # AnyPyTools Change Log
 
+## v1.12.1
+
+**Fixed:**
+* Fixed a crash when stopping simulations with ctrl-c. It should now shutdown more gracefully.
+* Fixed a bug making it was hard to stop simulations which were not running in parrallel. Now
+  simulations are always started on separate threads, which makes it possible to stop them with ctrl-c.
+
+**Added:**
+* Added a some python annotations to the code base, which should provide better type hints in IDEs.
+
+
 
 ## v1.12.0
 
