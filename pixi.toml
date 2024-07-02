@@ -6,17 +6,11 @@ channels = ["conda-forge", "anybody" ]
 platforms = ["win-64", "linux-64"]
 
 [tasks]
-develop = "pip install -e ."
-install = "pip install ."
-
-clean-build = "rm -rf build dist"
-pipy-upload = {cmd="twine upload dist/*"}
-release = {cmd="", depends-on=["test", "clean-build", "build", "pipy-upload"]}
 
 
 
 [dependencies]
-python= ">=3.8"
+python= ">=3.7"
 pip="*"
 h5py="*"
 setuptools="*"
@@ -37,13 +31,22 @@ anypytools = {path=".", editable=false}
 build="*"
 twine="*"
 
+
+[feature.build.tasks]
+clean-build = "rm -rf build dist"
+pipy-upload = {cmd="twine upload dist/*"}
+build = {cmd="python -m build . --sdist"}
+
+
 [feature.jupyter.dependencies]
 jupyterlab = "*"
 
 [feature.test.dependencies]
 pytest="*"
 pytest-xdist = "*"
-debugpy = ">=1.8.1,<1.9"
+
+[feature.py37.dependencies]
+python = "3.7.*"
 
 [feature.test.target.win-64.dependencies]
 anybodycon = "*"
@@ -74,6 +77,7 @@ pytest = ">=8.2.1,<8.3"
 
 [environments]
 docs = ["docs"]
-test = ["test", "build"]
+test = ["test"]
+test-py37 = ["test", "py37",]
 build = ["build"]
 jupyter = ["jupyter"]
