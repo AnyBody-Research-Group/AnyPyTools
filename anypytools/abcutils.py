@@ -918,8 +918,7 @@ class AnyPyProcess(object):
         # Make a shallow copy of the task list,
         # so we don't mess with the callers list.
         tasklist = copy.copy(tasklist)
-        number_tasks = len(tasklist)
-        use_threading = number_tasks > 1 and self.num_processes > 1
+        use_threading = "ANPYTOOLS_DEBUG_NO_THREADING" not in os.environ
         task_queue: Queue = Queue()
         threads: List[Thread] = []
         # run while there is still threads, tasks or stuff in the queue
