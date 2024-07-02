@@ -1,5 +1,11 @@
 # AnyPyTools Change Log
 
+## v1.12.2
+
+**Fixed:**
+* Fixed type annotation which broke compability with older versions of Python.
+
+
 ## v1.12.1
 
 **Fixed:**
