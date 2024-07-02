@@ -914,7 +914,9 @@ class AnyPyProcess(object):
                 task.logfile = ""
             task_queue.put(task)
 
-    def _schedule_processes(self, tasklist: list[_Task]) -> Generator[_Task, None, None]:
+    def _schedule_processes(
+        self, tasklist: list[_Task]
+    ) -> Generator[_Task, None, None]:
         # Make a shallow copy of the task list,
         # so we don't mess with the callers list.
         tasklist = copy.copy(tasklist)
