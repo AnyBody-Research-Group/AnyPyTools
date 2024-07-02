@@ -6,12 +6,10 @@ channels = ["conda-forge", "anybody" ]
 platforms = ["win-64", "linux-64"]
 
 [tasks]
-test = {cmd = "pytest tests", depends-on = ["install"]}
 develop = "pip install -e ."
 install = "pip install ."
 
 clean-build = "rm -rf build dist"
-build = {cmd="python -m build . --sdist"}
 pipy-upload = {cmd="twine upload dist/*"}
 release = {cmd="", depends-on=["test", "clean-build", "build", "pipy-upload"]}
 
@@ -49,6 +47,9 @@ debugpy = ">=1.8.1,<1.9"
 
 [feature.test.target.win-64.dependencies]
 anybodycon = "*"
+
+[feature.test.tasks]
+test = {cmd = "pytest tests", depends-on = ["install"]}
 
 
 [feature.docs.dependencies]
