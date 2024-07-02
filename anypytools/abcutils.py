@@ -83,7 +83,7 @@ class _SubProcessContainer(object):
 
     def remove(self, pid):
         with _thread_lock:
-            self._pids.pop(pid, None)
+            self._pids.discard(pid)
 
     def stop_all(self):
         """Clean up and shut down any running processes."""
