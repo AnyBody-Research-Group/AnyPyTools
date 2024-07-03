@@ -193,7 +193,7 @@ def execute_anybodycon(
         subprocess_flags |= CREATE_NEW_PROCESS_GROUP
         extra_kwargs = {"creationflags": subprocess_flags}
 
-        anybodycmd = [
+        cmd = [
             str(anybodycon_path.resolve()),
             "-m",
             str(macrofile_path),
@@ -201,15 +201,13 @@ def execute_anybodycon(
             str(debug_mode),
             "/ni" if not interactive_mode else "",
         ]
-
-        proc = Popen(
-            anybodycmd,
-            stdout=logfile,
-            stderr=logfile,
-            env=env,
-            cwd=folder,
+        kwargs = {
+            "stdout": logfile,
+            "stderr": logfile,
+            "env": env,
+            "cwd": folder,
             **extra_kwargs,
-        )
+        }
 
     else:
         if os.environ.get("WINE_REDIRECT_OUTPUT", 0):
@@ -222,14 +220,13 @@ def execute_anybodycon(
                 str(debug_mode),
                 "/ni",
             ]
-            proc = Popen(
-                cmd,
-                env=env,
-                cwd=folder,
-                close_fds=False,
-                stdout=logfile,
-                stderr=logfile,
-            )
+            kwargs = {
+                "env": env,
+                "cwd": folder,
+                "close_fds": False,
+                "stdout": logfile,
+                "stderr": logfile,
+            }
         else:
             # ON Linux/Wine we use a bat file to redirect the output into a file on wine/windows
             # side. This prevents a bug with AnyBody starts it's builtin python.
@@ -248,11 +245,10 @@ def execute_anybodycon(
             macrofile_cleanup.append(batfile)
 
             cmd = ["wine", "cmd", "/c", str(batfile) + r"& exit /b %ERRORLEVEL%"]
-            proc = Popen(
-                cmd,
-                env=env,
-                cwd=folder,
-            )
+
+            kwargs = {"env": env, "cwd": folder}
+
+    proc = Popen(cmd, **kwargs)
 
     retcode = None
     _subprocess_container.add(proc.pid)
