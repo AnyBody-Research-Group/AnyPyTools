@@ -269,8 +269,10 @@ def execute_anybodycon(
         retcode = _KILLED_BY_ANYPYTOOLS
         raise e
     finally:
-        if not retcode:
+        if retcode is None:
             proc.kill()
+            if ON_WINDOWS:
+                proc._close_job_object(proc._win32_job)
         else:
             _subprocess_container.remove(proc.pid)
 

@@ -8,6 +8,7 @@ This module provides a JobPopen class that is a subclass of the Popen class from
 
 import subprocess
 from subprocess import Popen
+from threading import RLock
 
 import win32api
 import win32job
@@ -58,15 +59,16 @@ class JobPopen(Popen):
         kwargs["creationflags"] |= CREATE_SUSPENDED
         _winapi = subprocess._winapi  # Python 3
         _winapi_key = "_winapi"
-        try:
-            setattr(
-                subprocess,
-                _winapi_key,
-                JobPopen._winapijobhandler(_winapi, self._win32_job),
-            )
-            super(JobPopen, self).__init__(*args, **kwargs)
-        finally:
-            setattr(subprocess, _winapi_key, _winapi)
+        with RLock():
+            try:
+                setattr(
+                    subprocess,
+                    _winapi_key,
+                    JobPopen._winapijobhandler(_winapi, self._win32_job),
+                )
+                super(JobPopen, self).__init__(*args, **kwargs)
+            finally:
+                setattr(subprocess, _winapi_key, _winapi)
 
     def _create_job_object(self):
         """Create a new anonymous job object"""
