@@ -947,7 +947,7 @@ class AnyPyProcess(object):
                 task = task_queue.get()
                 yield task
 
-            time.sleep(0.05)
+            time.sleep(0.1)
 
     def cleanup_logfiles(self, tasklist):
         for task in tasklist:
