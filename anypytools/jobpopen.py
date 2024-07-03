@@ -13,6 +13,7 @@ from threading import RLock
 import win32api
 import win32job
 import win32process
+import pywintypes
 
 
 class JobPopen(Popen):
@@ -42,7 +43,14 @@ class JobPopen(Popen):
 
         def CreateProcess(self, *args, **kwargs):
             hp, ht, pid, tid = self._oldapi.CreateProcess(*args, **kwargs)
-            win32job.AssignProcessToJobObject(self._job, hp)
+            try:
+                win32job.AssignProcessToJobObject(self._job, hp)
+            except BaseException as e:  # to catch pywintypes.error
+                if e.args == (6, "AssignProcessToJobObject", "The handle is invalid."):
+                    # Try to ignore an error can occur randomly sometimes.
+                    pass
+                else:
+                    raise e
             win32process.ResumeThread(ht)
             return hp, ht, pid, tid
 
@@ -57,9 +65,9 @@ class JobPopen(Popen):
         CREATE_SUSPENDED = 0x00000004
         kwargs.setdefault("creationflags", 0)
         kwargs["creationflags"] |= CREATE_SUSPENDED
-        _winapi = subprocess._winapi  # Python 3
-        _winapi_key = "_winapi"
         with RLock():
+            _winapi = subprocess._winapi  # Python 3
+            _winapi_key = "_winapi"
             try:
                 setattr(
                     subprocess,
