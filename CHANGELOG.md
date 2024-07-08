@@ -1,5 +1,11 @@
 # AnyPyTools Change Log
 
+
+## v1.13.0
+
+**Added:**
+* Added a "LoadData" macro command can generate the macro for loading h5 files. 
+
 ## v1.12.2
 
 **Fixed:**
