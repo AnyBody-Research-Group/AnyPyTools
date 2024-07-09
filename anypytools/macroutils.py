@@ -457,7 +457,8 @@ class SaveData(MacroCommand):
     operation : str
         Operation to save the h5 from
     filename : str
-        The anyset file to save the values to
+        The h5 file to save the values to. This must be given a
+        file name without extension or with a ".anydata.h5" extension.
 
     Examples
     --------
@@ -472,6 +473,33 @@ class SaveData(MacroCommand):
 
     def get_macro(self, index, **kwarg):
         macro_str = 'classoperation {}.Output "Save data" --type="Deep" --file="{}"'
+        return macro_str.format(self.opeation, self.filename)
+
+
+class LoadData(MacroCommand):
+    """Create a "Load data" classoperation macro command.
+
+    This macro operation will load all data from a HDF5 file into a study.
+
+    Parameters
+    ----------
+    operation : str
+        Operation to load the h5 data into
+    filename : str
+        The h5 file to load the data from.
+
+    Examples
+    --------
+    >>> LoadData('Main.Study', 'output.anydata.h5')
+    classoperation Main.Study.Output "Load data" --file="output.anydata.h5"
+    """
+
+    def __init__(self, operation, filename):
+        self.filename = filename
+        self.opeation = operation
+
+    def get_macro(self, index, **kwarg):
+        macro_str = 'classoperation {}.Output "Load data" --file="{}"'
         return macro_str.format(self.opeation, self.filename)
 
 
