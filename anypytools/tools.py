@@ -553,7 +553,7 @@ def get_anybodycon_path() -> str | None:
     If AnyBodyCon.exe is on path it will take precedence over
     the registry lookup.
     """
-    anybodycon_path = shutil.which("AnyBodyCon.exe")
+    anybodycon_path = shutil.which("anybodycon")
 
     if anybodycon_path:
         return anybodycon_path
