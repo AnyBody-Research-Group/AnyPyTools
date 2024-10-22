@@ -49,7 +49,7 @@ pytest-xdist = "*"
 python = "3.7.*"
 
 [feature.test.target.win-64.dependencies]
-anybodycon = "*"
+anybodycon = "8.0.4"
 
 [feature.test.tasks]
 test = {cmd = "pytest tests", depends-on = ["install"]}
