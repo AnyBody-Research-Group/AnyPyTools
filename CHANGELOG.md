@@ -5,6 +5,8 @@
 
 **Added:**
 * Added a "LoadData" macro command can generate the macro for loading h5 files. 
+* Allow the "AnyBodyCon" executable on path to have any valid windows executable extension (exe, bat, cmd etc.). 
+  This will allow users to use custom shim of the AnyBodyCon executables to point else where.
 
 ## v1.12.2
 
