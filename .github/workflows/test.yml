@@ -24,7 +24,7 @@ jobs:
   test:
     strategy:
       matrix:
-        env: ["test", "test-py37"]
+        env: ["test"]
     runs-on: windows-latest
     needs: lint
     steps:

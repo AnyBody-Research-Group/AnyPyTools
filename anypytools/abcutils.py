@@ -175,7 +175,7 @@ def execute_anybodycon(
         macro.append("exit")
 
     if not os.path.isfile(anybodycon_path):
-        raise IOError(f"Can not find anybodycon.exe: {anybodycon_path}")
+        raise IOError(f"Can not find anybodycon: {anybodycon_path}")
 
     with open(macrofile_path, "w+b") as fh:
         fh.write("\n".join(macro).encode("UTF-8"))
@@ -444,8 +444,8 @@ class AnyPyProcess(object):
         This defaults to the number of logical CPU cores in the computer.
     anybodycon_path : str, optional
         Overwrite the default anybodycon.exe file to
-        use in batch processing. Defaults to what is found in the windows
-        registry.
+        use in batch processing. Defaults to 'AnyBodyCon' on path, or
+        to what is found in the windows registry.
     timeout : int, optional
         Maximum time (i seconds) a model can run until it is terminated.
         Defaults to 3600 sec (1 hour).

@@ -553,23 +553,19 @@ def get_anybodycon_path() -> str | None:
     If AnyBodyCon.exe is on path it will take precedence over
     the registry lookup.
     """
-    anybodycon_path = shutil.which("AnyBodyCon.exe")
-
-    if anybodycon_path:
-        return anybodycon_path
-
     if not ON_WINDOWS:
         wineprefix = Path(os.environ.get("WINEPREFIX", Path.home() / ".wine"))
         abtpath = wineprefix / "drive_c/Program Files/AnyBody Technology"
         anybodycon_paths = list(abtpath.glob("*/AnyBodyCon.exe"))
-        if anybodycon_paths:
-            return str(anybodycon_paths[-1])
-        else:
+        if not anybodycon_paths:
             return None
+        return str(anybodycon_paths[-1])
 
-    anybodycon_path = lookup_anybody_in_registry()
+    anybodycon_path = shutil.which("anybodycon") or lookup_anybody_in_registry()
+
     if "~" in anybodycon_path:
         anybodycon_path = _expand_short_path_name(anybodycon_path)
+
     return anybodycon_path
 
 

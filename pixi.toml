@@ -10,7 +10,7 @@ platforms = ["win-64", "linux-64"]
 
 
 [dependencies]
-python= ">=3.7"
+python= ">=3.8"
 pip="*"
 h5py="*"
 setuptools="*"
@@ -45,11 +45,9 @@ jupyterlab = "*"
 pytest="*"
 pytest-xdist = "*"
 
-[feature.py37.dependencies]
-python = "3.7.*"
 
 [feature.test.target.win-64.dependencies]
-anybodycon = "*"
+anybodycon = "8.0.4"
 
 [feature.test.tasks]
 test = {cmd = "pytest tests", depends-on = ["install"]}
@@ -78,6 +76,5 @@ pytest = ">=8.2.1,<8.3"
 [environments]
 docs = ["docs"]
 test = ["test"]
-test-py37 = ["test", "py37",]
 build = ["build"]
 jupyter = ["jupyter"]

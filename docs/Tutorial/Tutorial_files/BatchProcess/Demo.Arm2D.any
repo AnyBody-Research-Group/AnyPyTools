@@ -1,43 +1,58 @@
 /**
-File: Demo.Arm2D.any
-
-Copyright (c) 1999-2011, AnyBody Technology A/S
-
-All rights reserved.
-
-
-
 This is a demonstration of a simple arm model comprising 
 two degrees of freedom and a selected number of muscles.
 Features in this model are
 
-- definition of muscles
-- application of muscle recruitment analysis in 
-  the AnyBodyStudy
-- redundancy of the muscle configuration
 
+* definition of muscles
+* application of muscle recruitment analysis in the AnyBodyStudy</li>
+* redundancy of the muscle configuration</li>
 
 The file has the following sections:
-- The Arm Model
-  - Reference frames
-  - Segments
-  - Joints
-  - Drivers
-  - Loads
-  - Muscles
-- "The body study"
+
+* The Arm Model
+
+  * Reference frames
+  * Segments
+  * Joints
+  * Drivers
+  * Loads
+  * Muscles
+  
+* "The body study"
 
 Notice that all these section could be separate files
 that are assemble in a single main file by #include 
 statements. All include statements must be inside the 
-"Main = {};" statement in this main file.
+``Main = {};`` statement in this main file.
 
 */
 Main = {
-
-
   
- 
+  
+// Control if the external load is applied
+#ifndef CONFIG 
+#define CONFIG "Loaded"
+#endif
+    
+AnyFolder InputVariables = {
+  AnyVar MassArm ??= DesignVar(2); 
+  AnyString Configuration = CONFIG;
+};
+
+ArmModelStudy = {
+    AnyFolder OutputVariables = 
+    {
+    AnyVar DeltodeusA = Main.ArmModel.Muscles.DeltodeusA.Activity;
+    AnyVar DeltodeusB = Main.ArmModel.Muscles.DeltodeusB.Activity;
+    AnyVar Brachialis = Main.ArmModel.Muscles.Brachialis.Activity;
+    AnyVar Brachioralis = Main.ArmModel.Muscles.Brachioralis.Activity;
+    AnyVar BicepsShort = Main.ArmModel.Muscles.BicepsShort.Activity;
+    AnyVar BicepsLong = Main.ArmModel.Muscles.BicepsLong.Activity;
+ };
+};
+  
+
 // =======================================================
 // The Arm Model
 // =======================================================
@@ -67,7 +82,7 @@ AnyFolder ArmModel = {
     AnySeg UpperArm = {
       r0 = {0,0,-0.2};
       Axes0 = {{0,0,1},{0,1,0},{-1,0,0}};
-      Mass = 2.0;
+      Mass = Main.InputVariables.MassArm;
       Jii = {0.005,0.01,0.01};
       AnyRefNode ShoulderNode = {
         sRel = {-0.2,0,0};
@@ -82,14 +97,16 @@ AnyFolder ArmModel = {
       AnyRefNode Brachioradialis = { sRel = {0.05,0,0}; };
       AnyRefNode TricepsShort = { sRel = {-0.1,0,0}; };
 
-      AnyDrawSeg DrwSeg= {};
+      viewRefFrame.Visible = On;
+      viewInertia.Visible = On;
+      viewNodes.Visible = On;
     };
 
     //---------------------------------
     AnySeg LowerArm = {
       r0 = {0.2,0,-0.4};
-      Mass = Main.InputVariables.MassArm;
-      Jii = {0.005,0.01,0.01};
+      Mass = 1.5;
+      Jii = Mass*{0.005,0.01,0.01};
       AnyRefNode ElbowNode = {
         sRel = {-0.2,0,0};
       };
@@ -102,7 +119,9 @@ AnyFolder ArmModel = {
       AnyRefNode Biceps = { sRel = {-0.15,0,0}; };
       AnyRefNode Triceps = { sRel = {-0.25,0,-0.05}; };
 
-      AnyDrawSeg DrwSeg= {};
+      viewRefFrame.Visible = On;
+      viewInertia.Visible = On;
+      viewNodes.Visible = On;
     };
 
   };
@@ -174,15 +193,22 @@ AnyFolder ArmModel = {
   AnyFolder Loads = {
 
     //---------------------------------
+    #if CONFIG == "Loaded"
     AnyForce3D HandLoad = {
       AnyRefNode &HandNode = ..Segs.LowerArm.HandNode;
       F = {0,0,-100};  // Global force in Newton
+      viewForce.Visible = On;
+      
+      
+      AnyFloat FoutTest = Fout;
     };
+    #endif
 
     //---------------------------------
     AnyForce ElbowTorque = {
       AnyJoint& Jnt = ..Jnts.Elbow;
       F = {10};  // Force, equivalent to torque in Newton
+      viewForce.Visible = On;
     };
 
 
@@ -198,100 +224,113 @@ AnyFolder ArmModel = {
     // We define one simple muscle model, which we will use
     // use for all muscles
     AnyMuscleModel MusMdl = {
-      F0 = 300;
+      F0 = 3000;
     };
 
     //---------------------------------
-    AnyViaPointMuscle DeltodeusA = {
+    AnyMuscleViaPoint DeltodeusA = {
       AnyMuscleModel &MusMdl = .MusMdl;
       AnyRefNode &Org = Main.ArmModel.GlobalRef.DeltodeusA;
       AnyRefNode &Ins = ..Segs.UpperArm.DeltodeusA;
-      AnyDrawMuscle DrwMus = {
+      viewMuscle = {
+        Visible = On;
         RGB = {149/256,51/256,55/256};
         Bulging =1.0;
         ColorScale =1.0;
         RGBColorScale = {0.957031, 0.785156, 0.785156};
         MaxStress = 50000; //N/m^2 //This number is for graphics only!
       };
+
     };
 
     //---------------------------------
-    AnyViaPointMuscle DeltodeusB = {
+    AnyMuscleViaPoint DeltodeusB = {
       AnyMuscleModel &MusMdl = .MusMdl;
       AnyRefNode &Org = Main.ArmModel.GlobalRef.DeltodeusB;
       AnyRefNode &Ins = ..Segs.UpperArm.DeltodeusB;
-      AnyDrawMuscle DrwMus = {
+      viewMuscle = {
+        Visible = On;
         RGB = {149/256,51/256,55/256};
         Bulging =1.0;
         ColorScale =1.0;
         RGBColorScale = {0.957031, 0.785156, 0.785156};
         MaxStress = 50000; //N/m^2 //This number is for graphics only!
       };
+
     };
 
 
     //---------------------------------
-    AnyViaPointMuscle Brachialis = {
+    AnyMuscleViaPoint Brachialis = {
       AnyMuscleModel &MusMdl = .MusMdl;
       AnyRefNode &Org = ..Segs.UpperArm.Brachialis;
       AnyRefNode &Ins = ..Segs.LowerArm.Brachialis;
-      AnyDrawMuscle DrwMus = {
+      viewMuscle = {
+        Visible = On;
         RGB = {149/256,51/256,55/256};
         Bulging =1.0;
         ColorScale =1.0;
         RGBColorScale = {0.957031, 0.785156, 0.785156};
         MaxStress = 50000; //N/m^2 //This number is for graphics only!
       };
+
     };
 
     //---------------------------------
-    AnyViaPointMuscle Brachioralis = {
+    AnyMuscleViaPoint Brachioralis = {
       AnyMuscleModel &MusMdl = .MusMdl;
       AnyRefNode &Org = ..Segs.UpperArm.Brachioradialis;
       AnyRefNode &Ins = ..Segs.LowerArm.Brachioradialis;
-      AnyDrawMuscle DrwMus = {
+      viewMuscle = {
+        Visible = On;
         RGB = {149/256,51/256,55/256};
         Bulging =1.0;
         ColorScale =1.0;
         RGBColorScale = {0.957031, 0.785156, 0.785156};
         MaxStress = 50000; //N/m^2 //This number is for graphics only!
       };
+
     };
 
     //---------------------------------
-    AnyViaPointMuscle BicepsShort = {
+    AnyMuscleViaPoint BicepsShort = {
       AnyMuscleModel &MusMdl = .MusMdl;
       AnyRefNode &Org = ..Segs.UpperArm.BicepsShort;
       AnyRefNode &Ins = ..Segs.LowerArm.Biceps;
-      AnyDrawMuscle DrwMus = {
+      viewMuscle = {
+        Visible = On;
         RGB = {149/256,51/256,55/256};
         Bulging =1.0;
         ColorScale =1.0;
         RGBColorScale = {0.957031, 0.785156, 0.785156};
         MaxStress = 50000; //N/m^2 //This number is for graphics only!
       };
+
     };
 
     //---------------------------------
-    AnyViaPointMuscle TricepsShort = {
+    AnyMuscleViaPoint TricepsShort = {
       AnyMuscleModel &MusMdl = .MusMdl;
       AnyRefNode &Org = ..Segs.UpperArm.TricepsShort;
       AnyRefNode &Ins = ..Segs.LowerArm.Triceps;
-      AnyDrawMuscle DrwMus = {
+      viewMuscle = {
+        Visible = On;
         RGB = {149/256,51/256,55/256};
         Bulging =1.0;
         ColorScale =1.0;
         RGBColorScale = {0.957031, 0.785156, 0.785156};
         MaxStress = 50000; //N/m^2 //This number is for graphics only!
       };
+
     };
 
     //---------------------------------
-    AnyViaPointMuscle BicepsLong = {
+    AnyMuscleViaPoint BicepsLong = {
       AnyMuscleModel &MusMdl = .MusMdl;
       AnyRefNode &Org = Main.ArmModel.GlobalRef.BicepsLong;
       AnyRefNode &Ins = ..Segs.LowerArm.Biceps;
-      AnyDrawMuscle DrwMus = {
+      viewMuscle = {
+        Visible = On;
         RGB = {149/256,51/256,55/256};
         Bulging =1.0;
         ColorScale =1.0;
@@ -301,11 +340,12 @@ AnyFolder ArmModel = {
     };
 
     //---------------------------------
-    AnyViaPointMuscle TricepsLong = {
+    AnyMuscleViaPoint TricepsLong = {
       AnyMuscleModel &MusMdl = .MusMdl;
       AnyRefNode &Org = Main.ArmModel.GlobalRef.TricepsLong;
       AnyRefNode &Ins = ..Segs.LowerArm.Triceps;
-      AnyDrawMuscle DrwMus = {
+      viewMuscle = {
+        Visible = On;
         RGB = {149/256,51/256,55/256};
         Bulging =1.0;
         ColorScale =1.0;
@@ -322,26 +362,10 @@ AnyFolder ArmModel = {
 // =======================================================
 // "The body study"
 // =======================================================
-AnyBodyStudy Study = {
+AnyBodyStudy ArmModelStudy = {
   AnyFolder& Model = Main.ArmModel;
   Gravity = {0,0,-9.81};
-  nStep = 40;
-  
-  AnyOutputFile FileOutput = {
-      // Write output to a csv file with the number of steps in filename
-      FileName = "Output/TestOutput_"+ANYBODY_NAME_MAINFILEDIR+ ".csv";
-      Header =   {
-      TitleSectionOnOff = Off;
-      ConstSectionOnOff = Off;
-      VarSectionOnOff = Off;
-      ColumnNamesOnOff = On;
-      };
-      AnyFloat MaxMusAct = .MaxMuscleActivity;
-      AnyFloat ElbowAngle = .Model.Drivers.ElbowMotion.Pos;
-      AnyFloat BicepsLong = .Model.Muscles.BicepsLong.Activity;
-  };
-  
-  
+
 };
 
 
