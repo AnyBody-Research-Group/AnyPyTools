@@ -35,7 +35,9 @@ statements. All include statements must be inside the
 */
 Main = {
 
-
+AnyFolder InputVariables = {
+  AnyVar MassArm ??= DesignVar(0.4);  
+};
   
  
 // =======================================================
