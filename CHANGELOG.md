@@ -1,5 +1,11 @@
 # AnyPyTools Change Log
 
+## v1.13.1
+
+**Fixed:**
+* Permission problems removing log files no longer causes a error message, but is silently ignored. 
+  Hence, it doesn't cause a simulation to appear as failed to external tools. 
+
 
 ## v1.13.0
 
