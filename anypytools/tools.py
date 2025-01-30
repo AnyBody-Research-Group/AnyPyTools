@@ -959,11 +959,10 @@ def silentremove(filename):
         return
     try:
         os.remove(filename)
-    except OSError as e:
-        if e.errno != errno.ENOENT:  # errno.ENOENT : no such file or directory
-            logging.debug(f"Error removing file: {filename}")
-            raise  # re-raise exception if a different error occured
-
+    except FileNotFoundError as e:
+        logging.debug(f"Error removing file: {filename}. File not found.")
+    except PermissionError as e:
+        logging.debug(f"Error removing file: {filename}. Permission denied.")
 
 def make_hash(o):
     """Make a hash from a dictionary, list, tuple or set.
