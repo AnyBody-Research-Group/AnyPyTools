@@ -964,6 +964,7 @@ def silentremove(filename):
     except PermissionError as e:
         logging.debug(f"Error removing file: {filename}. Permission denied.")
 
+
 def make_hash(o):
     """Make a hash from a dictionary, list, tuple or set.
 
