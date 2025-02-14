@@ -21,13 +21,18 @@ If you use the library for publications please **cite as:**
 
 ## Installation
 
-- Download and install the [Anaconda Python distribution]
-- After installation opens the Anaconda command prompt and type:
+- Download and install the [pixi](https://pixi.sh) package manager
+- After installation open a command prompt in you project directory and type:
 
 ```bash
-conda config --add channels conda-forge
-conda install anypytools
+pixi init
+pixi add anypytools
+pixi install
 ```
+
+This will install a virtual environment with python, anypytools and all
+dependencies. You can then run you scripts in the virtual environment by typing
+by prefixing the command with `pixi run`: e.g. `pixi run python myscript.py`
 
 The library is also available on [PyPi](https://pypi.python.org/pypi/AnyPyTools) for installing using `pip`.
 
