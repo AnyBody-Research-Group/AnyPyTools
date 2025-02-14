@@ -184,8 +184,8 @@ $ rm -fr build
 > 4. Make PR on GitHub, and check docs compile correctly on Github Actions
 > 5. Create a tag with the version number and push it.
 > 6. Crate PYPI pckage
->    : 1. Run `python -m build . --sdist`
->      2. Run `twine upload dist/*`
+>    : 1. Run `pixi run build`
+>      2. Run `pixi run pipy-upload`
 > 7. Update the conda forge package on <https://github.com/conda-forge/anypytools-feedstock>
 
 ## Document History
