@@ -908,7 +908,7 @@ class AnyPyProcess(object):
                 )
         finally:
             if not self.keep_logfiles and not task.has_error():
-                silentremove(logfile.name)
+                silentremove(task.logfile)
                 task.logfile = ""
             task_queue.put(task)
 

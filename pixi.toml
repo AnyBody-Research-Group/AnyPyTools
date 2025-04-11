@@ -47,10 +47,11 @@ pytest-xdist = "*"
 
 
 [feature.test.target.win-64.dependencies]
-anybodycon = "8.0.4"
+anybodycon = "8.1*"
 
 [feature.test.tasks]
-test = {cmd = "pytest tests", depends-on = ["install"]}
+test-install = {cmd = "pip install ."}
+test = {cmd = "pytest tests", depends-on = ["test-install"]}
 
 
 [feature.docs.dependencies]

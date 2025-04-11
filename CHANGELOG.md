@@ -1,5 +1,10 @@
 # AnyPyTools Change Log
 
+## v1.13.2
+
+**Fixed:**
+* Fixed and syntax issue when removing logfiles when simulation fails.  
+
 ## v1.13.1
 
 **Fixed:**
