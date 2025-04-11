@@ -43,23 +43,36 @@ jobs:
         RLM_LICENSE: ${{ secrets.LICENSE_SERVER }}
 
 
-  test-linux-cloud:
-    runs-on: ubuntu-latest
-    container: ghcr.io/anybody/anybodycon-github-actions:latest
+# Linux builds have started failing with AMS 8.1 due to some WINE issue: 
+# ----------------------------- Captured stderr call -----------------------------
+# wine: Call from 00006FFFFF463DF7 to unimplemented function ucrtbase.dll.feholdexcept, aborting
+# wine: Unimplemented function ucrtbase.dll.feholdexcept called at address 00006FFFFF463DF7 (thread 0524), starting debugger...
+# wine: Call from 00006FFFFF463DF7 to unimplemented function ucrtbase.dll.feholdexcept, aborting
+#
+# This link hits at solutions: https://forum.winehq.org/viewtopic.php?t=40355
+# Either something with WINETRICKS or using a the newest WINE 10.1
+# 
+# So this can not be fixed until we update the AnyBody Linux containers. 
+#
+#
+
+  # test-linux-cloud:
+  #   runs-on: ubuntu-latest
+  #   container: ghcr.io/anybody/anybodycon-github-actions:latest
     
-    needs: lint
+  #   needs: lint
 
-    steps:
-      - uses: actions/checkout@v4
+  #   steps:
+  #     - uses: actions/checkout@v4
 
-      - uses: prefix-dev/setup-pixi@v0.8.1
-        with:
-          environments: test
-          cache-write: ${{ github.event_name == 'push' && github.ref_name == 'master' }}
-          activate-environment: test
+  #     - uses: prefix-dev/setup-pixi@v0.8.1
+  #       with:
+  #         environments: test
+  #         cache-write: ${{ github.event_name == 'push' && github.ref_name == 'master' }}
+  #         activate-environment: test
 
-      - name: test
-        env:
-          RLM_LICENSE_PASSWORD: ${{ secrets.LICENSE_PASSWORD }}
-          RLM_LICENSE: ${{ secrets.LICENSE_SERVER }}
-        run: pytest tests
+  #     - name: test
+  #       env:
+  #         RLM_LICENSE_PASSWORD: ${{ secrets.LICENSE_PASSWORD }}
+  #         RLM_LICENSE: ${{ secrets.LICENSE_SERVER }}
+  #       run: pytest tests
