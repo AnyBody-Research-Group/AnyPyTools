@@ -1,5 +1,10 @@
 # AnyPyTools Change Log
 
+## v1.14.0
+**Added:**
+* Replace tqdm with rich.progress for enhanced task progress visualization
+
+
 ## v1.13.2
 
 **Fixed:**
