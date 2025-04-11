@@ -160,10 +160,7 @@ def execute_anybodycon(
     if folder is None:
         folder = os.getcwd()
 
-    try:
-        macrofile_path = Path(folder).resolve() / (Path(logfile.name).stem + ".anymcr")
-    except AttributeError:
-        macrofile_path = Path("macrofile.anymcr")
+    macrofile_path = Path(logfile.name).with_suffix(".anymcr")
 
     macrofile_cleanup = [macrofile_path]
 
