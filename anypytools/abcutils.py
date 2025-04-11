@@ -27,7 +27,9 @@ from threading import RLock, Thread
 from typing import Generator, List
 
 import numpy as np
-from tqdm.auto import tqdm
+# from tqdm.auto import tqdm
+from rich.progress import Progress, BarColumn, TextColumn, TimeElapsedColumn, TimeRemainingColumn
+
 
 from .macroutils import AnyMacro, MacroCommand
 from .tools import (
@@ -818,19 +820,27 @@ class AnyPyProcess(object):
 
         # Start the scheduler
         try:
-            with tqdm(total=len(tasklist), disable=self.silent) as pbar:
+            with Progress(
+                TextColumn("{task.description}"),
+                BarColumn(),
+                "{task.completed}/{task.total}",
+                TimeElapsedColumn(),
+                TimeRemainingColumn(),
+                disable=self.silent
+            ) as progress:
+                task_progress = progress.add_task("Processing tasks", total=len(tasklist))
                 for task in self._schedule_processes(tasklist):
                     if task.has_error() and not self.silent:
-                        tqdm.write(task_summery(task))
-                        if hasattr(pbar, "container"):
-                            pbar.container.children[0].bar_style = "danger"
-                    pbar.update()
+                        progress.console.print(task_summery(task))
+                        if hasattr(progress, "container"):
+                            progress.console.log("[red]Task failed[/red]")
+                    progress.update(task_progress, advance=1, refresh=True)
         except KeyboardInterrupt:
-            tqdm.write("KeyboardInterrupt: User aborted")
+            progress.console.print("[red]KeyboardInterrupt: User aborted[/red]")
         finally:
             _subprocess_container.stop_all()
             if not self.silent:
-                tqdm.write(tasklist_summery(tasklist))
+                progress.console.print(tasklist_summery(tasklist))
 
         self.cleanup_logfiles(tasklist)
         # Cache the processed tasklist for restarting later
