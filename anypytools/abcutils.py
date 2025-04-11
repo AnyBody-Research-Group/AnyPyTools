@@ -424,9 +424,14 @@ def task_summery(task: _Task) -> str:
         status = "Not completed"
     else:
         status = "Completed"
-    line = f"{status} (i={task.number}) : {task.processtime:.1f} sec"
+    line = f"{status} ({task.number}) : {task.processtime:.1f} sec"
     if task.logfile:
-        line += f" : {os.path.basename(task.logfile)}"
+        try:
+            logfilestr = str(Path(task.logfile).relative_to(os.getcwd()))
+        except ValueError:
+            logfilestr = str(Path(task.logfile).absolute())
+        
+        line += f" : {logfilestr}"
     return line
 
 
@@ -832,8 +837,7 @@ class AnyPyProcess(object):
                 for task in self._schedule_processes(tasklist):
                     if task.has_error() and not self.silent:
                         progress.console.print(task_summery(task))
-                        if hasattr(progress, "container"):
-                            progress.console.log("[red]Task failed[/red]")
+                        progress.update(task_progress, style="red")
                     progress.update(task_progress, advance=1, refresh=True)
         except KeyboardInterrupt:
             progress.console.print("[red]KeyboardInterrupt: User aborted[/red]")
