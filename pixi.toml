@@ -2,7 +2,7 @@
 name = "AnyPyTools"
 description = "Add a short description here"
 authors = ["Morten Enemark Lund <melund@gmail.com>"]
-channels = ["conda-forge", "anybody" ]
+channels = ["https://prefix.dev/conda-forge", "https://prefix.dev/anybody"]
 platforms = ["win-64", "linux-64"]
 
 [tasks]
@@ -10,16 +10,16 @@ platforms = ["win-64", "linux-64"]
 
 
 [dependencies]
-python= ">=3.8"
+python= ">3.11"
 pip="*"
 h5py="*"
 setuptools="*"
 pydoe="*"
-tqdm="*"
 scipy="*"
 pygments_anyscript="*"
 pandas="*"
 ipywidgets="*"
+rich="*"
 
 [target.win-64.dependencies]
 pywin32="*"
@@ -28,9 +28,9 @@ pywin32="*"
 anypytools = {path=".", editable=false}
 
 [feature.build.dependencies]
-build="*"
 twine="*"
-
+[feature.build.pypi-dependencies]
+build="*"
 
 [feature.build.tasks]
 clean-build = "rm -rf build dist"
