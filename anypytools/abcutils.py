@@ -29,7 +29,7 @@ from typing import Generator, List
 import numpy as np
 # from tqdm.auto import tqdm
 from rich.progress import Progress, BarColumn, TextColumn, TimeElapsedColumn, TimeRemainingColumn
-
+from rich import print
 
 from .macroutils import AnyMacro, MacroCommand
 from .tools import (
@@ -100,6 +100,11 @@ class _SubProcessContainer(object):
 _subprocess_container = _SubProcessContainer()
 atexit.register(_subprocess_container.stop_all)
 
+def progress_print(progress, content):
+    previous = progress.console.is_jupyter
+    progress.console.is_jupyter = False
+    progress.console.print(content)
+    progress.console.is_jupyter = previous
 
 def execute_anybodycon(
     macro,
@@ -668,6 +673,9 @@ class AnyPyProcess(object):
                     elif isinstance(v, np.ndarray):
                         h5_task_group.create_dataset(k, data=v)
 
+  
+
+
     def load_results(self, filename):
         """Load previously saved results.
 
@@ -833,15 +841,15 @@ class AnyPyProcess(object):
                 task_progress = progress.add_task("Processing tasks", total=len(tasklist))
                 for task in self._schedule_processes(tasklist):
                     if task.has_error() and not self.silent:
-                        progress.console.print(task_summery(task))
-                        progress.update(task_progress, style="red")
+                        progress_print(progress, task_summery(task))
+                        progress.update(task_progress, style="red", refresh=True)
                     progress.update(task_progress, advance=1, refresh=True)
         except KeyboardInterrupt:
-            progress.console.print("[red]KeyboardInterrupt: User aborted[/red]")
+            print("[red]KeyboardInterrupt: User aborted[/red]")
         finally:
             _subprocess_container.stop_all()
             if not self.silent:
-                progress.console.print(tasklist_summery(tasklist))
+                print(tasklist_summery(tasklist))
 
         self.cleanup_logfiles(tasklist)
         # Cache the processed tasklist for restarting later
@@ -868,8 +876,8 @@ class AnyPyProcess(object):
                 # to create one
                 with NamedTemporaryFile(
                     mode="w+",
-                    prefix=(self.logfile_prefix or task.name.lower()) + "_(",
-                    suffix=").txt",
+                    prefix=(self.logfile_prefix or task.name.lower()) + "_",
+                    suffix=".txt",
                     dir=task.folder,
                     delete=False,
                 ) as fh:
