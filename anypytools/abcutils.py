@@ -173,7 +173,7 @@ def execute_anybodycon(
     if folder is None:
         folder = os.getcwd()
 
-    macrofile_path = Path(logfile.name).with_suffix(".anymcr")
+    macrofile_path = Path(logfile.name).with_suffix(".anymcr").absolute()
 
     macrofile_cleanup = [macrofile_path]
 
