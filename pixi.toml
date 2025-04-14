@@ -47,7 +47,7 @@ pytest-xdist = "*"
 debugpy = "*"
 
 [feature.test.pypi-dependencies]
-anypytools = {path=".", editable=true}
+anypytools = {path=".", editable=false}
 
 [feature.test.target.win-64.dependencies]
 anybodycon = "8.1*"

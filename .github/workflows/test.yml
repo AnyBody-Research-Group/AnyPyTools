@@ -35,7 +35,6 @@ jobs:
         environments: ${{ matrix.env }}
         cache-write: ${{ github.event_name == 'push' && github.ref_name == 'master' }}
         activate-environment: test
-        frozen: true
     
     - name: Test with pytest
       run: pytest tests
