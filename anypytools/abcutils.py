@@ -27,7 +27,15 @@ from threading import RLock, Thread
 from typing import Generator, List
 
 import numpy as np
-from tqdm.auto import tqdm
+
+from rich.progress import (
+    Progress,
+    BarColumn,
+    TextColumn,
+    TimeElapsedColumn,
+    TimeRemainingColumn,
+)
+from rich import print
 
 from .macroutils import AnyMacro, MacroCommand
 from .tools import (
@@ -99,6 +107,13 @@ _subprocess_container = _SubProcessContainer()
 atexit.register(_subprocess_container.stop_all)
 
 
+def progress_print(progress, content):
+    previous = progress.console.is_jupyter
+    progress.console.is_jupyter = False
+    progress.console.print(content)
+    progress.console.is_jupyter = previous
+
+
 def execute_anybodycon(
     macro,
     logfile=None,
@@ -155,18 +170,19 @@ def execute_anybodycon(
         The return code from the AnyBody Console application.
 
     """
+
     if folder is None:
         folder = os.getcwd()
 
-    try:
-        macrofile_path = Path(folder).resolve() / (Path(logfile.name).stem + ".anymcr")
-    except AttributeError:
-        macrofile_path = Path("macrofile.anymcr")
-
-    macrofile_cleanup = [macrofile_path]
-
     if logfile is None:
         logfile = sys.stdout
+        macro_name = "macro.anymcr"
+    else:
+        macro_name = Path(logfile.name).stem
+
+    macrofile_path = Path(folder).joinpath(macro_name).with_suffix(".anymcr")
+
+    macrofile_cleanup = [macrofile_path]
 
     if anybodycon_path is None:
         anybodycon_path = Path(get_anybodycon_path())
@@ -422,9 +438,14 @@ def task_summery(task: _Task) -> str:
         status = "Not completed"
     else:
         status = "Completed"
-    line = f"{status} (i={task.number}) : {task.processtime:.1f} sec"
+    line = f"{status} ({task.number}) : {task.processtime:.1f} sec"
     if task.logfile:
-        line += f" : {os.path.basename(task.logfile)}"
+        try:
+            logfilestr = str(Path(task.logfile).relative_to(os.getcwd()))
+        except ValueError:
+            logfilestr = str(Path(task.logfile).absolute())
+
+        line += f" : {logfilestr}"
     return line
 
 
@@ -818,19 +839,28 @@ class AnyPyProcess(object):
 
         # Start the scheduler
         try:
-            with tqdm(total=len(tasklist), disable=self.silent) as pbar:
+            with Progress(
+                TextColumn("{task.description}"),
+                BarColumn(),
+                "{task.completed}/{task.total}",
+                TimeElapsedColumn(),
+                TimeRemainingColumn(),
+                disable=self.silent,
+            ) as progress:
+                task_progress = progress.add_task(
+                    "Processing tasks", total=len(tasklist)
+                )
                 for task in self._schedule_processes(tasklist):
                     if task.has_error() and not self.silent:
-                        tqdm.write(task_summery(task))
-                        if hasattr(pbar, "container"):
-                            pbar.container.children[0].bar_style = "danger"
-                    pbar.update()
+                        progress_print(progress, task_summery(task))
+                        progress.update(task_progress, style="red", refresh=True)
+                    progress.update(task_progress, advance=1, refresh=True)
         except KeyboardInterrupt:
-            tqdm.write("KeyboardInterrupt: User aborted")
+            print("[red]KeyboardInterrupt: User aborted[/red]")
         finally:
             _subprocess_container.stop_all()
             if not self.silent:
-                tqdm.write(tasklist_summery(tasklist))
+                print(tasklist_summery(tasklist))
 
         self.cleanup_logfiles(tasklist)
         # Cache the processed tasklist for restarting later
@@ -857,8 +887,8 @@ class AnyPyProcess(object):
                 # to create one
                 with NamedTemporaryFile(
                     mode="w+",
-                    prefix=(self.logfile_prefix or task.name.lower()) + "_(",
-                    suffix=").txt",
+                    prefix=(self.logfile_prefix or task.name.lower()) + "_",
+                    suffix=".txt",
                     dir=task.folder,
                     delete=False,
                 ) as fh:
