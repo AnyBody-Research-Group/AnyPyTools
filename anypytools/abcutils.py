@@ -170,14 +170,14 @@ def execute_anybodycon(
         The return code from the AnyBody Console application.
 
     """
-    
+
     if folder is None:
         folder = os.getcwd()
-        
+
     if logfile is None:
         logfile = sys.stdout
         macro_name = "macro.anymcr"
-    else: 
+    else:
         macro_name = Path(logfile.name).stem
 
     macrofile_path = Path(folder).joinpath(macro_name).with_suffix(".anymcr")
