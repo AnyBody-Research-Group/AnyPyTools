@@ -105,12 +105,14 @@ def test_savedata():
         == 'classoperation Main.MyStudy.Output "Save data" --type="Deep" --file="output.anydata.h5"'
     )
 
+
 def test_loaddata():
     c = mc.LoadData("Main.MyStudy", "output.anydata.h5")
     assert (
         c.get_macro(0)
         == 'classoperation Main.MyStudy.Output "Load data" --file="output.anydata.h5"'
     )
+
 
 def test_loadvalues():
     c = mc.LoadValues("c:/design.anyset")

@@ -77,9 +77,7 @@ class TestAnyPyProcess:
         assert os.path.isfile("test_2.log")
 
     def test_macro_with_erros(self, init_simple_model, default_macro):
-        app = AnyPyProcess(
-            silent=True, ignore_errors=["Unresolved object"]
-        )
+        app = AnyPyProcess(silent=True, ignore_errors=["Unresolved object"])
         macro = [
             ['load "model.main.any"', "operation Main.ArmModelStudy.InverseDynamics"],
             ['load "model.main.any"', "operation Main.NonExistentOpeation"],
@@ -92,7 +90,7 @@ class TestAnyPyProcess:
         assert not "ERROR" in output[1]
         assert "ERROR" in output[2]
 
-    def test_start_macro(self, init_simple_model, default_macro):        
+    def test_start_macro(self, init_simple_model, default_macro):
         app = AnyPyProcess(silent=True)
 
         default_macro[0].extend(
@@ -131,13 +129,15 @@ class TestAnyPyProcess:
         assert "task_logfile" in output[0]
 
     def test_start_macro_subdirs(self, tmpdir, default_macro):
-        
+
         number_of_models = 5
         setup_models_in_subdirs(tmpdir, number_of_models)
 
         app = AnyPyProcess(silent=True)
         with tmpdir.as_cwd():
-            output = app.start_macro(default_macro, search_subdirs="main.any", logfile="test.log")
+            output = app.start_macro(
+                default_macro, search_subdirs="main.any", logfile="test.log"
+            )
 
         assert len(output) == number_of_models
         for result in output:
@@ -147,8 +147,7 @@ class TestAnyPyProcess:
         n_macros = 5
 
         def generate_macros():
-            """Generator that returns macros
-            """
+            """Generator that returns macros"""
             for i in range(n_macros):
                 yield default_macro[0]
 
@@ -276,7 +275,6 @@ class TestAnyPyProcess:
         df = output.to_dataframe()
         assert df.shape == (100, 12)
 
-
     def test_output_dataframe_without_time(self, init_simple_model):
 
         macro = [
@@ -300,4 +298,6 @@ class TestAnyPyProcess:
 
 if __name__ == "__main__":
     os.chdir(pathlib.Path(__file__).parent)
-    pytest.main([str("test_abcutils.py::TestAnyPyProcess::test_output_dataframe_with_time")])
+    pytest.main(
+        [str("test_abcutils.py::TestAnyPyProcess::test_output_dataframe_with_time")]
+    )
