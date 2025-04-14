@@ -44,14 +44,13 @@ jupyterlab = "*"
 [feature.test.dependencies]
 pytest="*"
 pytest-xdist = "*"
-
+debugpy = "*"
 
 [feature.test.target.win-64.dependencies]
 anybodycon = "8.1*"
 
 [feature.test.tasks]
-test-install = {cmd = "pip install ."}
-test = {cmd = "pytest tests", depends-on = ["test-install"]}
+test = {cmd = "pytest"}
 
 
 [feature.docs.dependencies]

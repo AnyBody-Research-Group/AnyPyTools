@@ -92,7 +92,7 @@ class TestAnyPyProcess:
         assert not "ERROR" in output[1]
         assert "ERROR" in output[2]
 
-    def test_start_macro(self, init_simple_model, default_macro):
+    def test_start_macro(self, init_simple_model, default_macro):        
         app = AnyPyProcess(silent=True)
 
         default_macro[0].extend(
@@ -131,6 +131,7 @@ class TestAnyPyProcess:
         assert "task_logfile" in output[0]
 
     def test_start_macro_subdirs(self, tmpdir, default_macro):
+        
         number_of_models = 5
         setup_models_in_subdirs(tmpdir, number_of_models)
 
