@@ -25,7 +25,7 @@ rich="*"
 pywin32="*"
 
 [pypi-dependencies]
-anypytools = {path=".", editable=false}
+anypytools = {path="."}
 
 [feature.build.dependencies]
 twine="*"
@@ -46,10 +46,14 @@ pytest="*"
 pytest-xdist = "*"
 debugpy = "*"
 
+[feature.test.pypi-dependencies]
+anypytools = {path=".", editable=true}
+
 [feature.test.target.win-64.dependencies]
 anybodycon = "8.1*"
 
 [feature.test.tasks]
+# test-install = {cmd="pip install -e ."}
 test = {cmd = "pytest"}
 
 
