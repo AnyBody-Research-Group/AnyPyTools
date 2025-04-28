@@ -856,11 +856,11 @@ class AnyPyProcess(object):
                         progress.update(task_progress, style="red", refresh=True)
                     progress.update(task_progress, advance=1, refresh=True)
             except KeyboardInterrupt:
-                progress_print("[red]KeyboardInterrupt: User aborted[/red]")
+                progress_print(progress, "[red]KeyboardInterrupt: User aborted[/red]")
             finally:
                 _subprocess_container.stop_all()
                 if not self.silent:
-                    progress_print(tasklist_summery(tasklist))
+                    progress_print(progress, tasklist_summery(tasklist))
 
         self.cleanup_logfiles(tasklist)
         # Cache the processed tasklist for restarting later
