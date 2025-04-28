@@ -846,9 +846,7 @@ class AnyPyProcess(object):
             TimeRemainingColumn(),
             disable=self.silent,
         ) as progress:
-            task_progress = progress.add_task(
-                "Processing tasks", total=len(tasklist)
-            )
+            task_progress = progress.add_task("Processing tasks", total=len(tasklist))
             try:
                 for task in self._schedule_processes(tasklist):
                     if task.has_error() and not self.silent:
