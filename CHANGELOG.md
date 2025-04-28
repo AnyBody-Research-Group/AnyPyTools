@@ -1,4 +1,10 @@
 # AnyPyTools Change Log
+## v1.14.0
+
+**Added:**
+* Improved formatting of output when running AnyPyTools in Jupyter notebooks. 
+* Add type anotation to the output of the `start_macro` function.
+
 
 ## v1.14.0
 **Added:**
