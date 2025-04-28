@@ -838,29 +838,29 @@ class AnyPyProcess(object):
             raise ValueError("Nothing to process for " + str(macrolist))
 
         # Start the scheduler
-        try:
-            with Progress(
-                TextColumn("{task.description}"),
-                BarColumn(),
-                "{task.completed}/{task.total}",
-                TimeElapsedColumn(),
-                TimeRemainingColumn(),
-                disable=self.silent,
-            ) as progress:
-                task_progress = progress.add_task(
-                    "Processing tasks", total=len(tasklist)
-                )
+        with Progress(
+            TextColumn("{task.description}"),
+            BarColumn(),
+            "{task.completed}/{task.total}",
+            TimeElapsedColumn(),
+            TimeRemainingColumn(),
+            disable=self.silent,
+        ) as progress:
+            task_progress = progress.add_task(
+                "Processing tasks", total=len(tasklist)
+            )
+            try:
                 for task in self._schedule_processes(tasklist):
                     if task.has_error() and not self.silent:
                         progress_print(progress, task_summery(task))
                         progress.update(task_progress, style="red", refresh=True)
                     progress.update(task_progress, advance=1, refresh=True)
-        except KeyboardInterrupt:
-            print("[red]KeyboardInterrupt: User aborted[/red]")
-        finally:
-            _subprocess_container.stop_all()
-            if not self.silent:
-                print(tasklist_summery(tasklist))
+            except KeyboardInterrupt:
+                progress_print("[red]KeyboardInterrupt: User aborted[/red]")
+            finally:
+                _subprocess_container.stop_all()
+                if not self.silent:
+                    progress_print(tasklist_summery(tasklist))
 
         self.cleanup_logfiles(tasklist)
         # Cache the processed tasklist for restarting later
