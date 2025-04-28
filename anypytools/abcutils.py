@@ -729,7 +729,7 @@ class AnyPyProcess(object):
 
     def start_macro(
         self, macrolist=None, folderlist=None, search_subdirs=None, logfile=None
-    ):
+    ) -> AnyPyProcessOutputList:
         """Start a batch processing job.
 
         Runs a list of AnyBody Macro commands in
