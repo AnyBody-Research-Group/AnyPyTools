@@ -174,7 +174,7 @@ HEADER_ENSURES = (
     ("define", (dict, collections.abc.Sequence)),
     ("path", (dict, collections.abc.Sequence)),
     ("ignore_errors", (collections.abc.Sequence,)),
-    ("warnings_to_include", (collections.abc.Sequence,)),
+    ("log_error_match", (collections.abc.Sequence,)),
     ("fatal_warnings", (bool, collections.abc.Sequence)),
     ("keep_logfiles", (bool,)),
     ("logfile_prefix", (str,)),
@@ -319,19 +319,21 @@ class AnyTestItem(pytest.Item):
                 macro_commands.Dump(LOAD_TIME_VARIABLE),
             ]
 
-        fatal_warnings = kwargs.get("fatal_warnings", False)
-        warnings_to_include = kwargs.get("warnings_to_include", None)
-        if warnings_to_include:
-            warnings.warn(
-                f"\n{name}:`warnings_to_include` is deprecated. \nSpecify the `fatal_warnings` variable as "
-                "a list to select specific warnings",
-                DeprecationWarning,
-            )
-            if not isinstance(fatal_warnings, collections.abc.Sequence):
-                fatal_warnings = warnings_to_include
 
-        if not isinstance(fatal_warnings, collections.abc.Sequence):
-            fatal_warnings = ["WARNING"] if fatal_warnings else []
+        log_error_match = kwargs.get("log_error_match", [])
+
+        fatal_warnings = kwargs.get("fatal_warnings", None)
+        if fatal_warnings and isinstance(fatal_warnings, bool):
+            fatal_warnings = [""]
+
+        if fatal_warnings is not None:
+            if log_error_match:
+                raise ValueError("log_error_match and fatal_warnings can't be used at the same time")
+            for substr in fatal_warnings: 
+                log_error_match.append(f"^(WARNING|NOTICE).*{re.escape(substr)}$")
+
+
+
 
         self.app_opts = {
             "silent": True,
@@ -339,8 +341,8 @@ class AnyTestItem(pytest.Item):
             "anybodycon_path": pytest.anytest.ams_path,
             "timeout": self.timeout,
             "ignore_errors": kwargs.get("ignore_errors", []),
-            "warnings_to_include": fatal_warnings,
-            "fatal_warnings": bool(fatal_warnings),
+            "log_patterns": log_error_match,
+            "fatal_log_patterns": True,
             "keep_logfiles": kwargs.get("keep_logfiles", True),
             "logfile_prefix": kwargs.get("logfile_prefix", None),
             "use_gui": kwargs.get("use_gui", False),
