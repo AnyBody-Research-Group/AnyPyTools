@@ -34,7 +34,7 @@ build="*"
 
 [feature.build.tasks]
 clean-build = "rm -rf build dist"
-pipy-upload = {cmd="twine upload dist/*"}
+pypi-upload = {args=["file"], cmd="twine upload dist/{{file}}"}
 build = {cmd="python -m build . --sdist"}
 
 
