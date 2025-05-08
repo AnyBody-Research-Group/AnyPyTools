@@ -1,5 +1,5 @@
 # AnyPyTools Change Log
-## v1.14.0
+## v1.15.0
 
 **Added:**
 * Improved formatting of output when running AnyPyTools in Jupyter notebooks. 
