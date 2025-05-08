@@ -845,14 +845,15 @@ class AnyPyProcess(object):
             TimeElapsedColumn(),
             TimeRemainingColumn(),
             disable=self.silent,
+            refresh_per_second=4,
         ) as progress:
-            task_progress = progress.add_task("Processing tasks", total=len(tasklist))
+            task_id = progress.add_task("Processing tasks", total=len(tasklist), )
             try:
                 for task in self._schedule_processes(tasklist):
                     if task.has_error() and not self.silent:
                         progress_print(progress, task_summery(task))
-                        progress.update(task_progress, style="red", refresh=True)
-                    progress.update(task_progress, advance=1, refresh=True)
+                        progress.update(task_id, style="red")
+                    progress.update(task_id, advance=1)
             except KeyboardInterrupt:
                 progress_print(progress, "[red]KeyboardInterrupt: User aborted[/red]")
             finally:
