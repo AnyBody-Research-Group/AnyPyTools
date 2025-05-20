@@ -1,4 +1,11 @@
 # AnyPyTools Change Log
+
+## v1.15.1
+
+**Fixed:**
+* Fixed an issue parsing output when AnyBody prints "-nan" in the output values. This is now 
+just treated as NaN. 
+
 ## v1.15.0
 
 **Added:**
