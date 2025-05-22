@@ -22,6 +22,7 @@ jobs:
         
       - uses: prefix-dev/setup-pixi@v0.8.5
         with:
+          locked: false
           environments: docs
           cache-write: ${{ github.event_name == 'push' && github.ref_name == 'master' }}
           activate-environment: docs
@@ -54,6 +55,7 @@ jobs:
   
       - uses: prefix-dev/setup-pixi@v0.8.5
         with:
+          locked: false
           environments: docs
           cache-write: ${{ github.event_name == 'push' && github.ref_name == 'master' }}
           activate-environment: docs
