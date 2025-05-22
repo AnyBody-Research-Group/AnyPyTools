@@ -414,7 +414,7 @@ class AnyTestItem(pytest.Item):
             )
             if runtest_missing:
                 runtest_errros = (
-                    "Error : Main.RunTest : Unresolved",
+                    "Main.RunTest : Unresolved",
                     "Main.RunTest : Select Operation",
                     "Error : run : command unexpected while",
                     "Error : Main.RunTest.RunDurationCPUThread : Unresolved object",

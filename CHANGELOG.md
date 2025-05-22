@@ -1,5 +1,11 @@
 # AnyPyTools Change Log
 
+## v1.15.2
+
+**Fixed:**
+Updated the pytest plugin to handles the way AnyBody 8.2 reports missing RunTest operations. 
+
+
 ## v1.15.1
 
 **Fixed:**
