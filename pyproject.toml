@@ -1,7 +1,7 @@
 [build-system]
 
-requires = ["setuptools", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
 
 [project]
 name = "anypytools"
@@ -17,6 +17,7 @@ classifiers=[
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Framework :: Pytest",
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: MIT License",
@@ -42,12 +43,7 @@ full=[
 [project.urls]
 Homepage = "https://anybody-research-group.github.io/anypytools-docs/"
 Code = "https://github.com/AnyBody-Research-Group/AnyPyTools"
+Documentation = "https://anybody-research-group.github.io/anypytools-docs/"
 
-[project.entry-points.pytest11]
+[project.entry-points."pytest11"]
 anypytools = "anypytools.pytest_plugin"
-
-[tool.setuptools.dynamic]
-version = {attr = "anypytools.__version__"}
-
-[tool.setuptools.packages.find]
-exclude = ["docs", "tests"] 

@@ -28,14 +28,12 @@ pywin32="*"
 anypytools = {path="."}
 
 [feature.build.dependencies]
-twine="*"
-[feature.build.pypi-dependencies]
-build="*"
+flit="*"
 
 [feature.build.tasks]
 clean-build = "rm -rf build dist"
-pypi-upload = {args=["file"], cmd="twine upload dist/{{file}}"}
-build = {cmd="python -m build . --sdist"}
+publish = {cmd="op run --env-file=upload.env -- flit publish"}
+build = {cmd="flit build", depends-on=["clean-build"]}
 
 
 [feature.jupyter.dependencies]
