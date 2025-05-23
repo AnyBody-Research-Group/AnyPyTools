@@ -410,7 +410,7 @@ class AnyTestItem(pytest.Item):
         # Ignore error due to missing Main.RunTest
         if "ERROR" in result:
             runtest_missing = any(
-                "Main.RunTest : Unresolved" in err for err in result["ERROR"]
+                "Main.RunTest :" in err for err in result["ERROR"]
             )
             if runtest_missing:
                 runtest_errros = (
