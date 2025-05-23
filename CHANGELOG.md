@@ -2,10 +2,11 @@
 
 ## v1.16.0
 
-**Fixed:**
-Fixed a bug when exporting output to pandas dataframes would not work correctly if the output was 2 dimensional.
-Now output is correctly converted to 1D arrays.
-I.e. similart to how 3D vectors are converted to 3 columns the rotation matrices are converted to 9 columns.
+**Fixed:** 
+Resolved an issue where exporting 2D output to pandas dataframes
+failed. Now, 2D outputs (3D when a function of time) are flattened into 1D arrays for compatibility. For
+example, rotation matrices are split into 9 separate columns, similar to how 3D
+vectors are split into 3 columns.
 
 
 ## v1.15.2
