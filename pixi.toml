@@ -28,7 +28,8 @@ pywin32="*"
 anypytools = {path="."}
 
 [feature.build.dependencies]
-flit="*"
+flit-core="*"
+pip="*"
 
 [feature.build.tasks]
 clean-build = "rm -rf build dist"
