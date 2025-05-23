@@ -798,6 +798,9 @@ class AnyPyProcessOutput(collections.OrderedDict):
                     col_names = [
                         var + "".join(f"[{i}]" for i in index) for index in indices
                     ]
+                    # Colapse higher dimensions, so data becomes 2D
+                    data = data.reshape((data.shape[0], np.prod(data.shape[1:])))
+
                 dfs.append(pd.DataFrame(data, columns=col_names))
 
         dfout = pd.concat(dfs, axis=1).convert_dtypes(
