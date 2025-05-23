@@ -28,7 +28,7 @@ pywin32="*"
 anypytools = {path="."}
 
 [feature.build.dependencies]
-flit-core="*"
+flit="*"
 pip="*"
 
 [feature.build.tasks]
