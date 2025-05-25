@@ -852,10 +852,11 @@ def _parse_data(val):
         out = literal_eval(val)
     except (SyntaxError, ValueError):
         try:
-            if "nan," in val:
+            if "nan," in val or "nan]" in val:
                 # handle the case where AnyBody has output 'nan' values
                 val2 = val.replace("-nan", "nan")
                 val2 = val2.replace("nan,", ' "nan",')
+                val2 = val2.replace("nan]", ' "nan"]')
                 out = literal_eval(val2)
                 _recursive_replace(out, "nan", float("nan"))
             else:
