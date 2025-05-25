@@ -1,5 +1,11 @@
 # AnyPyTools Change Log
 
+## v1.16.1
+
+**Fixed:**
+* Fixed issue with parsing 'nan' values from AnyBody in multi dimensional arrays.
+
+
 ## v1.16.0
 
 **Fixed:** 
