@@ -905,13 +905,15 @@ DUMP_PATTERN = re.compile(r"^((Main|Global).*?)\s=\s(.*?(?:\n\s\s.*?)*);", flags
 
 
 def parse_anybodycon_output(
-    raw, errors_to_ignore=None, warnings_to_include=None, fatal_warnings=False
+    raw, errors_to_ignore=None, log_patterns: list[str]=None, fatal_log_patterns=False
 ):
     """Parse the output log file from AnyBodyConsole to
     for data, errors and warnings. If fatal_warnins is
     True, then warnings are also added to the error list.
     """
-    warnings_to_include = warnings_to_include or []
+    if log_patterns:
+        regex_log_patterns = [re.compile(p) for p in log_patterns]
+    
     errors_to_ignore = errors_to_ignore or []
     output = AnyPyProcessOutput()
     # Find all data in logfile
@@ -940,18 +942,17 @@ def parse_anybodycon_output(
     for match in ERROR_PATTERN.finditer(raw):
         _add_non_ignored_errors(match.group(0))
     # Find all warnings in logfile
-    warning_list = []
-    for match in WARNING_PATTERN.finditer(raw):
-        for case in warnings_to_include:
-            if case in match.group(0):
-                if fatal_warnings:
-                    _add_non_ignored_errors(match.group(0))
-                warning_list.append(match.group(0))
-                break
+    captured_log_messages = []
+    for regex_pattern in regex_log_patterns:
+        for match in regex_pattern.finditer(raw):
+            if fatal_log_patterns:
+                _add_non_ignored_errors(match.group(0))
+            captured_log_messages.append(match.group(0))
+    
     if error_list:
         output["ERROR"] = error_list
-    if warning_list:
-        output["WARNING"] = warning_list
+    if captured_log_messages:
+        output["LOG_MATCHES"] = captured_log_messages
     return output
 
 

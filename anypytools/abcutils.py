@@ -476,13 +476,19 @@ class AnyPyProcess(object):
     ignore_errors : list of str, optional
         List of AnyBody Errors substrings to ignore when running the models.
         (Defaults to None)
-    warnings_to_include : list of str, optional
-        List of strings that are matched to warnings in the model
-        output. If a warning with that string is found the warning
-        is returned in the output. (Defaults to None)
-    fatal_warnings: bool, optional
-        Treat warnings as errors. This only triggers for specific warnings given
-        by ``warnings_to_include`` argument.
+    log_patterns : list of str, optional
+        List of regex pattern which are matched against the AnyBody log file and 
+        returned in the result['LOGMATCHES'] attribute. (Defaults to None)
+    fatal_log_patterns : bool, optional
+        Treat log matches as errors. This only triggers for specific log patterns given
+        by ``log_patterns`` argument.
+    # warnings_to_include : list of str, optional
+    #     List of strings that are matched to warnings in the model
+    #     output. If a warning with that string is found the warning
+    #     is returned in the output. (Defaults to None)
+    # fatal_warnings: bool, optional
+    #     Treat warnings as errors. This only triggers for specific warnings given
+    #     by ``warnings_to_include`` argument.
     keep_logfiles : bool, optional
         If True logfile will never be removed. Even if a simulations successeds
         without error. (Defautls to False)
@@ -502,7 +508,7 @@ class AnyPyProcess(object):
         of the executable with 'anybody' of the `anybodycon_path` arguments. I.e. ".../anybdoycon.exe" becomes ".../anybody.exe"
     interactive_mode : bool, optional
         If set to True, AnyBody will be started in iteractive mode, and will not shutdown
-        autmaticaly after running the macro. This automatically enables the `use_gui` argument  (Defaults to False)
+        autmaticaly after running the macro. This only works when using a GUI version of AnyBody  (Defaults to False)
     priority : int, optional
         The priority of the subprocesses. This can be on of the following:
         ``anypytools.IDLE_PRIORITY_CLASS``, ``anypytools.BELOW_NORMAL_PRIORITY_CLASS``,
@@ -531,44 +537,53 @@ class AnyPyProcess(object):
 
     def __init__(
         self,
-        num_processes=get_ncpu(),
-        anybodycon_path=None,
-        timeout=3600,
-        silent=False,
-        ignore_errors=None,
-        warnings_to_include=None,
-        fatal_warnings=False,
-        return_task_info=None,
-        keep_logfiles=False,
-        logfile_prefix=None,
-        python_env=None,
-        debug_mode=0,
-        use_gui=False,
-        priority=BELOW_NORMAL_PRIORITY_CLASS,
-        interactive_mode=False,
+        num_processes: int =get_ncpu(),
+        anybodycon_path: str | Path | None = None,
+        timeout: int=3600,
+        silent: bool=False,
+        ignore_errors: list[str]=None,
+        log_patterns: list[str]=None,
+        fatal_log_patterns: bool=False,
+        fatal_warnings:bool=False,
+        keep_logfiles:bool=False,
+        logfile_prefix: str | None =None,
+        python_env: str | None=None,
+        debug_mode: int =0,
+        use_gui:bool =False,
+        priority: int =BELOW_NORMAL_PRIORITY_CLASS,
+        interactive_mode: bool =False,
         **kwargs,
     ):
-        if return_task_info is not None:
-            warnings.warn(
-                "return_task_info is deprecated, and task meta information is always included in the output.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-        if kwargs:
-            warnings.warn(
-                "The following input arguments are not supported/understood:\n"
-                + str(list(kwargs.keys()))
-            )
+
+
         if not isinstance(ignore_errors, (list, type(None))):
             raise ValueError("ignore_errors must be a list of strings")
+        
+        if not isinstance(log_patterns, (list, type(None))):
+            raise ValueError("log_patterns must be a list of strings")
 
-        if not isinstance(warnings_to_include, (list, type(None))):
-            raise ValueError("warnings_to_include must be a list of strings")
+        if "warnings_to_include" in kwargs: 
+            raise ValueError("'warnings_to_include' has been removed. Use log_patterns instead, to caputure arbitrary log lines from the log file.")
+        elif kwargs:
+            raise ValueError("Unexpected keyword arguments: {}".format(", ".join(kwargs.keys())))
+
+        if fatal_warnings:
+            if log_patterns:
+                raise ValueError("fatal_warnings is deprecated and can't be used with the new log_pattern arguments.")
+            else: 
+                warnings.warn(
+                    "fatal_warnings is deprecated, and will be removed in a future version. Use log_patterns instead.",
+                    DeprecationWarning,
+                    stacklevel=2,
+                )
+                log_patterns = [r"^(WARNING).*$"]
+                fatal_log_patterns = True
+
 
         if anybodycon_path is None:
             anybodycon_path = get_anybodycon_path()
         anybodycon_path = Path(anybodycon_path)
-        if use_gui or interactive_mode:
+        if use_gui:
             anybodycon_path = anybodycon_path.with_name(
                 case_preserving_replace(anybodycon_path.name, "anybodycon", "anybody")
             )
@@ -583,14 +598,14 @@ class AnyPyProcess(object):
         self.timeout = timeout
         self.counter = 0
         self.debug_mode = debug_mode
-        self.fatal_warnings = fatal_warnings
         self.ignore_errors = ignore_errors
-        self.warnings_to_include = warnings_to_include
         self.keep_logfiles = keep_logfiles
         self.logfile_prefix = logfile_prefix
         self.interactive_mode = interactive_mode
         self.cached_arg_hash = None
         self.cached_tasklist = None
+        self.log_patterns = log_patterns
+        self.fatal_log_patterns = fatal_log_patterns 
         if python_env is not None:
             if not os.path.isdir(python_env):
                 raise IOError("Python environment does not exist:" + python_env)
@@ -931,8 +946,8 @@ class AnyPyProcess(object):
                 task.output = parse_anybodycon_output(
                     readout,
                     self.ignore_errors,
-                    self.warnings_to_include,
-                    fatal_warnings=self.fatal_warnings,
+                    self.log_patterns,
+                    fatal_log_patterns=self.fatal_log_patterns,
                 )
         finally:
             if not self.keep_logfiles and not task.has_error():
