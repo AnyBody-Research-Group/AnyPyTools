@@ -838,9 +838,17 @@ def _recursive_replace(iterable: Iterable, old: Any, new: Any):
         elif elem == old:
             iterable[i] = new
 
+def _replace_nan_and_inf(iterable: Iterable):
+    for i, elem in enumerate(iterable):
+        if isinstance(elem, list):
+            _replace_nan_and_inf(elem)
+        elif elem in ("nan", "-nan", "inf", "-inf"):
+            iterable[i] = float(elem)
+
 
 TRIPEL_QUOTE_WRAP = re.compile(r'([^\[\]",\s]+)')
 
+QUOTE_INF_NAN = re.compile(r"([-]?(nan|inf))(?=[,\]])")
 
 def _parse_data(val):
     """Convert a str AnyBody data repr into Numpy array."""
@@ -852,15 +860,11 @@ def _parse_data(val):
         out = literal_eval(val)
     except (SyntaxError, ValueError):
         try:
-            if "nan," in val or "nan]" in val:
-                # handle the case where AnyBody has output 'nan' values
-                val2 = val.replace("-nan", "nan")
-                val2 = val2.replace("nan,", ' "nan",')
-                val2 = val2.replace("nan]", ' "nan"]')
-                out = literal_eval(val2)
-                _recursive_replace(out, "nan", float("nan"))
-            else:
+            val2, n_replacements = QUOTE_INF_NAN.subn(r'"\1"', val )
+            if not n_replacements:
                 raise SyntaxError
+            out = literal_eval(val2)
+            _replace_nan_and_inf(out)
         except (SyntaxError, ValueError):
             val, _ = TRIPEL_QUOTE_WRAP.subn(r"'''\1'''", val)
             if val == "":

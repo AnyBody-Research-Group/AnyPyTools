@@ -11,6 +11,7 @@ import pytest
 import numpy as np
 
 from anypytools.tools import (
+    _parse_data,
     array2anyscript,
     get_anybodycon_path,
     define2str,
@@ -144,6 +145,55 @@ def test_get_anybodycon_path():
     abc = get_anybodycon_path()
 
     assert os.path.exists(abc)
+
+
+@pytest.mark.parametrize(
+    "str_val, expected, expected_dtype",
+    [
+        (
+            """{{{0.9959166, nan, -nan}, {-0.08322453, 0.952727, -0.292207}, {0.0349831, 0.2958367, 0.9545977}},{{0.996183, -0.0689204, 0.05356734}, {0.07839193, 0.9763008, -0.2017211}, {-0.03839513, 0.2051504, 0.9779771}}}""",
+            np.array([[[0.9959166, float("nan"), float("nan") ], [-0.08322453, 0.952727, -0.292207], [0.0349831, 0.2958367, 0.9545977]],[[0.996183, -0.0689204, 0.05356734], [0.07839193, 0.9763008, -0.2017211], [-0.03839513, 0.2051504, 0.9779771]]]),
+            np.float64,
+        ),
+        (
+            """{{inf, 4.0}, {3.0, -inf}}""",
+            np.array([[float("inf"), 4.0],[3.0, float("-inf")]]),
+            np.float64,
+        ),
+        (
+            """{1.0, inf, 3.0}""",
+            np.array([1.0, float("inf"), 3.0]),
+            np.float64,
+        ),
+    ]
+)
+def test_parse_anybodydata_arrays(str_val, expected, expected_dtype):
+    data_np = _parse_data(str_val)
+    assert data_np.dtype == expected_dtype
+    assert np.isclose(data_np, expected, equal_nan=True).all()
+
+
+@pytest.mark.parametrize(
+    "str_val, expected, expected_type",
+    [
+        ("1.0", 1.0, float),
+        ('"some_str"', "some_str", str),
+        ("1", 1, int),
+    ]
+  )
+def test_parse_anybodydata_scalars(str_val, expected, expected_type):
+    out = _parse_data(str_val)
+    assert isinstance(out, expected_type)
+    assert out == expected
+
+
+
+
+
+
+
+
+
 
 
 if __name__ == "__main__":
