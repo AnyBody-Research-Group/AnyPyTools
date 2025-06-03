@@ -4,6 +4,7 @@
 
 **Fixed:**
 * Fixed issue with parsing 'nan' values from AnyBody in multi dimensional arrays.
+* Fixed an issue preventing the pytest plugin from ignoring missing `RunDurationCPUThread` objects.
 
 
 ## v1.16.1
