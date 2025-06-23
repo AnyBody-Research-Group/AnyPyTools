@@ -905,7 +905,7 @@ class AnyPyProcess(object):
                     logfile=logfile,
                     anybodycon_path=self.anybodycon_path,
                     timeout=self.timeout,
-                    keep_macrofile=self.keep_logfiles,
+                    keep_macrofile=False,
                     env=self.env,
                     priority=self.priority,
                     debug_mode=self.debug_mode,
