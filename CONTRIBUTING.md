@@ -185,7 +185,7 @@ $ rm -fr build
 > 5. Create a tag with the version number and push it.
 > 6. Crate PYPI pckage
 >    : 1. Run `pixi run build`
->      2. Run `pixi run pipy-upload`
+>      2. Run `pixi run publish`
 > 7. Update the conda forge package on <https://github.com/conda-forge/anypytools-feedstock>
 
 ## Document History
