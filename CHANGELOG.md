@@ -1,5 +1,11 @@
 # AnyPyTools Change Log
 
+## v1.17.1
+
+**Changed:**
+* Temporary macro files `*.anymcr` are now always deleted after a run.
+
+
 ## v1.17.0
 
 **Fixed:**
