@@ -591,7 +591,7 @@ class UpdateValues(MacroCommand):
 
 
 class OperationRun(MacroCommand):
-    """Deprecated: Renamed to RunOperation. 
+    """Deprecated: Renamed to RunOperation.
     Create a macro command to select and run an operation.
 
     Examples
