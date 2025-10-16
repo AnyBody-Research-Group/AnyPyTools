@@ -1,16 +1,28 @@
-[project]
-name = "AnyPyTools"
-description = "Add a short description here"
+[workspace]
 authors = ["Morten Enemark Lund <melund@gmail.com>"]
 channels = ["https://prefix.dev/conda-forge", "https://prefix.dev/anybody"]
 platforms = ["win-64", "linux-64"]
-
-[tasks]
-
-
+preview = ["pixi-build"]
 
 [dependencies]
-python= ">3.11"
+anypytools = {path= "."}
+
+[package]
+name = "anypytools"
+version="1.18.0"
+
+[package.build] 
+backend = { name = "pixi-build-python", version = "*" }
+
+
+[package.host-dependencies]
+flit-core="*"
+pip = "*"
+setuptools = "*"
+
+
+[package.run-dependencies]
+python= ">=3.10"
 pip="*"
 h5py="*"
 setuptools="*"
@@ -24,12 +36,6 @@ rich="*"
 [target.win-64.dependencies]
 pywin32="*"
 
-[pypi-dependencies]
-anypytools = {path="."}
-
-[feature.build.dependencies]
-flit="*"
-pip="*"
 
 [feature.build.tasks]
 clean-build = "rm -rf build dist"
@@ -44,9 +50,6 @@ jupyterlab = "*"
 pytest="*"
 pytest-xdist = "*"
 debugpy = "*"
-
-[feature.test.pypi-dependencies]
-anypytools = {path=".", editable=false}
 
 [feature.test.target.win-64.dependencies]
 anybodycon = "8.1*"
