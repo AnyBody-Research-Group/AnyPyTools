@@ -165,7 +165,7 @@ class SetValue(MacroCommand):
 
     >>> mg = AnyMacro( Load('MyModel.main.any'),
                      SetValue('Main.Study.myvar1',[1,2]),
-                     OperationRun('Main.Study.InverseDynamics') )
+                     RunOperation('Main.Study.InverseDynamics') )
     >>> mg.number_of_macros = 2
     [['load "MyModel.main.any"',
       'classoperation Main.Study.myvar1 "Set Value" --value="1"',
@@ -591,7 +591,8 @@ class UpdateValues(MacroCommand):
 
 
 class OperationRun(MacroCommand):
-    """Create a macro command to select and run an operation.
+    """Deprecated: Renamed to RunOperation. 
+    Create a macro command to select and run an operation.
 
     Examples
     --------
@@ -602,6 +603,30 @@ class OperationRun(MacroCommand):
 
     >>> mg = AnyMacro(Load('my_model.main.any'),
                    OperationRun('Main.MyStudy.Kinematics'))
+    >>> mg.create_macros()
+    [[u'load "my_model.main.any"', u'operation Main.MyStudy.Kinematics', u'run']]
+
+    """
+
+    def __init__(self, operation):
+        self.operation = operation
+
+    def get_macro(self, index, **kwarg):
+        return f"operation {self.operation}" + "\n" + "run"
+
+
+class RunOperation(MacroCommand):
+    """Create a macro command to select and run an operation.
+
+    Examples
+    --------
+    >>> RunOperation('Main.MyStudy.Kinematics')
+    >>> pprint( mg.generate_macros())
+    operation Main.MyStudy.Kinematics
+    run
+
+    >>> mg = AnyMacro(Load('my_model.main.any'),
+                   RunOperation('Main.MyStudy.Kinematics'))
     >>> mg.create_macros()
     [[u'load "my_model.main.any"', u'operation Main.MyStudy.Kinematics', u'run']]
 

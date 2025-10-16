@@ -28,7 +28,8 @@
 * When exporting a whole folder heirachy the folders them self will no longer
   show up in the results as `Main.MyFolder = "..."`. Instead only real values
   and strings will be part of the output.
-* AnyPyTools now requires a minimum of Python 3.10. 
+* AnyPyTools now requires a minimum of Python 3.10.
+* The helper macro class "OperationRun" has been renamed to "RunOperation". The old name still works. 
 
 
 

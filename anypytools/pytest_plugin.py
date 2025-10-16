@@ -346,7 +346,7 @@ class AnyTestItem(pytest.Item):
             "use_gui": kwargs.get("use_gui", False),
         }
         if not self.config.getoption("--only-load"):
-            self.macro += [macro_commands.OperationRun("Main.RunTest")]
+            self.macro += [macro_commands.RunOperation("Main.RunTest")]
 
         if load_duration_supported():
             self.macro += [

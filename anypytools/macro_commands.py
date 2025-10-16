@@ -14,6 +14,7 @@ from anypytools.macroutils import (
     LoadValues,
     MacroCommand,
     OperationRun,
+    RunOperation,
     SaveData,
     SaveDesign,
     SaveValues,
@@ -35,6 +36,7 @@ __all__ = [
     "LoadValues",
     "UpdateValues",
     "OperationRun",
+    "RunOperation",
     "SaveData",
     "LoadData",
 ]

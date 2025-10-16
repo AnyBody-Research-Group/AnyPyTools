@@ -135,8 +135,8 @@ def test_updatevalues():
     assert c.get_macro(0) == 'classoperation Main "Update Values"'
 
 
-def test_operationrun():
-    c = mc.OperationRun("Main.MyStudy.Kinematics")
+def test_runoperation():
+    c = mc.RunOperation("Main.MyStudy.Kinematics")
     assert c.get_macro(0) == "operation Main.MyStudy.Kinematics\nrun"
 
 
@@ -162,7 +162,7 @@ def test_macros():
 # def test_macro2():
 # mcr = AnyMacro([
 # mc.Load('main.any'),
-# mc.OperationRun('Main.MyStudy.Kinematics')
+# mc.RunOperation('Main.MyStudy.Kinematics')
 # ])
 
 # assert str(mcr) == 'kd'
