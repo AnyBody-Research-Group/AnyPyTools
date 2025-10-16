@@ -4,12 +4,12 @@ Created on Sun Jul 06 19:09:58 2014
 
 @author: Morten
 """
-import pytest
 import numpy as np
+import pytest
 from scipy.stats.distributions import norm
 
-from anypytools import AnyMacro
 import anypytools.macro_commands as mc
+from anypytools import AnyMacro
 
 # @pytest.yield_fixture()
 # def fixture():
@@ -75,6 +75,15 @@ def test_dump():
     assert c.get_macro(0) == 'classoperation Main.Study.myvar1 "Dump"'
 
 
+def test_export():
+    c = mc.Export("Main.Study.myvar1")
+    assert c.get_macro(0) == 'classoperation Main.Study.myvar1 "Dump"'
+
+def test_export_rename():
+    c = mc.Export("Main.Study.myvar1", "My Var")
+    assert c.get_macro(0) == 'print "#### ANYPYTOOLS RENAME OUTPUT: My Var"\nclassoperation Main.Study.myvar1 "Dump"'
+
+
 def test_savedesign():
     c = mc.SaveDesign("Main.MyStudy.Kinematics", "c:/design.txt")
     assert (
@@ -126,8 +135,8 @@ def test_updatevalues():
     assert c.get_macro(0) == 'classoperation Main "Update Values"'
 
 
-def test_operationrun():
-    c = mc.OperationRun("Main.MyStudy.Kinematics")
+def test_runoperation():
+    c = mc.RunOperation("Main.MyStudy.Kinematics")
     assert c.get_macro(0) == "operation Main.MyStudy.Kinematics\nrun"
 
 
@@ -153,7 +162,7 @@ def test_macros():
 # def test_macro2():
 # mcr = AnyMacro([
 # mc.Load('main.any'),
-# mc.OperationRun('Main.MyStudy.Kinematics')
+# mc.RunOperation('Main.MyStudy.Kinematics')
 # ])
 
 # assert str(mcr) == 'kd'

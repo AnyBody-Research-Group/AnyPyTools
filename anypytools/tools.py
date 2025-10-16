@@ -4,6 +4,7 @@ Created on Sun Sep  7 13:25:38 2014.
 
 @author: Morten
 """
+
 from __future__ import annotations
 
 import collections
@@ -857,7 +858,8 @@ def _parse_data(val):
     if val.startswith("{") and val.endswith("}"):
         val = val.replace("{", "[").replace("}", "]")
     if val == "[...]":
-        val = '"..."'
+        return None  # Skip entries represented by '[...]', which are folders dumped from AnyBody
+
     try:
         out = literal_eval(val)
     except (SyntaxError, ValueError):
@@ -903,7 +905,24 @@ ERROR_PATTERN = re.compile(
     r"^((ERROR)|(Model loading skipped)).*$", flags=re.IGNORECASE | re.M
 )
 WARNING_PATTERN = re.compile(r"^(WARNING|NOTICE).*$", flags=re.IGNORECASE | re.M)
-DUMP_PATTERN = re.compile(r"^((Main|Global).*?)\s=\s(.*?(?:\n\s\s.*?)*);", flags=re.M)
+
+# Capture AnyBody console dumps of the form:
+#   Main.... = <value>;
+# or
+#   Global.... = <possibly multi-line value>;
+#
+DUMP_PATTERN = re.compile(
+    r"""
+    (?:^\#\#\#\#\ ANYPYTOOLS\ RENAME\ OUTPUT:\s(?P<rename2>.+)\n)?
+    (?:^\#\#\#\#\ Macro\ command\ >\ classoperation\s?(?P<rename1>\S+)\s?"Dump"\s*)? 
+    ^(?P<name>(?:[^\#\n])[^\s=]*?)     # name starts with Main or Global and is non-greedy
+    \s=\s                                # equals sign with optional whitespace
+    (?P<value>                             # value may span multiple indented lines until the terminating semicolon
+    [^\n]*?                               # non-greedy match for the main line of the value
+    (?:\n\s\s[^\n]*)*?                     # allow subsequent lines that start with two spaces (indented continuation)
+    );""",
+    flags=re.M | re.X,
+)
 
 
 def parse_anybodycon_output(
@@ -919,16 +938,20 @@ def parse_anybodycon_output(
     # Find all data in logfile
     prefix_replacement = ("", "")
     for dump in DUMP_PATTERN.finditer(raw):
-        name, val = dump.group(1), dump.group(3)
-        new_prefix = correct_dump_prefix(raw, dump.start())
-        if new_prefix:
-            prefix_replacement = (name, new_prefix)
+        name_override = dump.group("rename2") or dump.group(
+            "rename1"
+        )  # Use renamed name if available
+        name = dump.group("name")
+        val = dump.group("value")
+        if name_override:
+            prefix_replacement = (name, name_override)
         name = name.replace(*prefix_replacement)
         try:
-            val = _parse_data(dump.group(3))
+            val = _parse_data(val)
         except (SyntaxError, ValueError):
             warnings.warn("\n\nCould not parse console output:\n" + name)
-        output[name] = val
+        if val is not None:
+            output[name] = val
     error_list = []
 
     def _add_non_ignored_errors(error_line):

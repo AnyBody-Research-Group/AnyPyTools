@@ -9,24 +9,20 @@ authors=[{name="Morten Enemark Lund", email="melund@gmail.com"}]
 description = "Python tools and utilities for working with the AnyBody Modeling System"
 readme = "README.md"
 keywords = ["AnyBody Modeling System", "AnyScript"]
-license = {file = "LICENSE.txt"}
+license = "MIT"
 classifiers=[
     "Development Status :: 5 - Production/Stable",
-    "Programming Language :: Python :: 3.7",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Framework :: Pytest",
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Topic :: Scientific/Engineering",
 ]
 dynamic = ["version"]
 
-requires-python = ">=3.7"
+requires-python = ">=3.10"
 dependencies = ["numpy", "scipy", "rich", "pywin32; platform_system == 'Windows'"]
 
 [project.optional-dependencies]

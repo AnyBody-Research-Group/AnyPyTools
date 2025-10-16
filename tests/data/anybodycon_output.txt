@@ -1,0 +1,43 @@
+AnyBody Console Application
+Edition Name : Beta
+AnyBodyCon.exe version : 8. 2. 0. 13700 (64-bit version)
+Build : 20374.39060 (beta)
+Copyright (c) 1999 - 2025 AnyBody Technology A/S
+
+Current path: D:\repos\AnyPyTools\tests\data
+#### Macro command > load "D:\repos\AnyPyTools\tests\data\output-model.any"
+# =====================================================================================
+
+# Loading AnyScript
+Main file loading: "D:\repos\AnyPyTools\tests\data\output-model.any"
+## Scanning...
+## Parsing...
+## Constructing model tree...
+## Linking identifiers...
+## Evaluating constants...
+## Configuring model...
+## Evaluating model...
+## Loading finished successfully.
+Elapsed Time : 0.015000
+#### Macro command > classoperation Main.MyOutput "Dump"
+Main.MyOutput = 42.0;
+#### Macro command > classoperation Main.MyOutput2 "Dump"
+Main.MyOutput2 = {1.0, 2.0, 3.0};
+#### Macro command > classoperation Main.SomeMatrix "Dump"
+Main.SomeMatrix = {{1.0, 2.0, 1.0}, {3.0, 0.0, 1.0}, {-1.0, 4.0, -1.0}};
+#### Macro command > classoperation Global.pi "Dump"
+pi = 3.1415926535897931;
+#### Macro command > print "#### ANYPYTOOLS RENAME OUTPUT: Renamed with spaces"
+#### ANYPYTOOLS RENAME OUTPUT: Renamed with spaces
+#### Macro command > classoperation Main.SomeOldName "Dump"
+Main.SomeOldName = 100.0;
+#### Macro command > classoperation Main.SubFolder "Dump"
+
+Main.SubFolder = {...};
+Main.SubFolder.SubOutput = 42.0;
+#### Macro command > print "#### ANYPYTOOLS RENAME OUTPUT: ReNamedSubFolder"
+#### ANYPYTOOLS RENAME OUTPUT: ReNamedSubFolder
+#### Macro command > classoperation Main.SubFolder "Dump"
+
+Main.SubFolder = {...};
+Main.SubFolder.SubOutput = 42.0;
