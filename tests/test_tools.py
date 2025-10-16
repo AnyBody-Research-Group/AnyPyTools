@@ -7,18 +7,13 @@ Created on Sun Jul 06 19:09:58 2014
 import os
 from pathlib import Path
 
-import pytest
 import numpy as np
+import pytest
 
-from anypytools.tools import (
-    _parse_data,
-    array2anyscript,
-    get_anybodycon_path,
-    define2str,
-    path2str,
-    AnyPyProcessOutput,
-    AnyPyProcessOutputList,
-)
+from anypytools.tools import (AnyPyProcessOutput, AnyPyProcessOutputList,
+                              _parse_data, array2anyscript, define2str,
+                              get_anybodycon_path, parse_anybodycon_output,
+                              path2str)
 
 
 @pytest.yield_fixture(scope="module")
@@ -187,13 +182,42 @@ def test_parse_anybodydata_scalars(str_val, expected, expected_type):
     assert out == expected
 
 
+def test_parse_anybodydata_renamed():
+    testfile = Path(__file__).parent / "data" / "anybodycon_output.txt"
+    raw = testfile.read_text()
+    
+    data = parse_anybodycon_output(raw)
+    assert "Main.SomeOldName" not in data
+    assert "Renamed with spaces" in data
+
+    assert "Main.SubFolder.SubOutput" in data
+    assert "ReNamedSubFolder.SubOutput" in data
 
 
+def test_parse_anybodycon_output():
+    testfile = Path(__file__).parent / "data" / "anybodycon_output.txt"
+    raw = testfile.read_text()
 
+    data = parse_anybodycon_output(raw)
 
+    assert isinstance(data, dict)
+    assert "Main.MyOutput" in data
+    assert "Main.MyOutput2" in data
+    assert "Main.SomeMatrix" in data
+    assert "pi" not in data
+    assert "Global.pi" in data
 
+    assert isinstance(data["Main.MyOutput"], float)
+    assert np.isclose(data["Main.MyOutput"], 42.0)
 
+    assert isinstance(data["Main.MyOutput2"], np.ndarray)
+    assert data["Main.MyOutput2"].shape == (3,)
 
+    assert isinstance(data["Global.pi"], float)
+    assert data["Global.pi"] == 3.1415926535897931
+
+    assert isinstance(data["Main.SomeMatrix"], np.ndarray)
+    assert data["Main.SomeMatrix"].shape == (3, 3)
 
 
 if __name__ == "__main__":

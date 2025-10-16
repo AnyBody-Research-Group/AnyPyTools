@@ -1,0 +1,18 @@
+Main = 
+{
+
+
+
+AnyFloat MyOutput = 42;
+AnyFloat MyOutput2 = {1, 2, 3};
+AnyFloat SomeMatrix = {{1, 2.0, 1}, {3.0, 0, 1}, {-1, 4.0, -1}};
+
+AnyFloat SomeOldName = 100;
+
+AnyFolder SubFolder = {
+  AnyFloat SubOutput = 42;
+};
+
+
+
+};

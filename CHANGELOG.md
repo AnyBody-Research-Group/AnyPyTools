@@ -1,5 +1,37 @@
 # AnyPyTools Change Log
 
+## v1.18
+
+**Added:**
+* New `macro_commands.Export()` helper class which can save output with different names. 
+  It is similar to the "Dump" command, but allows variables to be saved with arbitrary names.
+
+  See the following example: 
+  
+  ```python 
+  macro = [
+    mc.Load("MyModel.main.any"),
+    mc.RunOperation("MyModel.Study.Kinematics"),
+    mc.Export("Main.Study.Output.EKin", "NewShortName"),
+  ]
+  results = app.start_macro(macro)
+  ```
+  The `Main.Study.Output.EKin` variable will be available in the results as `results[0]['NewShortName']`, instead of the 
+  full variable name.
+
+  This also allows the same variable to be exported multiple times during a
+  single simulation but with different names in the output. This was not possible
+  with the "Dump" command as only the last exported variable would be available in the 
+  results. 
+
+**Changed:**
+* When exporting a whole folder heirachy the folders them self will no longer
+  show up in the results as `Main.MyFolder = "..."`. Instead only real values
+  and strings will be part of the output.
+* AnyPyTools now requires a minimum of Python 3.10. 
+
+
+
 ## v1.17.1
 
 **Changed:**

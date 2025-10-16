@@ -5,15 +5,16 @@ Created on Mon Mar 23 21:14:59 2015.
 
 @author: Morten
 """
-import types
+
 import logging
-from pprint import pprint, pformat  # noqa
-from copy import deepcopy
+import types
 from collections.abc import MutableSequence
+from copy import deepcopy
+from pprint import pformat, pprint  # noqa
 
 import numpy as np
 
-from anypytools.tools import define2str, path2str, array2anyscript
+from anypytools.tools import array2anyscript, define2str, path2str
 
 logger = logging.getLogger("abt.anypytools")
 
@@ -371,6 +372,53 @@ class Dump(MacroCommand):
         if self._include_in_macro is None or index in self._include_in_macro:
             for var in self.var_list:
                 cmd.append(f'classoperation {var} "Dump"')
+        return "\n".join(cmd)
+
+
+class Export(MacroCommand):
+    """Export a variable saving it with given 'name' in the output. This helper creates two
+       macros which dumps the output variable, and marks it to be renamed in the output.
+
+    Parameters
+    ----------
+    var : str | list[str]
+        The anyscript values to export
+    name: str | list[str] | None
+        Name of the variable in output. If None, the variable will be saved with its full name.
+
+    Examples
+    ---------
+    >>> Export('Main.Study.myvar1', "MyVar")
+    print "#### ANYPYTOOLS RENAME OUTPUT: MyVar"
+    classoperation Main.Study.myvar1 "Dump"
+
+    >>> Export('Main.Study.myvar1')
+    classoperation Main.Study.myvar1 "Dump"
+
+    """
+
+    def __init__(self, var: str | list[str], name: str | list[str] | None = None):
+        if not isinstance(var, list):
+            self.var_list = [var]
+        else:
+            self.var_list = var
+        if name is None:
+            self.name = [None] * len(self.var_list)
+        elif isinstance(name, str):
+            self.name = [name]
+        else:
+            self.name = name
+        if len(self.name) != len(self.var_list):
+            raise ValueError(
+                "Length of `name` argument must be the same as length of `var` argument"
+            )
+
+    def get_macro(self, index, **kwarg):
+        cmd = []
+        for var, name in zip(self.var_list, self.name):
+            if name is not None:
+                cmd.append(f'print "#### ANYPYTOOLS RENAME OUTPUT: {name}"')
+            cmd.append(f'classoperation {var} "Dump"')
         return "\n".join(cmd)
 
 
