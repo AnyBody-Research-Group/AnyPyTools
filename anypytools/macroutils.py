@@ -418,21 +418,21 @@ class Export(MacroCommand):
         for var, name in zip(self.var_list, self.name):
             if name is not None:
                 cmd.append(f'print "#### ANYPYTOOLS RENAME OUTPUT: {name}"')
-            cmd.append(f'print {var}')
+            cmd.append(f"print {var}")
         return "\n".join(cmd)
 
 
 class AddToOutput(MacroCommand):
     """Add a arbitrary values to to output. This value will be printed in
-       in the output so AnyPyTools will pick it up. 
-    
+       in the output so AnyPyTools will pick it up.
+
     Parameters
     ----------
     var_name : str
         Name of the variable in output.
     value : any
         The value to add to the output.
-    
+
     Examples:
     ---------
     >>> AddToOutput('MyVar', 23.5)
@@ -445,6 +445,7 @@ class AddToOutput(MacroCommand):
     print MyString = "Hello, World!";
 
     """
+
     def __init__(self, var_name: str, value):
         self.var_name = var_name
         self.value = value
@@ -457,6 +458,7 @@ class AddToOutput(MacroCommand):
         else:
             val_str = str(self.value)
         return f'print "{self.var_name} = {val_str};"'
+
 
 class SaveDesign(MacroCommand):
     """Create a Save Design classoperation macro command.

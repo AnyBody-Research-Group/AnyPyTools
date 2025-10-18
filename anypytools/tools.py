@@ -944,11 +944,11 @@ def parse_anybodycon_output(
         name = export.group("name")
         val = export.group("value")
         if export.group("new_export_macro"):
-            name_override = export.group("rename2") or export.group("rename1") 
+            name_override = export.group("rename2") or export.group("rename1")
             if name_override:
                 prefix_replacement = (name, name_override)
-            else: 
-                prefix_replacement = ("","")
+            else:
+                prefix_replacement = ("", "")
         name = name.replace(*prefix_replacement)
         try:
             val = _parse_data(val)
