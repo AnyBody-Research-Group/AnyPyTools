@@ -77,11 +77,11 @@ def test_dump():
 
 def test_export():
     c = mc.Export("Main.Study.myvar1")
-    assert c.get_macro(0) == 'classoperation Main.Study.myvar1 "Dump"'
+    assert c.get_macro(0) == 'print Main.Study.myvar1'
 
 def test_export_rename():
     c = mc.Export("Main.Study.myvar1", "My Var")
-    assert c.get_macro(0) == 'print "#### ANYPYTOOLS RENAME OUTPUT: My Var"\nclassoperation Main.Study.myvar1 "Dump"'
+    assert c.get_macro(0) == 'print "#### ANYPYTOOLS RENAME OUTPUT: My Var"\nprint Main.Study.myvar1'
 
 
 def test_savedesign():

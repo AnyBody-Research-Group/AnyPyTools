@@ -418,7 +418,7 @@ class Export(MacroCommand):
         for var, name in zip(self.var_list, self.name):
             if name is not None:
                 cmd.append(f'print "#### ANYPYTOOLS RENAME OUTPUT: {name}"')
-            cmd.append(f'classoperation {var} "Dump"')
+            cmd.append(f'print {var}')
         return "\n".join(cmd)
 
 
