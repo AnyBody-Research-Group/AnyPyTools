@@ -911,10 +911,10 @@ WARNING_PATTERN = re.compile(r"^(WARNING|NOTICE).*$", flags=re.IGNORECASE | re.M
 # or
 #   Global.... = <possibly multi-line value>;
 #
-DUMP_PATTERN = re.compile(
+EXPORT_PATTERN = re.compile(
     r"""
     (?:^\#\#\#\#\ ANYPYTOOLS\ RENAME\ OUTPUT:\s(?P<rename2>.+)\n)?
-    (?:^\#\#\#\#\ Macro\ command\ >\ classoperation\s?(?P<rename1>\S+)\s?"Dump"\s*)? 
+    (?P<new_export_macro>^\#\#\#\#\ Macro\ command\ >)?(\ (?:classoperation|print)\s?(?P<rename1>\S+)\s?(?:"Dump")?\s*)? 
     ^(?P<name>(?:[^\#\n])[^\s=]*?)     # name starts with Main or Global and is non-greedy
     \s=\s                                # equals sign with optional whitespace
     (?P<value>                             # value may span multiple indented lines until the terminating semicolon
@@ -937,14 +937,15 @@ def parse_anybodycon_output(
     output = AnyPyProcessOutput()
     # Find all data in logfile
     prefix_replacement = ("", "")
-    for dump in DUMP_PATTERN.finditer(raw):
-        name_override = dump.group("rename2") or dump.group(
-            "rename1"
-        )  # Use renamed name if available
-        name = dump.group("name")
-        val = dump.group("value")
-        if name_override:
-            prefix_replacement = (name, name_override)
+    for export in EXPORT_PATTERN.finditer(raw):
+        name = export.group("name")
+        val = export.group("value")
+        if export.group("new_export_macro"):
+            name_override = export.group("rename2") or export.group("rename1") 
+            if name_override:
+                prefix_replacement = (name, name_override)
+            else: 
+                prefix_replacement = ("","")
         name = name.replace(*prefix_replacement)
         try:
             val = _parse_data(val)
