@@ -422,6 +422,42 @@ class Export(MacroCommand):
         return "\n".join(cmd)
 
 
+class AddToOutput(MacroCommand):
+    """Add a arbitrary values to to output. This value will be printed in
+       in the output so AnyPyTools will pick it up. 
+    
+    Parameters
+    ----------
+    var_name : str
+        Name of the variable in output.
+    value : any
+        The value to add to the output.
+    
+    Examples:
+    ---------
+    >>> AddToOutput('MyVar', 23.5)
+    print MyVar = 23.5;
+
+    >>> AddToOutput('MyArray', np.array([1,2,3]))
+    print MyArray = {1,2,3};
+
+    >>> AddToOutput('MyString', "Hello, World!")
+    print MyString = "Hello, World!";
+
+    """
+    def __init__(self, var_name: str, value):
+        self.var_name = var_name
+        self.value = value
+
+    def get_macro(self, index, **kwarg):
+        if isinstance(self.value, np.ndarray):
+            val_str = array2anyscript(self.value)
+        elif isinstance(self.value, str):
+            val_str = f"'{self.value}'"
+        else:
+            val_str = str(self.value)
+        return f'print "{self.var_name} = {val_str};"'
+
 class SaveDesign(MacroCommand):
     """Create a Save Design classoperation macro command.
 

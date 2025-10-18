@@ -8,6 +8,7 @@ Created on Wed Apr 29 08:21:46 2015.
 from anypytools.macroutils import (
     Dump,
     Export,
+    AddToOutput,
     Load,
     LoadData,
     LoadDesign,
@@ -30,6 +31,7 @@ __all__ = [
     "SetValue_random",
     "Dump",
     "Export",
+    "AddToOutput",
     "SaveDesign",
     "LoadDesign",
     "SaveValues",

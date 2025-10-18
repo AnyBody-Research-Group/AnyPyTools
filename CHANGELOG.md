@@ -1,5 +1,29 @@
 # AnyPyTools Change Log
 
+## v1.19.0
+
+**Added:**
+* New `macro_commands.AddToOuput()` helper macro which can add arbitrary values 
+  to the results output. I.e. values that don't need to exists as 
+  variables in the AnyBody model. This is usefull to add extra meta information that will
+  appear in the result output, already when creating the macros.
+
+  ```python 
+  macro = [
+    mc.Load("MyModel.main.any"),
+    mc.AddToOutput("SubjectID", "S001"),
+    mc.AddToOutput("SubjectHeight", "1.8"),
+  ]
+  results = app.start_macro(macro)
+  assert results[0]["SubjectID"] == "S001
+  assert results[0]["SubjectHeight"] == 1.8
+  ```
+* {meth}`results.to_dataframe()
+  <anypytools.tools.AnyPyProcessOutput.to_dataframe>` has new argument
+  `exclude_task_info` which can exclude task information (variables starting
+  with 'task_') when exporting results to a datsaframe
+
+
 ## v1.18
 
 **Added:**

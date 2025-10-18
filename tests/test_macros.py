@@ -140,6 +140,20 @@ def test_runoperation():
     assert c.get_macro(0) == "operation Main.MyStudy.Kinematics\nrun"
 
 
+def test_addtooutput():
+    c = mc.AddToOutput("hello", "world")
+    assert (
+        c.get_macro(0) == '''print "hello = 'world';"'''
+    )
+    c = mc.AddToOutput("hello", 123)
+    assert (
+        c.get_macro(0) == '''print "hello = 123;"'''
+    )
+    c = mc.AddToOutput("hello", np.array([1,2,3]))
+    assert (
+        c.get_macro(0) == '''print "hello = {1,2,3};"'''
+    )
+
 def test_macrocommand():
     c = mc.MacroCommand("My macro cmd")
     assert c.get_macro(0) == "My macro cmd"
