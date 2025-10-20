@@ -32,7 +32,7 @@ pygments_anyscript="*"
 pandas="*"
 ipywidgets="*"
 rich="*"
-[package.target.win-64.run-dependencies]
+# [package.target.win-64.run-dependencies]
 pywin32="*"
 
 
