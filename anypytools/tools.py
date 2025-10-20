@@ -496,7 +496,7 @@ class AnyPyProcessOutputList(collections.abc.MutableSequence):
         interp_method: str
             Method to use when re-interpolating/resampling the data. Defaults to 'cubic'.
         exclude_task_info: bool
-            If True variables starting with 'task_' are excluded from the dataframe.
+            If True variables starting with `task_*` are excluded from the dataframe.
 
         Returns:
         --------
