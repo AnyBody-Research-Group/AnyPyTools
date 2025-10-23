@@ -32,10 +32,14 @@ pygments_anyscript="*"
 pandas="*"
 ipywidgets="*"
 rich="*"
-
-[target.win-64.dependencies]
+# [package.target.win-64.run-dependencies]
 pywin32="*"
 
+
+
+[feature.build.dependencies]
+flit = "*"
+pip = "*"
 
 [feature.build.tasks]
 clean-build = "rm -rf build dist"

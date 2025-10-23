@@ -480,7 +480,7 @@ class AnyPyProcessOutputList(collections.abc.MutableSequence):
             for elem in self
         ]
 
-    def to_dataframe(self, index_var="auto", **kwargs):
+    def to_dataframe(self, index_var="auto", exclude_task_info=False, **kwargs):
         """Return output of all simuations as a concatenated pandas dataframe.
 
         Parameters:
@@ -495,7 +495,8 @@ class AnyPyProcessOutputList(collections.abc.MutableSequence):
             Values to use when re-interpolating/resampling the data.
         interp_method: str
             Method to use when re-interpolating/resampling the data. Defaults to 'cubic'.
-
+        exclude_task_info: bool
+            If True variables starting with `task_*` are excluded from the dataframe.
 
         Returns:
         --------
@@ -510,6 +511,8 @@ class AnyPyProcessOutputList(collections.abc.MutableSequence):
         dfout = pd.concat(dfs, keys=range(len(dfs)), sort=False)
         if "task_id" in dfout.columns:
             dfout["task_id"] = pd.Categorical(dfout.task_id, ordered=True)
+        if exclude_task_info:
+            dfout = dfout.loc[:, ~dfout.columns.str.startswith("task_")]
         return dfout
 
 
@@ -911,10 +914,10 @@ WARNING_PATTERN = re.compile(r"^(WARNING|NOTICE).*$", flags=re.IGNORECASE | re.M
 # or
 #   Global.... = <possibly multi-line value>;
 #
-DUMP_PATTERN = re.compile(
+EXPORT_PATTERN = re.compile(
     r"""
     (?:^\#\#\#\#\ ANYPYTOOLS\ RENAME\ OUTPUT:\s(?P<rename2>.+)\n)?
-    (?:^\#\#\#\#\ Macro\ command\ >\ classoperation\s?(?P<rename1>\S+)\s?"Dump"\s*)? 
+    (?P<new_export_macro>^\#\#\#\#\ Macro\ command\ >)?(\ (?:classoperation|print)\s?(?P<rename1>\S+)\s?(?:"Dump")?\s*)? 
     ^(?P<name>(?:[^\#\n])[^\s=]*?)     # name starts with Main or Global and is non-greedy
     \s=\s                                # equals sign with optional whitespace
     (?P<value>                             # value may span multiple indented lines until the terminating semicolon
@@ -937,14 +940,15 @@ def parse_anybodycon_output(
     output = AnyPyProcessOutput()
     # Find all data in logfile
     prefix_replacement = ("", "")
-    for dump in DUMP_PATTERN.finditer(raw):
-        name_override = dump.group("rename2") or dump.group(
-            "rename1"
-        )  # Use renamed name if available
-        name = dump.group("name")
-        val = dump.group("value")
-        if name_override:
-            prefix_replacement = (name, name_override)
+    for export in EXPORT_PATTERN.finditer(raw):
+        name = export.group("name")
+        val = export.group("value")
+        if export.group("new_export_macro"):
+            name_override = export.group("rename2") or export.group("rename1")
+            if name_override:
+                prefix_replacement = (name, name_override)
+            else:
+                prefix_replacement = ("", "")
         name = name.replace(*prefix_replacement)
         try:
             val = _parse_data(val)

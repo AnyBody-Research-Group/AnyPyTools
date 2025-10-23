@@ -77,11 +77,11 @@ def test_dump():
 
 def test_export():
     c = mc.Export("Main.Study.myvar1")
-    assert c.get_macro(0) == 'classoperation Main.Study.myvar1 "Dump"'
+    assert c.get_macro(0) == 'print Main.Study.myvar1'
 
 def test_export_rename():
     c = mc.Export("Main.Study.myvar1", "My Var")
-    assert c.get_macro(0) == 'print "#### ANYPYTOOLS RENAME OUTPUT: My Var"\nclassoperation Main.Study.myvar1 "Dump"'
+    assert c.get_macro(0) == 'print "#### ANYPYTOOLS RENAME OUTPUT: My Var"\nprint Main.Study.myvar1'
 
 
 def test_savedesign():
@@ -139,6 +139,20 @@ def test_runoperation():
     c = mc.RunOperation("Main.MyStudy.Kinematics")
     assert c.get_macro(0) == "operation Main.MyStudy.Kinematics\nrun"
 
+
+def test_extendoutput():
+    c = mc.ExtendOutput("hello", "world")
+    assert (
+        c.get_macro(0) == '''print "hello = 'world';"'''
+    )
+    c = mc.ExtendOutput("hello", 123)
+    assert (
+        c.get_macro(0) == '''print "hello = 123;"'''
+    )
+    c = mc.ExtendOutput("hello", np.array([1,2,3]))
+    assert (
+        c.get_macro(0) == '''print "hello = {1,2,3};"'''
+    )
 
 def test_macrocommand():
     c = mc.MacroCommand("My macro cmd")

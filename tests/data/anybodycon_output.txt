@@ -23,7 +23,7 @@ Elapsed Time : 0.015000
 Main.MyOutput = 42.0;
 #### Macro command > classoperation Main.MyOutput2 "Dump"
 Main.MyOutput2 = {1.0, 2.0, 3.0};
-#### Macro command > classoperation Main.SomeMatrix "Dump"
+#### Macro command > print Main.SomeMatrix
 Main.SomeMatrix = {{1.0, 2.0, 1.0}, {3.0, 0.0, 1.0}, {-1.0, 4.0, -1.0}};
 #### Macro command > classoperation Global.pi "Dump"
 pi = 3.1415926535897931;
@@ -41,3 +41,10 @@ Main.SubFolder.SubOutput = 42.0;
 
 Main.SubFolder = {...};
 Main.SubFolder.SubOutput = 42.0;
+
+#### Macro command > print "hello = 'world';"
+hello = 'world';
+#### Macro command > print "number = 123;"
+number = 123;
+#### Macro command > print "array = {1,2,3};"
+array = {1,2,3};

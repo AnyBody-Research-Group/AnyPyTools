@@ -173,6 +173,7 @@ def test_parse_anybodydata_arrays(str_val, expected, expected_dtype):
     [
         ("1.0", 1.0, float),
         ('"some_str"', "some_str", str),
+        ("'some_single_quoted_str'", "some_single_quoted_str", str),
         ("1", 1, int),
     ]
   )
@@ -190,7 +191,12 @@ def test_parse_anybodydata_renamed():
     assert "Main.SomeOldName" not in data
     assert "Renamed with spaces" in data
 
+    # Ensure folder are no longer added to the output
+    assert "Main.SubFolder" not in data
+    # Ensure values in folders showup when exporting the folder
     assert "Main.SubFolder.SubOutput" in data
+
+    # Ensure that Export("Main.SubFolder", "RenamedSubFolder") works too
     assert "ReNamedSubFolder.SubOutput" in data
 
 
@@ -218,6 +224,14 @@ def test_parse_anybodycon_output():
 
     assert isinstance(data["Main.SomeMatrix"], np.ndarray)
     assert data["Main.SomeMatrix"].shape == (3, 3)
+
+    # Test parsing data added with ExtendOutput macro
+    assert "hello" in data
+    assert data["hello"] == "world"
+    assert "number" in data
+    assert data["number"] == 123
+    assert "array" in data
+    assert np.array_equal(data["array"], np.array([1, 2, 3]))
 
 
 if __name__ == "__main__":
