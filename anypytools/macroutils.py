@@ -422,7 +422,7 @@ class Export(MacroCommand):
         return "\n".join(cmd)
 
 
-class AddToOutput(MacroCommand):
+class ExtendOutput(MacroCommand):
     """Add a arbitrary values to to output. This value will be printed in
        in the output so AnyPyTools will pick it up.
 
@@ -435,13 +435,13 @@ class AddToOutput(MacroCommand):
 
     Examples:
     ---------
-    >>> AddToOutput('MyVar', 23.5)
+    >>> ExtendOutput('MyVar', 23.5)
     print MyVar = 23.5;
 
-    >>> AddToOutput('MyArray', np.array([1,2,3]))
+    >>> ExtendOutput('MyArray', np.array([1,2,3]))
     print MyArray = {1,2,3};
 
-    >>> AddToOutput('MyString', "Hello, World!")
+    >>> ExtendOutput('MyString', "Hello, World!")
     print MyString = "Hello, World!";
 
     """

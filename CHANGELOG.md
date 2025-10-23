@@ -3,7 +3,7 @@
 ## v1.19.0
 
 **Added:**
-* New `macro_commands.AddToOutput()` helper macro that can add arbitrary values 
+* New `macro_commands.ExtendOutput()` helper macro that can add arbitrary values 
   to the results output. This allows adding values that don't need to exist as 
   variables in the AnyBody model. This is useful for adding extra metadata that will
   appear in the results output when creating the macros.
@@ -11,8 +11,8 @@
   ```python 
   macro = [
     mc.Load("MyModel.main.any"),
-    mc.AddToOutput("SubjectID", "S001"),
-    mc.AddToOutput("SubjectHeight", "1.8"),
+    mc.ExtendOutput("SubjectID", "S001"),
+    mc.ExtendOutput("SubjectHeight", "1.8"),
   ]
   results = app.start_macro(macro)
   assert results[0]["SubjectID"] == "S001"

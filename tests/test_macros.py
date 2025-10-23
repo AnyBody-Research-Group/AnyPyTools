@@ -140,16 +140,16 @@ def test_runoperation():
     assert c.get_macro(0) == "operation Main.MyStudy.Kinematics\nrun"
 
 
-def test_addtooutput():
-    c = mc.AddToOutput("hello", "world")
+def test_extendoutput():
+    c = mc.ExtendOutput("hello", "world")
     assert (
         c.get_macro(0) == '''print "hello = 'world';"'''
     )
-    c = mc.AddToOutput("hello", 123)
+    c = mc.ExtendOutput("hello", 123)
     assert (
         c.get_macro(0) == '''print "hello = 123;"'''
     )
-    c = mc.AddToOutput("hello", np.array([1,2,3]))
+    c = mc.ExtendOutput("hello", np.array([1,2,3]))
     assert (
         c.get_macro(0) == '''print "hello = {1,2,3};"'''
     )

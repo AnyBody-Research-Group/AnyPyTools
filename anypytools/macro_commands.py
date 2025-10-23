@@ -5,24 +5,11 @@ Created on Wed Apr 29 08:21:46 2015.
 @author: mel
 """
 
-from anypytools.macroutils import (
-    Dump,
-    Export,
-    AddToOutput,
-    Load,
-    LoadData,
-    LoadDesign,
-    LoadValues,
-    MacroCommand,
-    OperationRun,
-    RunOperation,
-    SaveData,
-    SaveDesign,
-    SaveValues,
-    SetValue,
-    SetValue_random,
-    UpdateValues,
-)
+from anypytools.macroutils import (Dump, Export, ExtendOutput, Load, LoadData,
+                                   LoadDesign, LoadValues, MacroCommand,
+                                   OperationRun, RunOperation, SaveData,
+                                   SaveDesign, SaveValues, SetValue,
+                                   SetValue_random, UpdateValues)
 
 __all__ = [
     "MacroCommand",
@@ -31,7 +18,7 @@ __all__ = [
     "SetValue_random",
     "Dump",
     "Export",
-    "AddToOutput",
+    "ExtendOutput",
     "SaveDesign",
     "LoadDesign",
     "SaveValues",

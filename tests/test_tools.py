@@ -225,7 +225,7 @@ def test_parse_anybodycon_output():
     assert isinstance(data["Main.SomeMatrix"], np.ndarray)
     assert data["Main.SomeMatrix"].shape == (3, 3)
 
-    # Test parsing data added with AddToOutput macro
+    # Test parsing data added with ExtendOutput macro
     assert "hello" in data
     assert data["hello"] == "world"
     assert "number" in data
