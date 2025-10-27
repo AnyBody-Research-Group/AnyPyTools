@@ -23,6 +23,9 @@
   `exclude_task_info` which can exclude task information (variables starting
   with 'task_') when exporting results to a dataframe
 
+**Changed:**
+*  The documentation page has been updated with a new theme.
+
 
 ## v1.18
 
@@ -230,7 +233,7 @@ just treated as NaN.
 - Fixed issue which would cauase macros to execute twice when running the GUI version of AnyBody. 
 
 **Added:**
-- Added a `interactive_mode` argument to the {class}`AnyPyProcess <anypytools.AnPyProcess>` class. Setting this argument will automaticially lauch the GUI version
+- Added a `interactive_mode` argument to the {class}`AnyPyProcess <anypytools.abcutils.AnyPyProcess>` class. Setting this argument will automaticially lauch the GUI version
 of AnyBody with the macro commands. Futher it will not automatically exit AnyBody once the macro commands has finished. This must be done manually by the user. 
 
 
@@ -546,7 +549,7 @@ happend because empty folders (represented by "...") would become the python eli
 
 **Fixed:**
 
-- Fix regression in for {class}`AnyPyTools.macro_comands.SetValue_random` which caused a
+- Fix regression in for {py:class}`SetValue_random <anypytools.macroutils.SetValue_random>` which caused a
   crash when generating macros.
 
 ## v0.12
@@ -554,7 +557,7 @@ happend because empty folders (represented by "...") would become the python eli
 **Fixed:**
 
 - Missing newlines in error output from pytest plugin.
-- Fix a problem where the `ignore_errors` argument to {class}`AnyPyProcess()` could
+- Fix a problem where the `ignore_errors` argument to {class}`anypytools.abcutils.AnyPyProcess` could
   not filter warnings when they were considered as errors with the `fatal_warnings`
   arguments.
 
@@ -578,7 +581,7 @@ happend because empty folders (represented by "...") would become the python eli
 **New:**
 
 - Added option to the set the priority of the macro operations.
-  The option is an argument to {class}`AnyPyProcess()`.
+  The option is an argument to {class}`AnyPyProcess <anypytools.abcutils.AnyPyProcess>`.
 
   ```python
   from anypytools import IDLE_PRIORITY_CLASS
@@ -593,7 +596,7 @@ happend because empty folders (represented by "...") would become the python eli
   - `NORMAL_PRIORITY_CLASS`
   - `ABOVE_NORMAL_PRIORITY_CLASS`.
 
-- Added argument `fatal_warnings` to {class}`AnyPyProcess()` which
+- Added argument `fatal_warnings` to {class}`AnyPyProcess <anypytools.abcutils.AnyPyProcess>` which
   treat warnings as errors when running macros.
 
   ```python

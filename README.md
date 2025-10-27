@@ -27,7 +27,6 @@ If you use the library for publications please **cite as:**
 ```bash
 pixi init
 pixi add anypytools
-pixi install
 ```
 
 This will install a virtual environment with python, anypytools and all
@@ -60,6 +59,4 @@ Please see the [Jupyter Notebook based tutorial], or check the the following for
 <img src="docs/_static/relax.png" alt="Don't panic" height="100px">
 
 
-[anaconda python distribution]: https://store.continuum.io/cshop/anaconda/
 [anybody modeling system (ams)]: http://www.anybodytech.com
-[jupyter notebook based tutorial]: http://nbviewer.jupyter.org/github/AnyBody-Research-Group/AnyPyTools/blob/master/docs/Tutorial/00_AnyPyTools_tutorial.ipynb

@@ -10,6 +10,7 @@ import h5py
 
 logger = logging.getLogger("abt.anypytools")
 
+__all__ = ["File", "Group", "Dataset"]
 
 def _follow_reftarget(elem):
     completename = elem.attrs["CompleteName"]

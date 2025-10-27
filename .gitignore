@@ -21,3 +21,5 @@ Tests/anytest_output
 # pixi environments
 .pixi
 
+docs/apidocs/*
+docs/user-guide/*.txt

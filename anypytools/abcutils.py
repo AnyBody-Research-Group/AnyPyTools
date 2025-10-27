@@ -53,6 +53,12 @@ from .tools import (
     winepath,
 )
 
+__all__ = [
+    "execute_anybodycon",
+    "AnyPyProcess",
+    "Task",
+]
+
 if ON_WINDOWS:
     from .jobpopen import JobPopen as Popen
     from subprocess import CREATE_NEW_PROCESS_GROUP
@@ -107,7 +113,7 @@ _subprocess_container = _SubProcessContainer()
 atexit.register(_subprocess_container.stop_all)
 
 
-def progress_print(progress, content):
+def _progress_print(progress, content):
     previous = progress.console.is_jupyter
     progress.console.is_jupyter = False
     progress.console.print(content)
@@ -162,7 +168,8 @@ def execute_anybodycon(
     debug_mode : int
         The AMS debug mode to use. Defaults to 0 which is disabled. 1 correspond to
         crashdump enabled
-    folder : the folder in which AnyBody is executed
+    folder : 
+        the folder in which AnyBody is executed
 
     Returns
     -------
@@ -314,7 +321,7 @@ def execute_anybodycon(
     return retcode
 
 
-class _Task(object):
+class Task(object):
     """Class for storing processing jobs.
 
     Attributes:
@@ -418,7 +425,7 @@ class _Task(object):
         return all(k in output_elem for k in keys)
 
 
-def tasklist_summery(tasklist: List[_Task]) -> str:
+def _tasklist_summery(tasklist: List[Task]) -> str:
     out = ""
     unfinished_tasks = [t for t in tasklist if t.processtime <= 0]
     failed_tasks = [t for t in tasklist if t.has_error() and t.processtime > 0]
@@ -431,7 +438,7 @@ def tasklist_summery(tasklist: List[_Task]) -> str:
     return out
 
 
-def task_summery(task: _Task) -> str:
+def _task_summery(task: Task) -> str:
     if task.has_error():
         status = "Failed"
     elif task.processtime == 0:
@@ -822,7 +829,7 @@ class AnyPyProcess(object):
                     "to process"
                 )
         elif isinstance(macrolist[0], collections.abc.Mapping):
-            tasklist = list(_Task.from_output_list(macrolist))
+            tasklist = list(Task.from_output_list(macrolist))
         elif isinstance(macrolist[0], list):
             arg_hash = format(
                 abs(make_hash([macrolist, folderlist, search_subdirs, logfile])), "x"
@@ -832,7 +839,7 @@ class AnyPyProcess(object):
             else:
                 self.cached_arg_hash = arg_hash
                 tasklist = list(
-                    _Task.from_macrofolderlist(macrolist, folderlist, logfile)
+                    Task.from_macrofolderlist(macrolist, folderlist, logfile)
                 )
         else:
             raise ValueError("Nothing to process for " + str(macrolist))
@@ -850,15 +857,15 @@ class AnyPyProcess(object):
             try:
                 for task in self._schedule_processes(tasklist):
                     if task.has_error() and not self.silent:
-                        progress_print(progress, task_summery(task))
+                        _progress_print(progress, _task_summery(task))
                         progress.update(task_progress, style="red", refresh=True)
                     progress.update(task_progress, advance=1, refresh=True)
             except KeyboardInterrupt:
-                progress_print(progress, "[red]KeyboardInterrupt: User aborted[/red]")
+                _progress_print(progress, "[red]KeyboardInterrupt: User aborted[/red]")
             finally:
                 _subprocess_container.stop_all()
                 if not self.silent:
-                    progress_print(progress, tasklist_summery(tasklist))
+                    _progress_print(progress, _tasklist_summery(tasklist))
 
         self.cleanup_logfiles(tasklist)
         # Cache the processed tasklist for restarting later
@@ -941,8 +948,8 @@ class AnyPyProcess(object):
             task_queue.put(task)
 
     def _schedule_processes(
-        self, tasklist: List[_Task]
-    ) -> Generator[_Task, None, None]:
+        self, tasklist: List[Task]
+    ) -> Generator[Task, None, None]:
         # Make a shallow copy of the task list,
         # so we don't mess with the callers list.
         tasklist = copy.copy(tasklist)

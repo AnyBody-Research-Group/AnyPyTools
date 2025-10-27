@@ -34,22 +34,18 @@ from anypytools.tools import (
     get_bm_constants,
     anybodycon_version,
     find_ammr_path,
-    get_tag,
     get_ammr_version,
     winepath,
     wraptext,
     AMSVersion,
 )
 
-
-@contextlib.contextmanager
-def cwd(path):
-    oldpwd = os.getcwd()
-    os.chdir(path)
-    try:
-        yield
-    finally:
-        os.chdir(oldpwd)
+__all__ = [
+    "AnyTestFile",
+    "AnyTestItem",
+    "AnyException",
+    "AnyTestSession",
+]
 
 
 DEFAULT_ANYTEST_OUTPUT = Path.cwd() / "anytest-output"
@@ -58,7 +54,7 @@ LOAD_TIME_VARIABLE = "Global.System.LoadedModel.LoadDurationCPUThread"
 RUN_TEST_TIME_VARIABLE = "Main.RunTest.RunDurationCPUThread"
 
 
-def load_duration_supported():
+def _is_load_duration_supported():
     return AMSVersion.from_string(pytest.anytest.ams_version) >= (7, 5, 0, 10759)
 
 
@@ -314,7 +310,7 @@ class AnyTestItem(pytest.Item):
             macro_commands.Load(mainfile, self.any_defs, self.any_paths),
         ]
 
-        if load_duration_supported():
+        if _is_load_duration_supported():
             self.macro += [
                 macro_commands.Dump(LOAD_TIME_VARIABLE),
             ]
@@ -348,7 +344,7 @@ class AnyTestItem(pytest.Item):
         if not self.config.getoption("--only-load"):
             self.macro += [macro_commands.RunOperation("Main.RunTest")]
 
-        if load_duration_supported():
+        if _is_load_duration_supported():
             self.macro += [
                 macro_commands.Dump(RUN_TEST_TIME_VARIABLE),
             ]
@@ -398,7 +394,7 @@ class AnyTestItem(pytest.Item):
                         self.macro, logfile=Path(self.name).with_suffix(".txt")
                     )[0]
 
-        if load_duration_supported():
+        if _is_load_duration_supported():
             load_time = result.get(LOAD_TIME_VARIABLE, None)
             if load_time is not None:
                 self.user_properties.append(("Load time", load_time))
