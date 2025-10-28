@@ -139,13 +139,13 @@ def execute_anybodycon(
 
     Parameters
     ----------
-    macro : list of str
+    macro : list[str]
         List of macros strings to pass to the AnyBody Console Application
-    logfile : file like object, optional
+    logfile : typing.TextIO, optional
         An open file like object to write to pipe the output of AnyBody
         into. (Defaults to None, in which case it will use sys.stdout)
     anybodycon_path : str, optional
-        Path to the AnyBodyConsole application. Default to None, in which
+        Path to the AnyBodyConsole applibcation. Default to None, in which
         case the default installed AnyBody installation will be looked up
         in the Windows registry.
     timeout : int, optional
@@ -165,7 +165,7 @@ def execute_anybodycon(
     interactive_mode : bool, optional
         If set to True, the AnyBody Console application will be started in iteractive
         mode, and will not shutdown autmaticaly after running the macro. (Defaults to False)
-    debug_mode : int
+    debug_mode : int, optional
         The AMS debug mode to use. Defaults to 0 which is disabled. 1 correspond to
         crashdump enabled
     folder :
@@ -173,7 +173,7 @@ def execute_anybodycon(
 
     Returns
     -------
-    int
+    error_code : int
         The return code from the AnyBody Console application.
 
     """
@@ -497,7 +497,7 @@ class AnyPyProcess(object):
         String which will be prefixed to the generated log files. This can be used
         to assign a more meaningfull name to a batch of logfiles.
         (Defaults to None)
-    python_env : pathlike, optional
+    python_env : str, optional
         Path to a python environment/installation that the AnyBody Modeling System
         should use for Python Hooks. This will added the ``PYTHONHOME`` environment variable and
         prepended to the ``PATH`` before starting the AnyBody Console application.
@@ -746,10 +746,10 @@ class AnyPyProcess(object):
 
         Parameters
         ----------
-        macrolist : list of macrocommands, optional
+        macrolist : list, optional
             List of anyscript macro commands. This may also be obmitted in
             which case the previous macros will be re-run.
-        folderlist : list of str, optional
+        folderlist : list[str], optional
             List of folders in which to excute the macro commands. If `None` the
             current working directory is used. This may also be a list of
             tuples to specify a name to appear in the output

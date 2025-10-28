@@ -75,7 +75,7 @@ User guide <user-guide/index>
 ## API Documenation
 
 * [PyTest plugin for testing AnyBody models](pytest-plugin)
-* [API reference](apidocs/index)
+* [API reference](api/index)
 
 :::{toctree}
 :maxdepth: 2

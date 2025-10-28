@@ -529,7 +529,7 @@ environments:
       - conda: https://prefix.dev/conda-forge/linux-64/zstandard-0.25.0-py313h54dd161_0.conda
       - conda: https://prefix.dev/conda-forge/linux-64/zstd-1.5.7-hb8e6e7a_2.conda
       - conda: .
-      - pypi: git+https://github.com/AnyBody-Research-Group/sphinx-autodoc2?branch=main#1f55a8872cccd235cafa6323e2ae8c3a563156f4
+      - pypi: git+https://github.com/AnyBody-Research-Group/sphinx-autodoc2?rev=215f04e72efc7294a0c93de4f038b9a1aa806e8f#215f04e72efc7294a0c93de4f038b9a1aa806e8f
       win-64:
       - conda: https://prefix.dev/conda-forge/noarch/_python_abi3_support-1.0-hd8ed1ab_2.conda
       - conda: https://prefix.dev/conda-forge/noarch/accessible-pygments-0.0.5-pyhd8ed1ab_1.conda
@@ -679,7 +679,7 @@ environments:
       - conda: https://prefix.dev/conda-forge/win-64/zstandard-0.25.0-py314h4667ab5_0.conda
       - conda: https://prefix.dev/conda-forge/win-64/zstd-1.5.7-hbeecb71_2.conda
       - conda: .
-      - pypi: git+https://github.com/AnyBody-Research-Group/sphinx-autodoc2?branch=main#1f55a8872cccd235cafa6323e2ae8c3a563156f4
+      - pypi: git+https://github.com/AnyBody-Research-Group/sphinx-autodoc2?rev=215f04e72efc7294a0c93de4f038b9a1aa806e8f#215f04e72efc7294a0c93de4f038b9a1aa806e8f
   jupyter:
     channels:
     - url: https://prefix.dev/conda-forge/
@@ -6593,9 +6593,9 @@ packages:
   - pkg:pypi/sphinx?source=hash-mapping
   size: 1424416
   timestamp: 1740956642838
-- pypi: git+https://github.com/AnyBody-Research-Group/sphinx-autodoc2?branch=main#1f55a8872cccd235cafa6323e2ae8c3a563156f4
+- pypi: git+https://github.com/AnyBody-Research-Group/sphinx-autodoc2?rev=215f04e72efc7294a0c93de4f038b9a1aa806e8f#215f04e72efc7294a0c93de4f038b9a1aa806e8f
   name: sphinx-autodoc2
-  version: 0.5.0
+  version: 0.5.1
   requires_dist:
   - astroid>=2.7,<4
   - tomli ; python_full_version < '3.11'

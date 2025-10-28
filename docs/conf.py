@@ -5,10 +5,52 @@
 from anypytools import __version__ as ANYPYTOOLS_VERSION
 
 # load extensions
-extensions = ["myst_nb", "autodoc2", "sphinx.ext.intersphinx", "sphinx.ext.napoleon", "sphinx_design"
-
-
+extensions = [
+    "myst_nb",
+    "autodoc2",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.autosummary",
+    "sphinx.ext.napoleon",
+    "sphinx_design"
 ]
+
+
+autodoc2_packages = [
+ "../anypytools",
+]
+
+autodoc2_output_dir = "api"
+autodoc2_render_plugin = "rst"
+
+autodoc2_module_all_regexes = [
+    r"anypytools\..*",
+]
+
+
+nitpick_ignore = [
+    ('py:class', 'optional'),
+    ('py:class', 'np.ndarray'),
+    ]
+
+
+# autodoc2_render_plugin = "myst"
+
+# autodoc2_hidden_objects = ["dunder", "inherited"]
+autodoc2_replace_annotations = [
+    ("re.Pattern", "typing.Pattern"),
+    ("markdown_it.MarkdownIt", "markdown_it.main.MarkdownIt"),
+]
+autodoc2_replace_bases = [
+    ("sphinx.directives.SphinxDirective", "sphinx.util.docutils.SphinxDirective"),
+]
+
+napoleon_use_ivar = True
+
+# Napoleon settings for NumPy-style
+napoleon_google_docstring = False
+napoleon_numpy_docstring = True
+napoleon_use_admonition_for_notes = False
+
 
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3/", None),
@@ -106,29 +148,6 @@ html_context = {
     "doc_path": "docs",
 }
 
-
-autodoc2_packages = [
-    {
-        "path": "../anypytools",
-        # "exclude_files": ["_docs.py"],
-    }
-]
-
-autodoc2_module_all_regexes = [
-    r"anypytools\..*",
-]
-
-
-autodoc2_render_plugin = "myst"
-
-# autodoc2_hidden_objects = ["dunder", "inherited"]
-autodoc2_replace_annotations = [
-    ("re.Pattern", "typing.Pattern"),
-    ("markdown_it.MarkdownIt", "markdown_it.main.MarkdownIt"),
-]
-autodoc2_replace_bases = [
-    ("sphinx.directives.SphinxDirective", "sphinx.util.docutils.SphinxDirective"),
-]
 # autodoc2_docstring_parser_regexes = [
 #     ("myst_parser", "myst"),
 #     (r"myst_parser\.setup", "myst"),

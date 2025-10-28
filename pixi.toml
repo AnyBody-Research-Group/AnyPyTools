@@ -97,7 +97,7 @@ astroid = ">=2.7,<4"
 sphinxcontrib-napoleon = ">=0.7,<0.8"
 
 [feature.docs.pypi-dependencies]
-sphinx-autodoc2 = { git = "https://github.com/AnyBody-Research-Group/sphinx-autodoc2", branch = "main" }
+sphinx-autodoc2 = { git = "https://github.com/AnyBody-Research-Group/sphinx-autodoc2", rev = "215f04e72efc7294a0c93de4f038b9a1aa806e8f" }
 
 [feature.docs.tasks]
 build-docs = {cmd="sphinx-build -nW --keep-going -b html docs/ docs/_build/html"}

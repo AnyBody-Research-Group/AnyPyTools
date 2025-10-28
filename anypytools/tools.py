@@ -48,7 +48,7 @@ __all__ = [
     "anybodycon_version",
     "AMSVersion",
     "parse_anybodycon_output",
-    "wraptext"
+    "wraptext",
 ]
 
 

@@ -7,8 +7,8 @@ collect and run AnyScript files with a `test_` prefix (e.g.
 `Main.RunTest` operation if it exists. If the models produce error while
 loading and running, the framework considers it a failed test.
 
-.. autodoc2-summary::
-    :renderer: myst
+:::{autodoc2-summary}
+:renderer: myst
 
     anypytools.pytest_plugin
-
+:::
