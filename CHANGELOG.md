@@ -1,5 +1,10 @@
 # AnyPyTools Change Log
 
+## v1.19.2
+
+* Fixed missing widget information is user-guide documentation.
+
+
 ## v1.19.1
 
 * Fixed minor formatting issues in documentation.
