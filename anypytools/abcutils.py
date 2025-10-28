@@ -168,7 +168,7 @@ def execute_anybodycon(
     debug_mode : int
         The AMS debug mode to use. Defaults to 0 which is disabled. 1 correspond to
         crashdump enabled
-    folder : 
+    folder :
         the folder in which AnyBody is executed
 
     Returns
@@ -947,9 +947,7 @@ class AnyPyProcess(object):
                 task.logfile = ""
             task_queue.put(task)
 
-    def _schedule_processes(
-        self, tasklist: List[Task]
-    ) -> Generator[Task, None, None]:
+    def _schedule_processes(self, tasklist: List[Task]) -> Generator[Task, None, None]:
         # Make a shallow copy of the task list,
         # so we don't mess with the callers list.
         tasklist = copy.copy(tasklist)

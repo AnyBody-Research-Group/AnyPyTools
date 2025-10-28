@@ -459,7 +459,7 @@ class ExtendOutput(MacroCommand):
             val_str = str(self.value)
 
         cmd = ""
-        if self.var_name.isidentifier(): 
+        if self.var_name.isidentifier():
             name = self.var_name
         else:
             cmd += f'print "#### ANYPYTOOLS RENAME OUTPUT: {self.var_name}"\n'

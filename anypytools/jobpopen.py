@@ -17,6 +17,7 @@ import pywintypes
 
 __all__ = ["JobPopen"]
 
+
 class JobPopen(Popen):
     """Start a process in a new Win32 job object.
 

@@ -47,8 +47,9 @@ __all__ = [
     "winepath",
     "anybodycon_version",
     "AMSVersion",
-    "parse_anybodycon_output"
+    "parse_anybodycon_output",
 ]
+
 
 def run_from_ipython():
     try:
@@ -526,7 +527,18 @@ class AnyPyProcessOutputList(collections.abc.MutableSequence):
         if "task_id" in dfout.columns:
             dfout["task_id"] = pd.Categorical(dfout.task_id, ordered=True)
         if not include_task_info:
-            dfout = dfout.drop(["task_name", "task_macro_hash", "task_work_dir", "task_processtime", "task_logfile", "task_id"], axis=1, errors='ignore')
+            dfout = dfout.drop(
+                [
+                    "task_name",
+                    "task_macro_hash",
+                    "task_work_dir",
+                    "task_processtime",
+                    "task_logfile",
+                    "task_id",
+                ],
+                axis=1,
+                errors="ignore",
+            )
         return dfout
 
 
