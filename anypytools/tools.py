@@ -36,6 +36,22 @@ import numpy as np
 logger = logging.getLogger("abt.anypytools")
 
 
+__all__ = [
+    "AnyPyProcessOutput",
+    "AnyPyProcessOutputList",
+    "array2anyscript",
+    "case_preserving_replace",
+    "define2str",
+    "get_ammr_version",
+    "get_anybodycon_path",
+    "winepath",
+    "anybodycon_version",
+    "AMSVersion",
+    "parse_anybodycon_output",
+    "wraptext",
+]
+
+
 def run_from_ipython():
     try:
         __IPYTHON__
@@ -178,7 +194,7 @@ def _anybodycon_version(anybodyconpath):
 AMMR_VERSION_RE = re.compile(r'.*AMMR_VERSION\s"(?P<version>.*)"')
 
 
-def ammr_any_version(fpath):
+def _ammr_any_version(fpath):
     with open(fpath) as f:
         out = f.read()
     match = AMMR_VERSION_RE.search(out)
@@ -242,7 +258,7 @@ def get_ammr_version(folder=None):
     xml_version_file = "AMMR.version.xml"
     files = os.listdir(folder)
     if any_version_file in files:
-        return ammr_any_version(os.path.join(folder, any_version_file))
+        return _ammr_any_version(os.path.join(folder, any_version_file))
     elif xml_version_file in files:
         return ammr_xml_version(os.path.join(folder, xml_version_file))
     else:
@@ -269,19 +285,19 @@ def walk_up(bottom):
         yield x
 
 
-def get_current_time():
+def _get_current_time():
     return datetime.datetime.utcnow().strftime("%Y%m%d_%H%M%S")
 
 
-def get_tag(project_name=None):
-    info = get_git_commit_info(project_name)
-    parts = [info["id"], get_current_time()]
+def _get_git_tag(project_name=None):
+    info = _get_git_commit_info(project_name)
+    parts = [info["id"], _get_current_time()]
     if info["dirty"]:
         parts.append("uncommited-changes")
     return "_".join(parts)
 
 
-def get_git_project_name():
+def _get_git_project_name():
     cmd = "git config --local remote.origin.url".split()
     try:
         output = subprocess.check_output(cmd, universal_newlines=True)
@@ -305,10 +321,10 @@ def get_git_branch_info():
     return branch
 
 
-def get_git_commit_info(project_name=None):
+def _get_git_commit_info(project_name=None):
     dirty = False
     commit = "unversioned"
-    project_name = project_name or get_git_project_name()
+    project_name = project_name or _get_git_project_name()
     branch = get_git_branch_info()
     cmd = "git describe --dirty --always --long --abbrev=6".split()
     try:
@@ -480,7 +496,7 @@ class AnyPyProcessOutputList(collections.abc.MutableSequence):
             for elem in self
         ]
 
-    def to_dataframe(self, index_var="auto", exclude_task_info=False, **kwargs):
+    def to_dataframe(self, index_var="auto", include_task_info=False, **kwargs):
         """Return output of all simuations as a concatenated pandas dataframe.
 
         Parameters:
@@ -495,8 +511,8 @@ class AnyPyProcessOutputList(collections.abc.MutableSequence):
             Values to use when re-interpolating/resampling the data.
         interp_method: str
             Method to use when re-interpolating/resampling the data. Defaults to 'cubic'.
-        exclude_task_info: bool
-            If True variables starting with `task_*` are excluded from the dataframe.
+        include_task_info: bool
+            If True variables starting with `task_*` are included in the dataframe.
 
         Returns:
         --------
@@ -511,8 +527,19 @@ class AnyPyProcessOutputList(collections.abc.MutableSequence):
         dfout = pd.concat(dfs, keys=range(len(dfs)), sort=False)
         if "task_id" in dfout.columns:
             dfout["task_id"] = pd.Categorical(dfout.task_id, ordered=True)
-        if exclude_task_info:
-            dfout = dfout.loc[:, ~dfout.columns.str.startswith("task_")]
+        if not include_task_info:
+            dfout = dfout.drop(
+                [
+                    "task_name",
+                    "task_macro_hash",
+                    "task_work_dir",
+                    "task_processtime",
+                    "task_logfile",
+                    "task_id",
+                ],
+                axis=1,
+                errors="ignore",
+            )
         return dfout
 
 
@@ -893,7 +920,7 @@ NORMAL_PRIORITY_CLASS = 0x0020
 NAME_PATTERN = re.compile(r"(Main|Global)\.[\w\.]*")
 
 
-def correct_dump_prefix(raw, idx):
+def _correct_dump_prefix(raw, idx):
     """Find the correct prefix to use in the output"""
     # The -1000 hack is to avoid coping large strings in memory,
     # since we really only need to access the previous line.

@@ -79,7 +79,7 @@ class MacroCommand(object):
 
         Returns
         -------
-        string
+        str
             A string with the AnyScript macro
 
         """
@@ -139,9 +139,9 @@ class SetValue(MacroCommand):
 
     Parameters
     ----------
-    var : string
+    var : str
         An AnyScript variable.
-    value : number or list of number
+    value : float | list[float]
         A value or list of values to assign to the AnyScript variable.
 
     Examples
@@ -232,13 +232,13 @@ class SetValue(MacroCommand):
 class SetValue_random(SetValue):
     """Create a 'Set Value' macro command from a distribution.
 
-    The value is connected to a distibution in scipy.stats.distributions.
+    The value is connected to a distibution in ``scipy.stats.distributions``.
 
     Parameters
     ----------
     var : str
         An AnyScript variable.
-    frozen_distribution : <scipy.stats.distributions.rv_frozen>
+    frozen_distribution :
         A frozen distribution from scipy.stats.distributions
     default_lower_tail_probability : float
         The lower tail probability of the default value. Defaults to 0.5 which
@@ -430,11 +430,11 @@ class ExtendOutput(MacroCommand):
     ----------
     var_name : str
         Name of the variable in output.
-    value : any
+    value : int | float | str | np.ndarray
         The value to add to the output.
 
-    Examples:
-    ---------
+    Examples
+    --------
     >>> ExtendOutput('MyVar', 23.5)
     print MyVar = 23.5;
 
@@ -457,7 +457,16 @@ class ExtendOutput(MacroCommand):
             val_str = f"'{self.value}'"
         else:
             val_str = str(self.value)
-        return f'print "{self.var_name} = {val_str};"'
+
+        cmd = ""
+        if self.var_name.isidentifier():
+            name = self.var_name
+        else:
+            cmd += f'print "#### ANYPYTOOLS RENAME OUTPUT: {self.var_name}"\n'
+            name = "DUMMY"
+
+        cmd += f'print "{name} = {val_str};"'
+        return cmd
 
 
 class SaveDesign(MacroCommand):
@@ -710,8 +719,7 @@ class AnyMacro(MutableSequence):
     >>> mg = AnyMacro(number_of_macros = 22)
     >>> mg.append( Load('c:/MyModel/model.main.any', defs = {}, paths = {} ) )
     >>> mg.append( SetValue('Main.myvar', 12.3)  )
-    >>> mg.extend( [RunOperation('Main.Study.Kinematics'),
-                     Dump('Main.Study.Output.MyVar') ] )
+    >>> mg.extend( [RunOperation('Main.Study.Kinematics'), Dump('Main.Study.Output.MyVar') ] )
     >>> mg
     [['load "c:/MyModel/model.main.any"',
       'classoperation Main.myvar "Set Value" --value="12.3"',
