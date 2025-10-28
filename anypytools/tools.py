@@ -499,8 +499,8 @@ class AnyPyProcessOutputList(collections.abc.MutableSequence):
     def to_dataframe(self, index_var="auto", include_task_info=False, **kwargs):
         """Return output of all simuations as a concatenated pandas dataframe.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         index_var: str
             Name of the variable to use as axis 0 in the dataframe.
             If not given system will look for variables ending with
@@ -514,8 +514,8 @@ class AnyPyProcessOutputList(collections.abc.MutableSequence):
         include_task_info: bool
             If True variables starting with `task_*` are included in the dataframe.
 
-        Returns:
-        --------
+        Returns
+        -------
         pandas.DataFrame
         """
         try:
@@ -622,10 +622,14 @@ def path2str(key, path="."):
 def getsubdirs(toppath, search_string="."):
     """Find all directories below a given top path.
 
-    Args:
-        toppath: top directory when searching for sub directories
-        search_string: Limit to directories matching the this regular expression
-    Returns:
+    Parameters
+    ----------
+        toppath: str
+            top directory when searching for sub directories
+        search_string: str
+            Limit to directories matching the this regular expression
+    Returns
+    -------
         List of directories
     """
     if not search_string:
@@ -779,8 +783,8 @@ class AnyPyProcessOutput(collections.OrderedDict):
     ):
         """Convert the output to a pandas dataframe.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         index_var: str
             Name of the variable to use as axis 0 in the dataframe.
             If "auto" is given the system will look for variables ending with
@@ -793,8 +797,8 @@ class AnyPyProcessOutput(collections.OrderedDict):
         interp_method: str
             Method to use when re-interpolating/resampling the data. Defaults to 'cubic'.
 
-        Returns:
-        --------
+        Returns
+        -------
         df: pandas.DataFrame
             Dataframe with the output data.
         """

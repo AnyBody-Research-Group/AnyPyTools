@@ -30,6 +30,7 @@ autodoc2_module_all_regexes = [
 nitpick_ignore = [
     ('py:class', 'optional'),
     ('py:class', 'np.ndarray'),
+    ('py:class', 'pandas.DataFrame')
     ]
 
 
