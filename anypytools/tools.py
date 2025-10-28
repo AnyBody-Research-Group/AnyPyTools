@@ -48,6 +48,7 @@ __all__ = [
     "anybodycon_version",
     "AMSVersion",
     "parse_anybodycon_output",
+    "wraptext"
 ]
 
 
@@ -202,7 +203,7 @@ def _ammr_any_version(fpath):
     return "Unknown AMMR version"
 
 
-def _wraptext(elem, initial_indent="", subsequent_indent=None):
+def wraptext(elem, initial_indent="", subsequent_indent=None):
     """Wraps text to fit the terminal window."""
     width = 120
     if sys.version_info.major == 3:
