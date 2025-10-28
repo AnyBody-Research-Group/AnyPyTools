@@ -457,7 +457,16 @@ class ExtendOutput(MacroCommand):
             val_str = f"'{self.value}'"
         else:
             val_str = str(self.value)
-        return f'print "{self.var_name} = {val_str};"'
+
+        cmd = ""
+        if self.var_name.isidentifier(): 
+            name = self.var_name
+        else:
+            cmd += f'print "#### ANYPYTOOLS RENAME OUTPUT: {self.var_name}"\n'
+            name = "DUMMY"
+
+        cmd += f'print "{name} = {val_str};"'
+        return cmd
 
 
 class SaveDesign(MacroCommand):
