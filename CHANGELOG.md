@@ -1,5 +1,9 @@
 # AnyPyTools Change Log
 
+## v1.19.1
+
+* Fixed minor formatting issues in documentation.
+
 ## v1.19.0
 
 **Changed:**

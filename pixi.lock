@@ -1548,7 +1548,7 @@ packages:
   timestamp: 1758634638734
 - conda: .
   name: anypytools
-  version: 1.18.0
+  version: 1.19.1
   build: pyh4616a5c_0
   subdir: noarch
   depends:
@@ -1566,7 +1566,7 @@ packages:
   - pywin32
   license: MIT
   input:
-    hash: 04051bb0f19001e89523930447a67077863495536413e29ac3a62b8526e1ddee
+    hash: 722858220b377b175d7dbbf121ba71dbf1b2618b6906d58971105bd7a9a96bec
     globs:
     - pyproject.toml
 - conda: https://prefix.dev/conda-forge/win-64/aom-3.9.1-he0c23c2_0.conda
