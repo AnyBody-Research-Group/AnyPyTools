@@ -494,7 +494,7 @@ class AnyPyProcessOutputList(collections.abc.MutableSequence):
             for elem in self
         ]
 
-    def to_dataframe(self, index_var="auto", exclude_task_info=False, **kwargs):
+    def to_dataframe(self, index_var="auto", include_task_info=False, **kwargs):
         """Return output of all simuations as a concatenated pandas dataframe.
 
         Parameters:
@@ -509,8 +509,8 @@ class AnyPyProcessOutputList(collections.abc.MutableSequence):
             Values to use when re-interpolating/resampling the data.
         interp_method: str
             Method to use when re-interpolating/resampling the data. Defaults to 'cubic'.
-        exclude_task_info: bool
-            If True variables starting with `task_*` are excluded from the dataframe.
+        include_task_info: bool
+            If True variables starting with `task_*` are included in the dataframe.
 
         Returns:
         --------
@@ -525,8 +525,8 @@ class AnyPyProcessOutputList(collections.abc.MutableSequence):
         dfout = pd.concat(dfs, keys=range(len(dfs)), sort=False)
         if "task_id" in dfout.columns:
             dfout["task_id"] = pd.Categorical(dfout.task_id, ordered=True)
-        if exclude_task_info:
-            dfout = dfout.loc[:, ~dfout.columns.str.startswith("task_")]
+        if not include_task_info:
+            dfout = dfout.drop(["task_name", "task_macro_hash", "task_work_dir", "task_processtime", "task_logfile", "task_id"], axis=1, errors='ignore')
         return dfout
 
 

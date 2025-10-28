@@ -2,6 +2,11 @@
 
 ## v1.19.0
 
+**Changed:**
+*  The `results.to_dataframe()` no longer returns the special `task_*` (meta data) in the output columns. 
+   To get the extra task info use `results.to_dataframe(*, include_task_info=True)`
+*  The documentation page updated.
+
 **Added:**
 * New `macro_commands.ExtendOutput()` helper macro that can add arbitrary values 
   to the results output. This allows adding values that don't need to exist as 
@@ -22,9 +27,6 @@
   <anypytools.tools.AnyPyProcessOutput.to_dataframe>` has a new argument
   `exclude_task_info` which can exclude task information (variables starting
   with 'task_') when exporting results to a dataframe
-
-**Changed:**
-*  The documentation page has been updated with a new theme.
 
 
 ## v1.18
