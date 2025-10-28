@@ -10,7 +10,7 @@ anypytools = {path= "."}
 
 [package]
 name = "anypytools"
-version="1.19.1"
+version="1.19.2"
 
 [package.build] 
 backend = { name = "pixi-build-python", version = "*" }
@@ -75,6 +75,7 @@ sphinx = ">=8.2.3,<9"
 sphinx-design = ">=0.6.1,<0.7"
 astroid = ">=2.7,<4"
 sphinxcontrib-napoleon = ">=0.7,<0.8"
+ipywidgets = "*"
 
 [feature.docs.pypi-dependencies]
 sphinx-autodoc2 = { git = "https://github.com/AnyBody-Research-Group/sphinx-autodoc2", rev = "215f04e72efc7294a0c93de4f038b9a1aa806e8f" }
