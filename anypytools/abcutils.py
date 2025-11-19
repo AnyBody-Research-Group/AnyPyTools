@@ -61,9 +61,7 @@ __all__ = [
 
 if ON_WINDOWS:
     if "ANYPYTOOLS_DEBUG_USE_PYTHON_POPEN" in os.environ:
-        logger.warning(
-            "Warning: Using Python's subprocess.Popen instead of JobPopen."
-        )
+        logger.warning("Warning: Using Python's subprocess.Popen instead of JobPopen.")
         from subprocess import Popen
     else:
         from .jobpopen import JobPopen as Popen
@@ -1011,5 +1009,5 @@ class AnyPyProcess(object):
 
     def __del__(self):
         """Destructor to clean up any remaining subprocesses."""
-        if hasattr(self, '_local_subprocess_container'):
+        if hasattr(self, "_local_subprocess_container"):
             self._local_subprocess_container.stop_all()
