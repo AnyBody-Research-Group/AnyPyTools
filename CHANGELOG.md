@@ -1,5 +1,11 @@
 # AnyPyTools Change Log
 
+## v1.20.0
+
+* Fixed a problem that prevented multiple AnyPyTools instances from running
+  simultaneously in the same process. Previously, other running AnyBody instances
+  were shut down when the first `AnyPyProcess.start_macro()` call finished.
+
 ## v1.19.2
 
 * Fixed missing widget information is user-guide documentation.
@@ -32,11 +38,6 @@
   assert results[0]["SubjectID"] == "S001"
   assert results[0]["SubjectHeight"] == 1.8
   ```
-* {meth}`results.to_dataframe()
-  <anypytools.tools.AnyPyProcessOutput.to_dataframe>` has a new argument
-  `exclude_task_info` which can exclude task information (variables starting
-  with 'task_') when exporting results to a dataframe
-
 
 ## v1.18
 
