@@ -60,7 +60,14 @@ __all__ = [
 ]
 
 if ON_WINDOWS:
-    from .jobpopen import JobPopen as Popen
+    if "ANYPYTOOLS_DEBUG_USE_PYTHON_POPEN" in os.environ:
+        print(
+            "[yellow]Warning: Using Python's subprocess.Popen instead of JobPopen.[/yellow]"
+        )
+        from subprocess import Popen
+    else:
+        from .jobpopen import JobPopen as Popen
+
     from subprocess import CREATE_NEW_PROCESS_GROUP
 else:
     from subprocess import Popen
