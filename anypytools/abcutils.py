@@ -61,8 +61,8 @@ __all__ = [
 
 if ON_WINDOWS:
     if "ANYPYTOOLS_DEBUG_USE_PYTHON_POPEN" in os.environ:
-        print(
-            "[yellow]Warning: Using Python's subprocess.Popen instead of JobPopen.[/yellow]"
+        logger.warning(
+            "Warning: Using Python's subprocess.Popen instead of JobPopen."
         )
         from subprocess import Popen
     else:
