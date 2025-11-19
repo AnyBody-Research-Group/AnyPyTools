@@ -1011,4 +1011,5 @@ class AnyPyProcess(object):
 
     def __del__(self):
         """Destructor to clean up any remaining subprocesses."""
-        self._local_subprocess_container.stop_all()
+        if hasattr(self, '_local_subprocess_container'):
+            self._local_subprocess_container.stop_all()
