@@ -116,8 +116,8 @@ class _SubProcessContainer(object):
             self._pids.clear()
 
 
-_subprocess_container = _SubProcessContainer()
-atexit.register(_subprocess_container.stop_all)
+_global_subprocess_container = _SubProcessContainer()
+atexit.register(_global_subprocess_container.stop_all)
 
 
 def _progress_print(progress, content):
@@ -138,6 +138,7 @@ def execute_anybodycon(
     debug_mode=0,
     folder=None,
     interactive_mode=False,
+    subprocess_container=_global_subprocess_container,
 ):
     """Launch a single AnyBodyConsole applicaiton.
 
@@ -281,7 +282,7 @@ def execute_anybodycon(
     proc = Popen(cmd, **kwargs)
 
     retcode = None
-    _subprocess_container.add(proc.pid)
+    subprocess_container.add(proc.pid)
     try:
         proc.wait(timeout=timeout)
         retcode = ctypes.c_int32(proc.returncode).value
@@ -300,7 +301,7 @@ def execute_anybodycon(
             if ON_WINDOWS:
                 proc._close_job_object(proc._win32_job)
         else:
-            _subprocess_container.remove(proc.pid)
+            subprocess_container.remove(proc.pid)
 
     if retcode == _TIMEDOUT_BY_ANYPYTOOLS:
         logfile.write(f"\nERROR: AnyPyTools : Timeout after {int(timeout)} sec.")
@@ -614,6 +615,8 @@ class AnyPyProcess(object):
             self.env = env
         else:
             self.env = None
+
+        self._local_subprocess_container = _SubProcessContainer()
         logging.debug("\nAnyPyProcess initialized")
 
     def save_results(self, filename, append=False):
@@ -785,7 +788,7 @@ class AnyPyProcess(object):
 
         """
         # Handle different input types
-        if isinstance(macrolist, types.GeneratorType):
+        if isinstance(macrolist, (types.GeneratorType, tuple)):
             macrolist = list(macrolist)
         if isinstance(macrolist, AnyMacro):
             macrolist = macrolist.create_macros()
@@ -870,7 +873,7 @@ class AnyPyProcess(object):
             except KeyboardInterrupt:
                 _progress_print(progress, "[red]KeyboardInterrupt: User aborted[/red]")
             finally:
-                _subprocess_container.stop_all()
+                self._local_subprocess_container.stop_all()
                 if not self.silent:
                     _progress_print(progress, _tasklist_summery(tasklist))
 
@@ -925,6 +928,7 @@ class AnyPyProcess(object):
                     debug_mode=self.debug_mode,
                     folder=task.folder,
                     interactive_mode=self.interactive_mode,
+                    subprocess_container=self._local_subprocess_container,
                 )
                 try:
                     task.retcode = execute_anybodycon(**exe_args)
@@ -1004,3 +1008,7 @@ class AnyPyProcess(object):
                     silentremove(macrofile)
                 except OSError as e:
                     logger.debug(f"Could not remove: {macrofile} {e}")
+
+    def __del__(self):
+        """Destructor to clean up any remaining subprocesses."""
+        self._local_subprocess_container.stop_all()
