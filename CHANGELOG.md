@@ -1,5 +1,12 @@
 # AnyPyTools Change Log
 
+## v1.20.1
+
+* Fixed an issue with AnyPyTools when running directly in the main thread 
+  of the `snakemake` workflow tool (i.e., directly in the snakefile). This fix forces
+  AnyPyTools to use the standard Python subprocess module when running in snakemake.
+
+
 ## v1.20.0
 
 * Fixed a problem that prevented multiple AnyPyTools instances from running

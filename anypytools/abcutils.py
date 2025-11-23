@@ -68,8 +68,7 @@ if (
 ):
     from .jobpopen import JobPopen as Popen
 else:
-    print("running with normal subprocess.Popen")
-    logger.warning("running with normal subprocess.Popen")
+    logger.info("running with normal subprocess.Popen")
     from subprocess import Popen
 
 
