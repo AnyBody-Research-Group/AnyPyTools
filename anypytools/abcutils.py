@@ -21,21 +21,20 @@ import warnings
 from contextlib import suppress
 from pathlib import Path
 from queue import Queue
-from subprocess import TimeoutExpired
+import subprocess
 from tempfile import NamedTemporaryFile
 from threading import RLock, Thread
 from typing import Generator, List
 
 import numpy as np
-
+from rich import print
 from rich.progress import (
-    Progress,
     BarColumn,
+    Progress,
     TextColumn,
     TimeElapsedColumn,
     TimeRemainingColumn,
 )
-from rich import print
 
 from .macroutils import AnyMacro, MacroCommand
 from .tools import (
@@ -49,6 +48,7 @@ from .tools import (
     getsubdirs,
     make_hash,
     parse_anybodycon_output,
+    running_in_snakemake,
     silentremove,
     winepath,
 )
@@ -59,18 +59,19 @@ __all__ = [
     "Task",
 ]
 
-if ON_WINDOWS:
-    if "ANYPYTOOLS_DEBUG_USE_PYTHON_POPEN" in os.environ:
-        logger.warning("Warning: Using Python's subprocess.Popen instead of JobPopen.")
-        from subprocess import Popen
-    else:
-        from .jobpopen import JobPopen as Popen
+logger = logging.getLogger("abt.anypytools")
 
-    from subprocess import CREATE_NEW_PROCESS_GROUP
+if (
+    ON_WINDOWS
+    and not running_in_snakemake()
+    and "ANYPYTOOLS_DEBUG_USE_PYTHON_POPEN" not in os.environ
+):
+    from .jobpopen import JobPopen as Popen
 else:
+    print("running with normal subprocess.Popen")
+    logger.warning("running with normal subprocess.Popen")
     from subprocess import Popen
 
-logger = logging.getLogger("abt.anypytools")
 
 _thread_lock = RLock()
 _KILLED_BY_ANYPYTOOLS = 10
@@ -219,7 +220,7 @@ def execute_anybodycon(
         ctypes.windll.kernel32.SetErrorMode(SEM_NOGPFAULTERRORBOX)
         subprocess_flags = 0x8000000  # win32con.CREATE_NO_WINDOW?
         subprocess_flags |= priority
-        subprocess_flags |= CREATE_NEW_PROCESS_GROUP
+        subprocess_flags |= subprocess.CREATE_NEW_PROCESS_GROUP
         extra_kwargs = {"creationflags": subprocess_flags}
 
         cmd = [
@@ -284,7 +285,7 @@ def execute_anybodycon(
     try:
         proc.wait(timeout=timeout)
         retcode = ctypes.c_int32(proc.returncode).value
-    except TimeoutExpired:
+    except subprocess.TimeoutExpired:
         proc.kill()
         proc.communicate()
         retcode = _TIMEDOUT_BY_ANYPYTOOLS
@@ -296,7 +297,7 @@ def execute_anybodycon(
     finally:
         if retcode is None:
             proc.kill()
-            if ON_WINDOWS:
+            if ON_WINDOWS and hasattr(proc, "_close_job_object"):
                 proc._close_job_object(proc._win32_job)
         else:
             subprocess_container.remove(proc.pid)

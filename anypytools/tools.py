@@ -29,6 +29,7 @@ from contextlib import suppress
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
+import inspect
 
 # external imports
 import numpy as np
@@ -66,6 +67,15 @@ ANYBODYCON_VERSION_RE = re.compile(
 )
 
 ON_WINDOWS = platform.system() == "Windows"
+
+
+def running_in_snakemake():
+    """Check if we are running inside snakemake make main process"""
+    for frame in inspect.stack():
+        if "snakemake\\site_packages" in frame.filename:
+            return True
+    else:
+        return False
 
 
 def case_preserving_replace(string, old, new):
