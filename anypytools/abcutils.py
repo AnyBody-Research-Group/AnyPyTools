@@ -235,6 +235,7 @@ def execute_anybodycon(
             "stderr": logfile,
             "env": env,
             "cwd": folder,
+            "shell": False,
             **extra_kwargs,
         }
 
