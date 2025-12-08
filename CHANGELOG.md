@@ -1,5 +1,10 @@
 # AnyPyTools Change Log
 
+## v1.20.2
+
+* Fixed a deprecation warning from the pytest plugin, and enable pytest 9 support. 
+
+
 ## v1.20.1
 
 * Fixed an issue with AnyPyTools when running directly in the main thread 

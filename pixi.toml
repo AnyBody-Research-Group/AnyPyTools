@@ -10,7 +10,7 @@ anypytools = {path= "."}
 
 [package]
 name = "anypytools"
-version="1.20.1"
+version="1.20.2"
 
 [package.build] 
 backend = { name = "pixi-build-python", version = "*" }
@@ -57,7 +57,7 @@ ipywidgets = "*"
 seaborn = ">=0.13.2,<0.14"
 
 [feature.test.dependencies]
-pytest="*"
+pytest=">=9"
 pytest-xdist = "*"
 debugpy = "*"
 
