@@ -1287,7 +1287,7 @@ environments:
       - conda: https://prefix.dev/conda-forge/noarch/pydoe-0.3.8-py_1.tar.bz2
       - conda: https://prefix.dev/conda-forge/noarch/pygments-2.19.2-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/pygments_anyscript-1.5.0-pyhd8ed1ab_1.conda
-      - conda: https://prefix.dev/conda-forge/noarch/pytest-8.4.2-pyhd8ed1ab_0.conda
+      - conda: https://prefix.dev/conda-forge/noarch/pytest-9.0.2-pyhcf101f3_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/pytest-xdist-3.8.0-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/linux-64/python-3.13.9-hc97d973_101_cp313.conda
       - conda: https://prefix.dev/conda-forge/noarch/python-dateutil-2.9.0.post0-pyhe01879c_2.conda
@@ -1404,7 +1404,7 @@ environments:
       - conda: https://prefix.dev/conda-forge/noarch/pydoe-0.3.8-py_1.tar.bz2
       - conda: https://prefix.dev/conda-forge/noarch/pygments-2.19.2-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/pygments_anyscript-1.5.0-pyhd8ed1ab_1.conda
-      - conda: https://prefix.dev/conda-forge/noarch/pytest-8.4.2-pyhd8ed1ab_0.conda
+      - conda: https://prefix.dev/conda-forge/noarch/pytest-9.0.2-pyhcf101f3_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/pytest-xdist-3.8.0-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/win-64/python-3.14.0-h4b44e0e_102_cp314.conda
       - conda: https://prefix.dev/conda-forge/noarch/python-dateutil-2.9.0.post0-pyhe01879c_2.conda
@@ -1548,7 +1548,7 @@ packages:
   timestamp: 1758634638734
 - conda: .
   name: anypytools
-  version: 1.20.1
+  version: 1.20.2
   build: pyh4616a5c_0
   subdir: noarch
   depends:
@@ -1566,7 +1566,7 @@ packages:
   - pywin32
   license: MIT
   input:
-    hash: f4b0daf1f3076714723f62ddbe9257f4c3285e8f5f8cc790e34bdcc52bc2da6a
+    hash: cc5bfba51146b92c82c10a419d0bd23280b566181a189bc0afe8b21587ca882d
     globs:
     - pyproject.toml
 - conda: https://prefix.dev/conda-forge/win-64/aom-3.9.1-he0c23c2_0.conda
@@ -5842,24 +5842,25 @@ packages:
   - pkg:pypi/pysocks?source=hash-mapping
   size: 21085
   timestamp: 1733217331982
-- conda: https://prefix.dev/conda-forge/noarch/pytest-8.4.2-pyhd8ed1ab_0.conda
-  sha256: 41053d9893e379a3133bb9b557b98a3d2142fca474fb6b964ba5d97515f78e2d
-  md5: 1f987505580cb972cf28dc5f74a0f81b
+- conda: https://prefix.dev/conda-forge/noarch/pytest-9.0.2-pyhcf101f3_0.conda
+  sha256: 9e749fb465a8bedf0184d8b8996992a38de351f7c64e967031944978de03a520
+  md5: 2b694bad8a50dc2f712f5368de866480
   depends:
-  - colorama >=0.4
-  - exceptiongroup >=1
-  - iniconfig >=1
-  - packaging >=20
-  - pluggy >=1.5,<2
   - pygments >=2.7.2
   - python >=3.10
+  - iniconfig >=1.0.1
+  - packaging >=22
+  - pluggy >=1.5,<2
   - tomli >=1
+  - colorama >=0.4
+  - exceptiongroup >=1
+  - python
   constrains:
   - pytest-faulthandler >=2
   license: MIT
   license_family: MIT
-  size: 276734
-  timestamp: 1757011891753
+  size: 299581
+  timestamp: 1765062031645
 - conda: https://prefix.dev/conda-forge/noarch/pytest-xdist-3.8.0-pyhd8ed1ab_0.conda
   sha256: b7b58a5be090883198411337b99afb6404127809c3d1c9f96e99b59f36177a96
   md5: 8375cfbda7c57fbceeda18229be10417
