@@ -132,7 +132,9 @@ def change_dir(path):
 
 def pytest_collect_file(parent, file_path):
     """Collect AnyScript test files."""
-    if file_path.suffix.lower() == ".any" and file_path.stem.lower().startswith("test_"):
+    if file_path.suffix.lower() == ".any" and file_path.stem.lower().startswith(
+        "test_"
+    ):
         return AnyTestFile.from_parent(parent, path=file_path)
 
 
