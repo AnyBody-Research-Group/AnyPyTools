@@ -63,7 +63,7 @@ logger = logging.getLogger("abt.anypytools")
 
 if (
     ON_WINDOWS
-    and not running_in_snakemake()
+    # and not running_in_snakemake()
     and "ANYPYTOOLS_DEBUG_USE_PYTHON_POPEN" not in os.environ
 ):
     from .jobpopen import JobPopen as Popen
