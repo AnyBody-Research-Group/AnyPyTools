@@ -130,11 +130,10 @@ def change_dir(path):
         os.chdir(prev_cwd)
 
 
-def pytest_collect_file(parent, path):
+def pytest_collect_file(parent, file_path):
     """Collect AnyScript test files."""
-    path = Path(path)
-    if path.suffix.lower() == ".any" and path.stem.lower().startswith("test_"):
-        return AnyTestFile.from_parent(parent, path=path)
+    if file_path.suffix.lower() == ".any" and file_path.stem.lower().startswith("test_"):
+        return AnyTestFile.from_parent(parent, path=file_path)
 
 
 def _format_switches(defs):
