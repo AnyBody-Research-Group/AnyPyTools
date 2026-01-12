@@ -1,5 +1,12 @@
 # AnyPyTools Change Log
 
+## v1.20.3
+
+* Fixed a bug where `ctrl-c` events were not propagated and were silenced. This
+  fixes an issue where using AnyPyTools in tools liek pytest or snakemake made
+  it difficult to interrupt the process. 
+
+
 ## v1.20.2
 
 * Fixed a deprecation warning from the pytest plugin, and enable pytest 9 support. 
