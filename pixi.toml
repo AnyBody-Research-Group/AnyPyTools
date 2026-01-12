@@ -47,12 +47,14 @@ pywin32="*"
 [feature.build.dependencies]
 flit = "*"
 pip = "*"
+twine = "*"
 
 
 [feature.build.tasks]
 clean-build = "rm -rf build dist"
 publish = {cmd="op run --env-file=upload.env -- flit publish"}
 build = {cmd="flit build", depends-on=["clean-build"]}
+check-wheel = "twine check dist/*"
 
 
 [feature.jupyter.dependencies]
