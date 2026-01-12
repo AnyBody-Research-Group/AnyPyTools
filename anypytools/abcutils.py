@@ -868,8 +868,9 @@ class AnyPyProcess(object):
                         _progress_print(progress, _task_summery(task))
                         progress.update(task_progress, style="red", refresh=True)
                     progress.update(task_progress, advance=1, refresh=True)
-            except KeyboardInterrupt:
+            except KeyboardInterrupt as e:
                 _progress_print(progress, "[red]KeyboardInterrupt: User aborted[/red]")
+                raise e
             finally:
                 self._local_subprocess_container.stop_all()
                 if not self.silent:
