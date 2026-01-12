@@ -1,8 +1,14 @@
 [workspace]
 authors = ["Morten Enemark Lund <melund@gmail.com>"]
-channels = ["https://prefix.dev/conda-forge", "https://prefix.dev/anybody-beta"]
+channels = ["conda-forge",  "anybody", "anybody/label/rc"]
 platforms = ["win-64", "linux-64"]
 preview = ["pixi-build"]
+
+[environments]
+docs = ["docs"]
+test = ["test", "anybody"]
+build = ["build"]
+jupyter = ["jupyter", "anybody"]
 
 [dependencies]
 anypytools = {path= "."}
@@ -84,8 +90,3 @@ sphinx-autodoc2 = { git = "https://github.com/AnyBody-Research-Group/sphinx-auto
 build-docs = {cmd="sphinx-build -nW --keep-going -b html docs/ docs/_build/html"}
 
 
-[environments]
-docs = ["docs"]
-test = ["test", "anybody"]
-build = ["build"]
-jupyter = ["jupyter", "anybody"]
