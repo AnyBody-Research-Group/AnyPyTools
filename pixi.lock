@@ -1551,7 +1551,7 @@ packages:
   timestamp: 1767719033569
 - conda: .
   name: anypytools
-  version: 1.20.2
+  version: 1.20.3
   build: pyh4616a5c_0
   subdir: noarch
   variants:
