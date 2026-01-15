@@ -52,7 +52,7 @@ twine = "*"
 
 [feature.build.tasks]
 clean-build = "rm -rf build dist"
-publish = {cmd="op run --env-file=upload.env -- flit publish"}
+publish = {cmd='echo "Publishing to pypi is done by making a release on github"'}
 build = {cmd="flit build", depends-on=["clean-build"]}
 check-wheel = "twine check dist/*"
 
