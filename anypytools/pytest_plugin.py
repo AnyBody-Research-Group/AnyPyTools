@@ -489,15 +489,6 @@ class AnyTestItem(pytest.Item):
 
         target_log = target_folder / "logfile.txt"
         shutil.copyfile(src_log, target_log)
-        src_macrofile = src_log.with_suffix(".anymcr")
-        target_macro = target_folder / "macro.anymcr"
-        shutil.copyfile(src_macrofile, target_macro)
-
-        with open(target_folder / "run.bat", "w") as f:
-            anybodygui = re.sub(
-                r"(?i)anybodycon\.exe", "anybody.exe", pytest.anytest.ams_path
-            )
-            f.write(f'"{anybodygui}" -m "%~dp0{target_macro.name}"')
 
     def repr_failure(self, excinfo):
         """Print a representation when a test failes."""

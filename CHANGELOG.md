@@ -1,5 +1,10 @@
 # AnyPyTools Change Log
 
+## v1.20.4
+
+* Fix crash with pytest plugin when saving output to h5 files.
+
+
 ## v1.20.3
 
 * Fixed a bug where `ctrl-c` events were not propagated and were silenced. This
