@@ -3,16 +3,20 @@ authors = ["Morten Enemark Lund <melund@gmail.com>"]
 channels = ["conda-forge",  "anybody", "anybody/label/rc"]
 platforms = ["win-64", "linux-64"]
 preview = ["pixi-build"]
+requires-pixi = ">=0.63.2"
 
 [environments]
 docs = ["docs"]
 test = ["test", "anybody"]
 build = ["build"]
-jupyter = ["jupyter", "anybody"]
+# By default `pixi run start` will use released version of AnyPyTools
+# To use development version use `pixi run -e tutorials-dev start`
+tutorials = { features=["tutorials", "anybody", "released" ], no-default-feature = true }
+tutorials-dev = { features=["tutorials", "anybody"] }
+
 
 [dependencies]
 anypytools = {path= "."}
-
 
 [package]
 name = "anypytools"
@@ -52,17 +56,23 @@ twine = "*"
 
 [feature.build.tasks]
 clean-build = "rm -rf build dist"
-publish = {cmd="op run --env-file=upload.env -- flit publish"}
+publish = {cmd='echo "Publishing to pypi is done by making a release on github"'}
 build = {cmd="flit build", depends-on=["clean-build"]}
 check-wheel = "twine check dist/*"
 
 
-[feature.jupyter.dependencies]
+[feature.tutorials.dependencies]
 matplotlib = "*"
 jupyter="*"
 ipykernel = "*"
 ipywidgets = "*"
 seaborn = ">=0.13.2,<0.14"
+
+[feature.tutorials.tasks]
+start = {cmd="jupyter lab docs/user-guide/01_Getting_started_with_anypytools.ipynb", default-environment = "tutorials"}
+
+[feature.released.dependencies]
+anypytools = "*"
 
 [feature.test.dependencies]
 pytest=">=9"
@@ -73,7 +83,6 @@ debugpy = "*"
 anybodycon = "8.2*"
 
 [feature.test.tasks]
-# test-install = {cmd="pip install -e ."}
 test = {cmd = "pytest"}
 
 [feature.docs.dependencies]
