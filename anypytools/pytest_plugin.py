@@ -5,40 +5,39 @@ Created on Mon Sep  1 12:44:36 2014.
 
 @author: Morten
 """
+import argparse
+import ast
+import collections
+import contextlib
+import itertools
 import os
 import re
-import ast
-import time
 import shutil
+import time
 import warnings
-import argparse
-import itertools
-import contextlib
-import collections
 from pathlib import Path
-from traceback import format_list, extract_tb
+from traceback import extract_tb, format_list
 
 import pytest
-
-# from _pytest.fixtures import FixtureRequest
-# from _pytest.fixtures import TopRequest
-
-
 from pytest import TempPathFactory
 
 from anypytools import AnyPyProcess, macro_commands
 from anypytools.tools import (
     ON_WINDOWS,
-    get_anybodycon_path,
-    replace_bm_constants,
-    get_bm_constants,
+    AMSVersion,
     anybodycon_version,
     find_ammr_path,
     get_ammr_version,
+    get_anybodycon_path,
+    get_bm_constants,
+    replace_bm_constants,
     winepath,
     wraptext,
-    AMSVersion,
 )
+
+# from _pytest.fixtures import FixtureRequest
+# from _pytest.fixtures import TopRequest
+
 
 __all__ = [
     "AnyTestFile",
@@ -52,6 +51,13 @@ DEFAULT_ANYTEST_OUTPUT = Path.cwd() / "anytest-output"
 
 LOAD_TIME_VARIABLE = "Global.System.LoadedModel.LoadDurationCPUThread"
 RUN_TEST_TIME_VARIABLE = "Main.RunTest.RunDurationCPUThread"
+
+
+def _sanitize_path(path):
+    if isinstance(path, str):
+        while "\\\\" in path:
+            path = path.replace("\\\\", "\\")
+    return path
 
 
 def _is_load_duration_supported():
@@ -77,9 +83,13 @@ class AnyTestSession(object):
         early in the pytest startup.
         """
 
-        ammr_path = find_ammr_path(config.getoption("--ammr") or config.rootdir)
+        ammr_path = find_ammr_path(
+            _sanitize_path(config.getoption("--ammr")) or config.rootdir
+        )
         self.ammr_version = get_ammr_version(ammr_path)
-        self.ams_path = config.getoption("--anybodycon") or get_anybodycon_path()
+        self.ams_path = (
+            _sanitize_path(config.getoption("--anybodycon")) or get_anybodycon_path()
+        )
         self.ams_path = os.path.abspath(self.ams_path) if self.ams_path else ""
         self.ams_version = anybodycon_version(self.ams_path)
         major_ammr_ver = 1 if self.ammr_version.startswith("1") else 2
@@ -293,8 +303,9 @@ class AnyTestItem(pytest.Item):
             self.any_defs[k] = v
         self.any_defs["TEST_NAME"] = f'"{test_name}"'
         if self.config.getoption("--ammr"):
-            any_paths["AMMR_PATH"] = self.config.getoption("--ammr")
-            any_paths["ANYBODY_PATH_AMMR"] = self.config.getoption("--ammr")
+            ammr_path = _sanitize_path(self.config.getoption("--ammr"))
+            any_paths["AMMR_PATH"] = ammr_path
+            any_paths["ANYBODY_PATH_AMMR"] = ammr_path
         self.any_paths = _as_absolute_paths(any_paths, start=self.config.rootdir)
         self.name = test_name
         self.expect_errors = kwargs.get("expect_errors", [])
@@ -442,9 +453,8 @@ class AnyTestItem(pytest.Item):
 
         # Add info to the hdf5 file if compare output was set
         if self.hdf5_outputs:
-            base = Path(
-                self.config.getoption("--anytest-output") or DEFAULT_ANYTEST_OUTPUT
-            )
+            anytest_output = _sanitize_path(self.config.getoption("--anytest-output"))
+            base = Path(anytest_output or DEFAULT_ANYTEST_OUTPUT)
             subfolder = Path(self.config.getoption("--anytest-name"))
             target = base / subfolder / self.name
             self.save_output_files(tmpdir, target, result, self.hdf5_outputs)
