@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """AnyPyTools library."""
+
 import logging
 import os
 import platform
@@ -36,7 +37,7 @@ __all__ = [
     "NORMAL_PRIORITY_CLASS",
 ]
 
-__version__ = "1.20.4"
+__version__ = "1.20.5"
 
 
 def print_versions():
@@ -49,7 +50,7 @@ def print_versions():
     print(f"NumPy version: {np.__version__}")
     print(f"SciPy version: {sp.__version__}")
     print(f"Python version: {sys.version}")
-    (sysname, _, release, version, machine, processor) = platform.uname()
+    sysname, _, release, version, machine, processor = platform.uname()
     print(f"Platform: {sysname}-{release}-{machine} ({version})")
     if not processor:
         processor = "not recognized"

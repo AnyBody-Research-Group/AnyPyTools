@@ -1,5 +1,10 @@
 # AnyPyTools Change Log
 
+## v1.20.5
+
+* Fix issue with pytest plugin assuming `.any` files to be encode with default 
+  system encoding instead of UTF8.
+
 ## v1.20.4
 
 * Fix crash with pytest plugin when saving output to h5 files.
