@@ -205,7 +205,7 @@ AMMR_VERSION_RE = re.compile(r'.*AMMR_VERSION\s"(?P<version>.*)"')
 
 
 def _ammr_any_version(fpath):
-    with open(fpath) as f:
+    with open(fpath, encoding='utf8') as f:
         out = f.read()
     match = AMMR_VERSION_RE.search(out)
     if match:
@@ -1168,7 +1168,7 @@ def get_bm_constants(ammr_path=None, ammr_version=2):
             ammr_path, "Body/AAUHuman/Documentation/bm_constants.py"
         )
         with suppress(IOError):
-            with open(filename) as fh:
+            with open(filename, encoding='utf8') as fh:
                 bm_constants = literal_eval(fh.read())
     if not isinstance(bm_constants, dict):
         bm_constants = _BM_CONSTANTS if ammr_version >= 2 else _BM_CONSTANTS_AMMR1
