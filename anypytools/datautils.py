@@ -4,6 +4,7 @@ Created on Mon Jan 16 11:40:42 2012.
 
 @author: mel
 """
+
 import os
 import re
 import logging
@@ -184,7 +185,7 @@ def _parse_anyoutputfile_constants(strvar):
     value = None
     varname = None
     if strvar.count("=") == 1 and strvar.startswith("Main"):
-        (first, last) = strvar.split("=")
+        first, last = strvar.split("=")
         varname = first.strip()
         last = last.strip()
         value = None

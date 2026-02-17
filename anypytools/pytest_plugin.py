@@ -5,6 +5,7 @@ Created on Mon Sep  1 12:44:36 2014.
 
 @author: Morten
 """
+
 import os
 import re
 import ast
@@ -108,7 +109,7 @@ def _read_header(fpath):
     The function remvoes any leading '//' comments.
     """
     code = ""
-    with open(fpath, encoding='utf8') as f:
+    with open(fpath, encoding="utf8") as f:
         for line in f.readlines():
             if line.startswith("//"):
                 line = line.strip("//")
@@ -200,7 +201,7 @@ def _parse_header(header, test_file):
 
 def _write_macro_file(path, name, macro):
     filename = os.path.join(path, name + ".anymcr")
-    with open(filename, "w", encoding='utf8') as f:
+    with open(filename, "w", encoding="utf8") as f:
         f.writelines([str(mcr) + "\n" for mcr in macro])
     return filename
 

@@ -292,10 +292,8 @@ class SetValue_random(SetValue):
 
         self.var = var
         if not isinstance(frozen_distribution, rv_frozen):
-            raise TypeError(
-                "frozen_distribution must be frozen distribtuion from \
-                            scipy.stats.distributions"
-            )
+            raise TypeError("frozen_distribution must be frozen distribtuion from \
+                            scipy.stats.distributions")
 
         self.rv = frozen_distribution
 
