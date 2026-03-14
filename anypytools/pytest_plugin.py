@@ -377,9 +377,7 @@ class AnyTestItem(pytest.Item):
 
     def runtest(self):
         """Run an AnyScript test item."""
-        if not pytest.anytest.ams_path or not os.path.isfile(
-            pytest.anytest.ams_path
-        ):
+        if not pytest.anytest.ams_path or not os.path.isfile(pytest.anytest.ams_path):
             pytest.fail(
                 f"AnyBodyCon executable not found: '{pytest.anytest.ams_path}'. "
                 "Ensure AnyBodyCon is installed and available on PATH or specify "
