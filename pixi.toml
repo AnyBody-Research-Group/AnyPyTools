@@ -8,7 +8,7 @@ requires-pixi = ">=0.63.2"
 [environments]
 docs = ["docs"]
 test = ["test", "anybody"]
-test_no_anybodycon = ["test"]
+test-no-anybodycon = ["test"]
 build = ["build"]
 # By default `pixi run start` will use released version of AnyPyTools
 # To use development version use `pixi run -e tutorials-dev start`

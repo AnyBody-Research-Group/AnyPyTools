@@ -50,13 +50,13 @@ jobs:
 
     - uses: prefix-dev/setup-pixi@v0.9.3
       with:
-        environments: test_no_anybodycon
+        environments: test-no-anybodycon
         cache-write: ${{ github.event_name == 'push' && github.ref_name == 'master' }}
 
     - name: Test that .any tests fail without anybodycon
       shell: bash
       run: |
-        ! pixi run -e test_no_anybodycon pytest tests/test_Arm2D.any --no-header -rN
+        ! pixi run -e test-no-anybodycon pytest tests/test_Arm2D.any --no-header -rN
 
 
 # Linux builds have started failing with AMS 8.1 due to some WINE issue: 
