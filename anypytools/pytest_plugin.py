@@ -380,7 +380,7 @@ class AnyTestItem(pytest.Item):
         if not pytest.anytest.ams_path or not os.path.isfile(
             pytest.anytest.ams_path
         ):
-            raise pytest.fail(
+            pytest.fail(
                 f"AnyBodyCon executable not found: '{pytest.anytest.ams_path}'. "
                 "Ensure AnyBodyCon is installed and available on PATH or specify "
                 "the path with --anybodycon.",

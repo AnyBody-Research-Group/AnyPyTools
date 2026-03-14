@@ -55,7 +55,7 @@ jobs:
 
     - name: Test that .any tests fail without anybodycon
       run: |
-        pixi run -e test_no_anybodycon pytest tests/test_Arm2D.any --no-header -rN && exit 1 || exit 0
+        ! pixi run -e test_no_anybodycon pytest tests/test_Arm2D.any --no-header -rN
 
 
 # Linux builds have started failing with AMS 8.1 due to some WINE issue: 
