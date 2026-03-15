@@ -180,9 +180,10 @@ $ rm -fr build
 
 > 1. Update the release log
 > 2. Update version number in `anypytools.__init__.py`, and `pixi.toml`. Ensure they match. 
-> 3. Ensure test pass
-> 4. Make PR on GitHub, and check docs compile correctly on Github Actions
-> 5. Create a release on GitHub with the version number as the tag.
+> 4. Run `pixi.lock` to ensure lock file is updated. 
+> 5. Ensure test pass
+> 6. Make PR on GitHub, and check docs compile correctly on Github Actions
+> 7. Create a release on GitHub with the version number as the tag.
 >    1. This will trigger a Pypi release automatically
 >    2. A conda-forge release will also trigger automatically within 1 day. Alternatively, go to https://github.com/conda-forge/anypytools-feedstock and create a issue with the title: `@conda-forge-admin, please update version`. This will make the conda-forge relase immediatly. 
 
