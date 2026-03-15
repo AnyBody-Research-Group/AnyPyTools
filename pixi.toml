@@ -21,7 +21,7 @@ anypytools = {path= "."}
 
 [package]
 name = "anypytools"
-version="1.20.5"
+version="1.20.6"
 
 [package.build] 
 backend = { name = "pixi-build-python", version = "*" }

@@ -178,15 +178,13 @@ $ rm -fr build
 
 ### Performing the Release
 
-> 1. Update and push the release log
-> 2. Update version number in `anypytools.__init__.py`
+> 1. Update the release log
+> 2. Update version number in `anypytools.__init__.py`, and `pixi.toml`. Ensure they match. 
 > 3. Ensure test pass
 > 4. Make PR on GitHub, and check docs compile correctly on Github Actions
-> 5. Create a tag with the version number and push it.
-> 6. Crate PYPI pckage
->    : 1. Run `pixi run build`
->      2. Run `pixi run publish`
-> 7. Update the conda forge package on <https://github.com/conda-forge/anypytools-feedstock>
+> 5. Create a release on GitHub with the version number as the tag.
+>    1. This will trigger a Pypi release automatically
+>    2. A conda-forge release will also trigger automatically within 1 day. Alternatively, go to https://github.com/conda-forge/anypytools-feedstock and create a issue with the title: `@conda-forge-admin, please update version`. This will make the conda-forge relase immediatly. 
 
 ## Document History
 

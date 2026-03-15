@@ -1,5 +1,9 @@
 # AnyPyTools Change Log
 
+## v1.20.6
+
+* Fix issue with the pytest plugin which would not report tests as failed when no `anybodycon.exe` was available.
+
 ## v1.20.5
 
 * Fix issue with pytest plugin assuming `.any` files to be encode with default 
