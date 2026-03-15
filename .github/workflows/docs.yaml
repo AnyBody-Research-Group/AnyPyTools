@@ -20,7 +20,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         
-      - uses: prefix-dev/setup-pixi@v0.9.3
+      - uses: prefix-dev/setup-pixi@v0.9.4
         with:
           locked: false
           environments: docs
@@ -34,7 +34,7 @@ jobs:
           sphinx-build -M html . _build -W --keep-going -a -t DEV_BUILD
           cd ..
    
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         with:
           name: dev-version
           path: docs/_build/html
@@ -53,7 +53,7 @@ jobs:
       #   run: |
       #     git checkout $(git describe --tags `git rev-list --tags --max-count=1`);
   
-      - uses: prefix-dev/setup-pixi@v0.9.3
+      - uses: prefix-dev/setup-pixi@v0.9.4
         with:
           locked: false
           environments: docs
@@ -65,7 +65,7 @@ jobs:
           cd docs
           sphinx-build -M html . _build -a
   
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         with:
           name: tagged-version
           path: docs/_build/html
@@ -75,11 +75,11 @@ jobs:
     needs: [build-latest-docs, build-tagged-docs]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
         with:
           name: tagged-version
           path: public
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
         with:
           name: dev-version
           path: public/dev
