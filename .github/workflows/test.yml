@@ -30,7 +30,7 @@ jobs:
     steps:
     - uses: actions/checkout@v6
     
-    - uses: prefix-dev/setup-pixi@v0.9.4
+    - uses: prefix-dev/setup-pixi@v0.9.5
       with:
         environments: ${{ matrix.env }}
         cache-write: ${{ github.event_name == 'push' && github.ref_name == 'master' }}
@@ -48,7 +48,7 @@ jobs:
     steps:
     - uses: actions/checkout@v6
 
-    - uses: prefix-dev/setup-pixi@v0.9.4
+    - uses: prefix-dev/setup-pixi@v0.9.5
       with:
         environments: test-no-anybodycon
         cache-write: ${{ github.event_name == 'push' && github.ref_name == 'master' }}
@@ -81,7 +81,7 @@ jobs:
   #   steps:
   #     - uses: actions/checkout@v6
 
-  #     - uses: prefix-dev/setup-pixi@v0.9.4
+  #     - uses: prefix-dev/setup-pixi@v0.9.5
   #       with:
   #         environments: test
   #         cache-write: ${{ github.event_name == 'push' && github.ref_name == 'master' }}
